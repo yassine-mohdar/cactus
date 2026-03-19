@@ -52,11 +52,15 @@
                     </label>
                 </div>
 
-                {{-- Submit --}}
-                <button type="submit"
-                        class="w-full rounded-lg bg-sage px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-sage-dark focus:outline-none focus:ring-2 focus:ring-sage/30 focus:ring-offset-2">
-                    Sign In
-                </button>
+                 <div class="flex items-center justify-between">
+                    <button type="submit" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-sage hover:bg-sage-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage transition duration-150">
+                        Sign in
+                    </button>
+                </div>
+                
+                <div class="text-center pt-2 border-t border-border mt-6">
+                    <a href="{{ route('password.request') }}" class="text-sm font-medium text-sage hover:text-sage-dark transition duration-150">Forgot your password?</a>
+                </div>
             </form>
         </div>
 

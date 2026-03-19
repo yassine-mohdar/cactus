@@ -19,6 +19,10 @@ Phase 1 — Core Commerce & Operations
 ---
 
 ## Completed Task IDs
+- P1-PROD-01 — Products CRUD (simple + variable)
+- P1-CAT-01 — Categories hierarchy (recursive)
+- P1-SEC-01 — Add staff 2FA enforcement foundation
+- P1-SEC-03 — Add impersonation with audit logs
 - P0-INIT-01 — Create nino-backend folder
 - P0-INIT-02 — Initialize Laravel 12 project
 - P0-INIT-03 — Set PHP version compatibility to 8.3+ (using 8.4.3)
@@ -38,21 +42,12 @@ Phase 1 — Core Commerce & Operations
 - P0-DOCS-02 — Create ARCHITECTURE.md (updated to MySQL)
 - P0-DOCS-03 — Create PHASES.md
 - P1-AUTH-01 — Staff authentication (basic login/logout via AuthController)
-- P1-IAM-02 — Role model created (via spatie/permission)
-- P1-IAM-04 — Role presets seeded (13 roles)
-
----
-
-## In Progress Task IDs
-- P1-AUTH-03 — Password reset / password setup flow
-- P1-USERS-01 — Core user entity refinement
 - P1-IAM-01 — Permission model (foundation via spatie, needs custom permissions)
+- P1-IAM-02 — Role model created (via spatie/permission)
 - P1-IAM-03 — Role-permission relationships
+- P1-IAM-04 — Role presets seeded (13 roles)
 - P1-IAM-07 through P1-IAM-10 — Scope-aware permissions
-
----
-
-## Next Task IDs
+- P1-USERS-01 — Core user entity refinement
 - P1-USERS-02 — User type handling (staff/customer)
 - P1-USERS-05 — Active/inactive/suspended states
 - P1-POLICY-01 — Policies for major models
@@ -61,7 +56,19 @@ Phase 1 — Core Commerce & Operations
 - P1-STAFF-01 through P1-STAFF-06 — Staff management CRUD
 - P1-NAV-01 through P1-NAV-03 — Role-aware navigation
 - P0-ADMIN-04 — Role-aware menu placeholder system
-- P0-ADMIN-07 — Reusable table/filter/form card components
+- P1-AUTH-03 — Password reset / password setup flow
+- P1-SEC-02 — 2FA foundation (email/app based)
+- P1-SEC-03 — Admin impersonation (Super Admin only)
+
+---
+
+## In Progress Task IDs
+- none
+
+---
+
+## Next Task IDs
+- P5-MODEL-01 — Define stock item model or equivalent
 
 ---
 
@@ -92,7 +99,7 @@ Phase 1 — Core Commerce & Operations
 ## Admin Shell
 - Status: IN_PROGRESS
 - Completed: P0-ADMIN-01, P0-ADMIN-02, P0-ADMIN-03, P0-ADMIN-05, P0-ADMIN-06
-- Remaining: P0-ADMIN-04 (role-aware menu), P0-ADMIN-07 (reusable components)
+- Remaining: P0-ADMIN-07 (reusable components)
 
 ## IAM / Roles / Permissions
 - Status: IN_PROGRESS

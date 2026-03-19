@@ -12,11 +12,12 @@ use Spatie\Permission\Traits\HasRoles;
 use App\Modules\Organizations\Models\Organization;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Lab404\Impersonate\Models\Impersonate;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable, HasRoles, Impersonate;
 
     protected $fillable = [
         'name',
@@ -115,5 +116,22 @@ class User extends Authenticatable
             'last_login_at' => now(),
             'last_login_ip' => request()->ip(),
         ]);
+    }
+
+    /**
+     * Determine if the user can impersonate others.
+     */
+    public function canImpersonate(): bool
+    {
+        return $this->isSuperAdmin();
+    }
+
+    /**
+     * Determine if the user can be impersonated.
+     */
+    public function canBeImpersonated(): bool
+    {
+        // Don't allow impersonating other super admins
+        return ! $this->isSuperAdmin();
     }
 }

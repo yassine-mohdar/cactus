@@ -12,8 +12,21 @@
     @livewireStyles
     @stack('styles')
 </head>
-<body class="bg-cream font-sans text-ink antialiased">
-    <div class="flex h-screen overflow-hidden">
+<body class="bg-surface font-sans text-ink antialiased flex h-screen overflow-hidden">
+    
+    @impersonating
+    <div class="fixed top-0 left-0 right-0 z-50 bg-ink text-white px-4 py-2 flex items-center justify-between text-sm shadow-md">
+        <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+            <span class="font-medium">You are currently impersonating <strong>{{ auth()->user()->name }}</strong>.</span>
+        </div>
+        <a href="{{ route('impersonate.leave') }}" class="px-3 py-1 bg-white text-ink rounded hover:bg-cream transition font-bold shadow-sm">
+            Leave Impersonation
+        </a>
+    </div>
+    @endImpersonating
+
+    <div class="flex h-screen w-full @impersonating pt-10 @endImpersonating">
         {{-- Sidebar --}}
         @include('admin.partials.sidebar')
 
