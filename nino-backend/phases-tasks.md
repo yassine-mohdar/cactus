@@ -1,0 +1,1469 @@
+# Nino Backend — Phases & Tasks (Task-ID Version)
+
+## Purpose
+This file is the execution blueprint for the `nino-backend` project. It exists to guide AI coding agents and human reviewers through the full project in a controlled, modular, and production-minded way.
+
+This document is intentionally detailed. It should be used before implementation begins for any major module, and updated only when the project scope materially changes.
+
+## Core Principles
+- Build as a **modular monolith**.
+- Organize by **domain/module**, not by technical layer alone.
+- Prioritize **commerce and operations first**.
+- Keep **community** out of phase 1 delivery.
+- Use **thin controllers**, **service/action classes**, **policies**, **queues**, and **audit logs**.
+- Optimize for **maintainability**, **performance**, **clear permissions**, and **future scalability**.
+- Never trade security for convenience.
+- Never send plain passwords by email, SMS, or WhatsApp.
+
+## Task ID Convention
+Task IDs use this format:
+
+- `P{phase number}-{module code}-{task number}`
+
+Examples:
+- `P0-INIT-01`
+- `P1-IAM-01`
+- `P2-DASH-01`
+- `P4-CATALOG-01`
+- `P7-CHECKOUT-01`
+
+These IDs are the source of truth for `PHASES.md`.
+`PHASES.md` should track status primarily by task ID, not by long descriptive text.
+
+## Global Non-Functional Requirements
+
+### Performance
+- No N+1 queries.
+- Add indexes for high-frequency filters and lookups.
+- Queue all notifications, webhooks, media processing, and heavy exports/imports.
+- Cache settings, lookup data, and safe summary widgets.
+- Paginate all large tables.
+- Optimize images/media and use storage abstraction.
+- Add slow-query monitoring and basic performance logging.
+
+### Security
+- Enforce strong validation everywhere.
+- Use policies and scoped permissions for all sensitive actions.
+- Keep API credentials encrypted and never expose secrets in logs.
+- Use password setup links, magic links, or OTPs instead of sending passwords.
+- Add audit logs for sensitive actions such as price edits, refunds, role changes, status overrides, stock adjustments, and payment updates.
+- Support forced staff 2FA at the settings level.
+
+### Code Quality
+- Domain-oriented modules.
+- Thin controllers.
+- Business logic in services/actions.
+- Clear DTOs/value objects where complexity justifies them.
+- Consistent naming and module conventions.
+- Feature tests for critical user flows.
+- Factories and seeders for development/test data.
+
+### Admin UX
+- Professional, fast, dense UI.
+- No playful admin UI.
+- Role-adapted sidebars/navigation.
+- Search, filters, bulk actions, tabs, grouped forms, and clear status indicators.
+- Compact but readable tables.
+
+---
+
+# Phase 0 — Project Foundation & Architecture
+
+## Phase ID
+`P0`
+
+## Objective
+Establish the technical, architectural, and documentation foundation for the project before business modules are built.
+
+## Dependencies
+- Requires: none
+- Blocks: all later phases
+
+## Deliverables
+- `nino-backend` Laravel project bootstrapped.
+- Base module structure created.
+- Core docs created:
+  - `PROJECT_PROGRESS.md`
+  - `ARCHITECTURE.md`
+  - `PHASES.md`
+  - `phases-tasks.md`
+- Initial admin shell and navigation scaffold.
+- Core stack configured.
+
+## Tasks
+
+### 0.1 Initialize project
+- [ ] `P0-INIT-01` Create `nino-backend` folder
+- [ ] `P0-INIT-02` Initialize Laravel 12 project
+- [ ] `P0-INIT-03` Set PHP version compatibility to 8.3+
+- [ ] `P0-INIT-04` Configure environment files and sane defaults
+- [ ] `P0-INIT-05` Choose and configure database driver
+- [ ] `P0-INIT-06` Configure Redis for queue/cache
+
+### 0.2 Configure core packages/tools
+- [ ] `P0-TOOLS-01` Set up Tailwind CSS
+- [ ] `P0-TOOLS-02` Set up Livewire or chosen admin UI stack
+- [ ] `P0-TOOLS-03` Set up Sanctum/Fortify/auth stack
+- [ ] `P0-TOOLS-04` Set up Pest
+- [ ] `P0-TOOLS-05` Set up code style/linting if applicable
+- [ ] `P0-TOOLS-06` Set up debug and local mail/testing utilities
+
+### 0.3 Create module structure
+- [ ] `P0-MODULES-01` Define module directory standard
+- [ ] `P0-MODULES-02` Create IAM module
+- [ ] `P0-MODULES-03` Create Organizations module
+- [ ] `P0-MODULES-04` Create Catalog module
+- [ ] `P0-MODULES-05` Create Inventory module
+- [ ] `P0-MODULES-06` Create Orders module
+- [ ] `P0-MODULES-07` Create Checkout module
+- [ ] `P0-MODULES-08` Create Payments module
+- [ ] `P0-MODULES-09` Create Shipping module
+- [ ] `P0-MODULES-10` Create Customers module
+- [ ] `P0-MODULES-11` Create Notifications module
+- [ ] `P0-MODULES-12` Create Coupons module
+- [ ] `P0-MODULES-13` Create CMS module
+- [ ] `P0-MODULES-14` Create Finance module
+- [ ] `P0-MODULES-15` Create Reports module
+- [ ] `P0-MODULES-16` Create Settings module
+- [ ] `P0-MODULES-17` Create Support module
+- [ ] `P0-MODULES-18` Create Audit module
+- [ ] `P0-MODULES-19` Create Community module
+- [ ] `P0-MODULES-20` Add README or stub files if needed to keep structure visible
+
+### 0.4 Define architecture conventions
+- [ ] `P0-ARCH-01` Define controller rules
+- [ ] `P0-ARCH-02` Define service/action rules
+- [ ] `P0-ARCH-03` Define event/listener rules
+- [ ] `P0-ARCH-04` Define job/queue rules
+- [ ] `P0-ARCH-05` Define policy/permission rules
+- [ ] `P0-ARCH-06` Define request validation rules
+- [ ] `P0-ARCH-07` Define resource/transformer rules
+- [ ] `P0-ARCH-08` Define audit logging standard
+
+### 0.5 Admin shell foundation
+- [ ] `P0-ADMIN-01` Build base layout
+- [ ] `P0-ADMIN-02` Create topbar/sidebar/content shell
+- [ ] `P0-ADMIN-03` Add theme tokens for professional palette
+- [ ] `P0-ADMIN-04` Create role-aware menu placeholder system
+- [ ] `P0-ADMIN-05` Add flash message pattern
+- [ ] `P0-ADMIN-06` Add page header pattern
+- [ ] `P0-ADMIN-07` Add reusable table/filter/form card components
+
+### 0.6 Documentation foundation
+- [ ] `P0-DOCS-01` Create `PROJECT_PROGRESS.md` with concise template
+- [ ] `P0-DOCS-02` Create `ARCHITECTURE.md` with module map
+- [ ] `P0-DOCS-03` Create `PHASES.md` with phase summary
+- [ ] `P0-DOCS-04` Ensure docs remain concise and low-token for AI continuation
+
+## Acceptance Criteria
+- Project boots locally.
+- Admin shell renders.
+- Module structure exists.
+- Queue/cache/database configs are working.
+- Base docs exist and are clear.
+
+---
+
+# Phase 1 — IAM, Roles, Permissions, and Organizations
+
+## Phase ID
+`P1`
+
+## Objective
+Build authentication, authorization, scoped access, and the organization model that all business modules depend on.
+
+## Dependencies
+- Requires: Phase 0 complete
+- Blocks: all scoped admin features, dashboards, branch/franchise logic
+
+## Deliverables
+- Secure auth system.
+- Role presets and custom role capability foundation.
+- Scoped permissions.
+- Organization hierarchy foundation.
+- Staff/user management UI.
+- Role-aware navigation and dashboard routing.
+
+## Tasks
+
+### 1.1 Authentication foundation
+- [ ] `P1-AUTH-01` Implement staff authentication
+- [ ] `P1-AUTH-02` Implement customer authentication foundation
+- [ ] `P1-AUTH-03` Implement password reset / password setup flow
+- [ ] `P1-AUTH-04` Implement magic-link or password setup flow for checkout-created accounts
+- [ ] `P1-AUTH-05` Implement session management foundation
+- [ ] `P1-AUTH-06` Implement optional remember-me behavior if appropriate
+
+### 1.2 User model design
+- [ ] `P1-USERS-01` Define core user entity
+- [ ] `P1-USERS-02` Add user type handling (staff/customer or equivalent)
+- [ ] `P1-USERS-03` Add profile attributes
+- [ ] `P1-USERS-04` Add avatar/profile picture support foundation
+- [ ] `P1-USERS-05` Add active/inactive/suspended states
+- [ ] `P1-USERS-06` Add last login tracking
+
+### 1.3 Role and permission system
+- [ ] `P1-IAM-01` Define permission model
+- [ ] `P1-IAM-02` Define role model
+- [ ] `P1-IAM-03` Define role-permission relationships
+- [ ] `P1-IAM-04` Add role presets seed/data
+- [ ] `P1-IAM-05` Support custom roles
+- [ ] `P1-IAM-06` Support permission overrides
+- [ ] `P1-IAM-07` Support scope-aware permissions: platform
+- [ ] `P1-IAM-08` Support scope-aware permissions: franchise
+- [ ] `P1-IAM-09` Support scope-aware permissions: branch
+- [ ] `P1-IAM-10` Support scope-aware permissions: own records only
+
+### 1.4 Policy and authorization layer
+- [ ] `P1-POLICY-01` Build policies for all major models/actions
+- [ ] `P1-POLICY-02` Add middleware/helpers for permission checks
+- [ ] `P1-POLICY-03` Define naming conventions for permissions
+- [ ] `P1-POLICY-04` Ensure UI respects permissions and hides forbidden actions
+
+### 1.5 Organization hierarchy
+- [ ] `P1-ORG-01` Define platform entity
+- [ ] `P1-ORG-02` Define franchise entity
+- [ ] `P1-ORG-03` Define branch entity
+- [ ] `P1-ORG-04` Define user assignment to organization units
+- [ ] `P1-ORG-05` Define scope constraints
+- [ ] `P1-ORG-06` Prepare for branch-aware stock/orders/reports
+
+### 1.6 Staff user management
+- [ ] `P1-STAFF-01` Create staff list/search/filter UI
+- [ ] `P1-STAFF-02` Create add staff UI
+- [ ] `P1-STAFF-03` Create edit staff UI
+- [ ] `P1-STAFF-04` Assign roles and scopes
+- [ ] `P1-STAFF-05` Activate/deactivate staff
+- [ ] `P1-STAFF-06` Implement reset access/setup link flow
+
+### 1.7 Security controls
+- [ ] `P1-SEC-01` Add staff 2FA enforcement foundation
+- [ ] `P1-SEC-02` Add session revoke/forced logout foundation
+- [ ] `P1-SEC-03` Add impersonation with audit logs
+- [ ] `P1-SEC-04` Add audit logs for role changes and sensitive account updates
+
+### 1.8 Role-aware menu/dashboard routing
+- [ ] `P1-NAV-01` Build role-adapted sidebar items
+- [ ] `P1-NAV-02` Build role-based home dashboard routing
+- [ ] `P1-NAV-03` Ensure permission-safe navigation
+
+## Acceptance Criteria
+- Staff can securely log in.
+- Permissions are scope-aware.
+- Roles can be assigned and enforced.
+- Organization hierarchy exists.
+- Sensitive auth/role actions are audited.
+
+---
+
+# Phase 2 — Dashboards & Admin Workspaces
+
+## Phase ID
+`P2`
+
+## Objective
+Provide each role with a focused dashboard and workspace entry point.
+
+## Dependencies
+- Requires: Phase 1 complete
+- Blocks: efficient role-based daily operations
+
+## Deliverables
+- Dashboard framework.
+- Widgets by role.
+- Reusable dashboard card system.
+- Quick actions and issue widgets.
+
+## Tasks
+
+### 2.1 Dashboard framework
+- [ ] `P2-DASH-01` Create dashboard layout patterns
+- [ ] `P2-DASH-02` Support widget-based sections
+- [ ] `P2-DASH-03` Add loading states and empty states
+- [ ] `P2-DASH-04` Add lightweight filtering/date presets where appropriate
+
+### 2.2 Super Admin dashboard
+- [ ] `P2-SUPER-01` Add GMV summary widget
+- [ ] `P2-SUPER-02` Add orders today widget
+- [ ] `P2-SUPER-03` Add revenue trend widget
+- [ ] `P2-SUPER-04` Add failed payments widget
+- [ ] `P2-SUPER-05` Add low stock alerts widget
+- [ ] `P2-SUPER-06` Add shipping exceptions widget
+- [ ] `P2-SUPER-07` Add franchise performance summary widget
+- [ ] `P2-SUPER-08` Add branch performance summary widget
+- [ ] `P2-SUPER-09` Add support KPI widget
+- [ ] `P2-SUPER-10` Add finance summary widget
+- [ ] `P2-SUPER-11` Add system alerts widget
+
+### 2.3 Platform Admin dashboard
+- [ ] `P2-PLATFORM-01` Add operational action queue
+- [ ] `P2-PLATFORM-02` Add recent orders widget
+- [ ] `P2-PLATFORM-03` Add stock alerts widget
+- [ ] `P2-PLATFORM-04` Add payment exceptions widget
+- [ ] `P2-PLATFORM-05` Add content/promo highlights widget
+
+### 2.4 Franchise dashboard
+- [ ] `P2-FRANCHISE-01` Add sales by branch widget
+- [ ] `P2-FRANCHISE-02` Add branch stock overview widget
+- [ ] `P2-FRANCHISE-03` Add staff performance summary widget
+- [ ] `P2-FRANCHISE-04` Add branch order metrics widget
+
+### 2.5 Branch dashboard
+- [ ] `P2-BRANCH-01` Add orders to prepare widget
+- [ ] `P2-BRANCH-02` Add branch stock widgets
+- [ ] `P2-BRANCH-03` Add dispatch queue widget
+- [ ] `P2-BRANCH-04` Add branch issue queue widget
+
+### 2.6 Customer Support dashboard
+- [ ] `P2-SUPPORT-01` Add order lookup widget
+- [ ] `P2-SUPPORT-02` Add customer lookup widget
+- [ ] `P2-SUPPORT-03` Add open cases/refund queue foundation
+- [ ] `P2-SUPPORT-04` Add recent issue timeline widget
+
+### 2.7 Shipping dashboard
+- [ ] `P2-SHIPPING-01` Add ready-to-ship widget
+- [ ] `P2-SHIPPING-02` Add shipped widget
+- [ ] `P2-SHIPPING-03` Add failed delivery widget
+- [ ] `P2-SHIPPING-04` Add returned parcel queue widget
+- [ ] `P2-SHIPPING-05` Add tracking queue widget
+
+### 2.8 Finance dashboard
+- [ ] `P2-FINANCE-01` Add paid/unpaid summary widget
+- [ ] `P2-FINANCE-02` Add payment method summary widget
+- [ ] `P2-FINANCE-03` Add gateway transactions summary widget
+- [ ] `P2-FINANCE-04` Add COD reconciliation summary widget
+- [ ] `P2-FINANCE-05` Add refund summary widget
+- [ ] `P2-FINANCE-06` Add discount/fee impact widgets
+
+### 2.9 SEO / Content dashboard
+- [ ] `P2-SEO-01` Add drafts widget
+- [ ] `P2-SEO-02` Add missing metadata widget
+- [ ] `P2-SEO-03` Add SEO issue summary widget
+- [ ] `P2-SEO-04` Add scheduled content widget if applicable
+
+### 2.10 Media Buying dashboard
+- [ ] `P2-MEDIA-01` Add integration health widget
+- [ ] `P2-MEDIA-02` Add attribution/coupon campaign hooks widget
+- [ ] `P2-MEDIA-03` Add traffic/campaign placeholders if analytics later connect
+
+### 2.11 Sales dashboard
+- [ ] `P2-SALES-01` Add revenue trend widget
+- [ ] `P2-SALES-02` Add AOV widget
+- [ ] `P2-SALES-03` Add best sellers widget
+- [ ] `P2-SALES-04` Add promo performance widget
+
+### 2.12 Stock dashboard
+- [ ] `P2-STOCK-01` Add low stock widget
+- [ ] `P2-STOCK-02` Add damaged stock widget
+- [ ] `P2-STOCK-03` Add adjustment summary widget
+- [ ] `P2-STOCK-04` Add transfer-ready metrics widget
+
+### 2.13 Community Moderator dashboard
+- [ ] `P2-MOD-01` Add report queue schema-ready placeholders if community is not fully implemented
+
+## Acceptance Criteria
+- Each role lands on a tailored dashboard.
+- Dashboard widgets respect scopes and permissions.
+- No dashboard makes unnecessary heavy queries.
+
+---
+
+# Phase 3 — Settings & System Configuration
+
+## Phase ID
+`P3`
+
+## Objective
+Build a robust settings center that controls platform behavior, branding, integrations, and operational defaults.
+
+## Dependencies
+- Requires: Phase 1 complete
+- Supports: most later modules
+
+## Deliverables
+- Multi-tab settings module.
+- Secure credentials handling.
+- Settings caching and invalidation.
+
+## Tasks
+
+### 3.1 Settings foundation
+- [ ] `P3-SETTINGS-01` Define settings storage strategy
+- [ ] `P3-SETTINGS-02` Implement grouped settings retrieval
+- [ ] `P3-SETTINGS-03` Add validation per settings section
+- [ ] `P3-SETTINGS-04` Add secure secret storage
+- [ ] `P3-SETTINGS-05` Add cache and cache invalidation
+
+### 3.2 General settings
+- [ ] `P3-GENERAL-01` Add website information settings
+- [ ] `P3-GENERAL-02` Add company information settings
+- [ ] `P3-GENERAL-03` Add contact information settings
+- [ ] `P3-GENERAL-04` Add branding basics settings
+- [ ] `P3-GENERAL-05` Add locale/timezone if needed
+
+### 3.3 Connections / Integrations settings
+- [ ] `P3-CONN-01` Add SMTP settings
+- [ ] `P3-CONN-02` Add Twilio SMS settings
+- [ ] `P3-CONN-03` Add WhatsApp API foundation settings
+- [ ] `P3-CONN-04` Add test connection utilities if safe
+
+### 3.4 SEO settings
+- [ ] `P3-SEO-01` Add analytics integration fields
+- [ ] `P3-SEO-02` Add Google verification field
+- [ ] `P3-SEO-03` Add Facebook Pixel field
+- [ ] `P3-SEO-04` Add TikTok Pixel field
+- [ ] `P3-SEO-05` Add SEO defaults settings
+
+### 3.5 Security settings
+- [ ] `P3-SECURITY-01` Add force staff/admin 2FA toggle
+- [ ] `P3-SECURITY-02` Add password policy settings foundation
+- [ ] `P3-SECURITY-03` Add session timeout foundation
+- [ ] `P3-SECURITY-04` Add security alert settings foundation
+
+### 3.6 Finance settings
+- [ ] `P3-FINANCE-01` Add base currency settings
+- [ ] `P3-FINANCE-02` Add multi-currency foundation settings
+- [ ] `P3-FINANCE-03` Add conversion adjustment rules
+- [ ] `P3-FINANCE-04` Add financial defaults settings
+
+### 3.7 Payment method settings
+- [ ] `P3-PAYSET-01` Add CMI config settings
+- [ ] `P3-PAYSET-02` Add Payzone config settings
+- [ ] `P3-PAYSET-03` Add Stripe config settings
+- [ ] `P3-PAYSET-04` Add offline payment methods CRUD settings
+- [ ] `P3-PAYSET-05` Add bank transfer default setup
+- [ ] `P3-PAYSET-06` Add test/live modes
+- [ ] `P3-PAYSET-07` Add gateway enable/disable controls
+
+### 3.8 Notifications settings
+- [ ] `P3-NOTIFY-01` Add channel enable/disable settings
+- [ ] `P3-NOTIFY-02` Add sender name settings
+- [ ] `P3-NOTIFY-03` Add basic template global settings
+- [ ] `P3-NOTIFY-04` Add retry/queue behavior foundation
+
+### 3.9 Shipping settings
+- [ ] `P3-SHIPSET-01` Add shipping defaults
+- [ ] `P3-SHIPSET-02` Add carrier/method management foundation
+- [ ] `P3-SHIPSET-03` Add tracking-related defaults
+
+### 3.10 System / maintenance settings
+- [ ] `P3-SYSTEM-01` Add maintenance mode
+- [ ] `P3-SYSTEM-02` Add media/storage settings foundation
+- [ ] `P3-SYSTEM-03` Add feature flags foundation
+
+## Acceptance Criteria
+- Settings are grouped, validated, cached, and secure.
+- Secrets are protected.
+- Changes are reflected in system behavior.
+
+---
+
+# Phase 4 — Catalog: Categories, Products, Media, SEO Fields
+
+## Phase ID
+`P4`
+
+## Objective
+Build the product catalog foundation with strong admin UX and SEO readiness.
+
+## Dependencies
+- Requires: Phase 1 complete
+- Recommended: Phase 3 available
+
+## Deliverables
+- Categories CRUD.
+- Products CRUD.
+- Variants foundation.
+- Product media management.
+- Product/category SEO fields.
+
+## Tasks
+
+### 4.1 Category management
+- [ ] `P4-CATEGORY-01` Define nested category model
+- [ ] `P4-CATEGORY-02` Add parent/child support
+- [ ] `P4-CATEGORY-03` Add category create/edit/delete rules
+- [ ] `P4-CATEGORY-04` Add category ordering
+- [ ] `P4-CATEGORY-05` Add slug management
+- [ ] `P4-CATEGORY-06` Add category image
+- [ ] `P4-CATEGORY-07` Add category description
+- [ ] `P4-CATEGORY-08` Add active/inactive status
+- [ ] `P4-CATEGORY-09` Add SEO fields
+
+### 4.2 Product model design
+- [ ] `P4-PRODUCT-01` Add simple product support
+- [ ] `P4-PRODUCT-02` Add variable product support
+- [ ] `P4-PRODUCT-03` Add SKU
+- [ ] `P4-PRODUCT-04` Add slug
+- [ ] `P4-PRODUCT-05` Add statuses: draft/published/archived
+- [ ] `P4-PRODUCT-06` Add product type handling
+- [ ] `P4-PRODUCT-07` Add category relationships
+- [ ] `P4-PRODUCT-08` Add tags
+- [ ] `P4-PRODUCT-09` Add dimensions/weight
+- [ ] `P4-PRODUCT-10` Add featured flag
+
+### 4.3 Product pricing fields
+- [ ] `P4-PRICE-01` Add price
+- [ ] `P4-PRICE-02` Add sale price
+- [ ] `P4-PRICE-03` Add internal cost if included
+- [ ] `P4-PRICE-04` Add currency-ready structure
+
+### 4.4 Product description fields
+- [ ] `P4-DESC-01` Add short description
+- [ ] `P4-DESC-02` Add full description
+- [ ] `P4-DESC-03` Add rich content support if needed
+
+### 4.5 Product media
+- [ ] `P4-MEDIA-01` Add featured image
+- [ ] `P4-MEDIA-02` Add gallery
+- [ ] `P4-MEDIA-03` Add media ordering
+- [ ] `P4-MEDIA-04` Add alt text foundation
+- [ ] `P4-MEDIA-05` Add media storage abstraction
+- [ ] `P4-MEDIA-06` Add image processing queue if needed
+
+### 4.6 Variable products
+- [ ] `P4-VARIANT-01` Add option/attribute foundation
+- [ ] `P4-VARIANT-02` Add variant SKU
+- [ ] `P4-VARIANT-03` Add variant price
+- [ ] `P4-VARIANT-04` Add variant stock
+- [ ] `P4-VARIANT-05` Add variant media support if needed
+
+### 4.7 Merchandising fields
+- [ ] `P4-MERCH-01` Add related products
+- [ ] `P4-MERCH-02` Add upsells
+- [ ] `P4-MERCH-03` Add cross-sells
+- [ ] `P4-MERCH-04` Add product badges foundation
+
+### 4.8 Catalog SEO
+- [ ] `P4-SEO-01` Add product meta title
+- [ ] `P4-SEO-02` Add product meta description
+- [ ] `P4-SEO-03` Add canonical foundation
+- [ ] `P4-SEO-04` Add OG fields if included
+- [ ] `P4-SEO-05` Add noindex foundation if included
+- [ ] `P4-SEO-06` Add category SEO
+
+### 4.9 Catalog admin UX
+- [ ] `P4-ADMIN-01` Build table with search/filter
+- [ ] `P4-ADMIN-02` Add filters for status/category/type/stock
+- [ ] `P4-ADMIN-03` Add bulk actions
+- [ ] `P4-ADMIN-04` Add draft/published workflows
+- [ ] `P4-ADMIN-05` Add audit log visibility for edits
+
+## Acceptance Criteria
+- Products and categories are easy to manage.
+- Variants are supported.
+- SEO fields exist.
+- Media works reliably.
+
+---
+
+# Phase 5 — Inventory & Stock Operations
+
+## Phase ID
+`P5`
+
+## Objective
+Build inventory features stronger than basic ecommerce stock handling, with branch-ready design.
+
+## Dependencies
+- Requires: Phase 4
+- Supports: Orders, Checkout, Shipping, Reports
+
+## Deliverables
+- Stock management.
+- Stock adjustment workflows.
+- Low stock alerts.
+- Variant stock.
+- Branch-aware stock architecture.
+
+## Tasks
+
+### 5.1 Inventory data model
+- [ ] `P5-MODEL-01` Define stock item model or equivalent
+- [ ] `P5-MODEL-02` Add product-level stock
+- [ ] `P5-MODEL-03` Add variant-level stock
+- [ ] `P5-MODEL-04` Add branch-awareness
+- [ ] `P5-MODEL-05` Add reservation/release-ready fields
+
+### 5.2 Stock adjustment workflows
+- [ ] `P5-ADJUST-01` Build manual adjustment UI
+- [ ] `P5-ADJUST-02` Add adjustment reasons
+- [ ] `P5-ADJUST-03` Support positive/negative adjustments
+- [ ] `P5-ADJUST-04` Add staff attribution
+- [ ] `P5-ADJUST-05` Add audit logs
+
+### 5.3 Low stock management
+- [ ] `P5-LOWSTOCK-01` Add threshold fields
+- [ ] `P5-LOWSTOCK-02` Add low stock alert list
+- [ ] `P5-LOWSTOCK-03` Add dashboard widgets
+
+### 5.4 Damaged stock
+- [ ] `P5-DAMAGE-01` Build damaged stock workflow
+- [ ] `P5-DAMAGE-02` Add separate reason logging
+- [ ] `P5-DAMAGE-03` Add reporting visibility
+
+### 5.5 Reservation and release design
+- [ ] `P5-RESERVE-01` Define reserve stock on checkout/payment stage rules
+- [ ] `P5-RESERVE-02` Implement release reserved stock on cancellation/failure/timeout
+- [ ] `P5-RESERVE-03` Ensure future readiness even if simple first pass
+
+### 5.6 Branch-aware architecture
+- [ ] `P5-BRANCH-01` Add branch stock visibility
+- [ ] `P5-BRANCH-02` Add branch stock update rules
+- [ ] `P5-BRANCH-03` Add transfer-ready schema and services
+
+### 5.7 Inventory reports foundation
+- [ ] `P5-REPORT-01` Add current stock report
+- [ ] `P5-REPORT-02` Add adjustment history report
+- [ ] `P5-REPORT-03` Add low stock report
+- [ ] `P5-REPORT-04` Add damaged stock report
+
+## Acceptance Criteria
+- Stock changes are auditable.
+- Low stock is visible.
+- Branch-aware logic is prepared cleanly.
+- Variant stock works.
+
+---
+
+# Phase 6 — Customers, Profiles, Addresses, and Account Area
+
+## Phase ID
+`P6`
+
+## Objective
+Build the customer identity and account layer used by checkout, orders, support, and future community.
+
+## Dependencies
+- Requires: Phase 1
+- Recommended: Phase 7 in parallel for account-order connection
+
+## Deliverables
+- Customer account area.
+- Address book.
+- Profile editing.
+- Order history foundation.
+
+## Tasks
+
+### 6.1 Customer model refinement
+- [ ] `P6-CUSTOMER-01` Add customer-specific fields
+- [ ] `P6-CUSTOMER-02` Add account states
+- [ ] `P6-CUSTOMER-03` Add marketing preference fields foundation if needed
+
+### 6.2 Customer profile
+- [ ] `P6-PROFILE-01` Add profile picture
+- [ ] `P6-PROFILE-02` Add first name
+- [ ] `P6-PROFILE-03` Add last name
+- [ ] `P6-PROFILE-04` Add email
+- [ ] `P6-PROFILE-05` Add username
+- [ ] `P6-PROFILE-06` Add password change
+
+### 6.3 Address book
+- [ ] `P6-ADDRESS-01` Add billing addresses
+- [ ] `P6-ADDRESS-02` Add shipping addresses
+- [ ] `P6-ADDRESS-03` Add add/edit/delete actions
+- [ ] `P6-ADDRESS-04` Add default/primary address
+- [ ] `P6-ADDRESS-05` Add validation rules
+- [ ] `P6-ADDRESS-06` Add country/city/state structure as needed
+
+### 6.4 Account area screens
+- [ ] `P6-ACCOUNT-01` Build account overview
+- [ ] `P6-ACCOUNT-02` Build order history
+- [ ] `P6-ACCOUNT-03` Build order details
+- [ ] `P6-ACCOUNT-04` Build tracking visibility
+- [ ] `P6-ACCOUNT-05` Build address management
+- [ ] `P6-ACCOUNT-06` Build profile edit
+
+### 6.5 Checkout-created accounts
+- [ ] `P6-CHECKOUT-01` Add auto account creation after checkout
+- [ ] `P6-CHECKOUT-02` Add password setup link or magic-link flow
+- [ ] `P6-CHECKOUT-03` Add welcome notification trigger
+- [ ] `P6-CHECKOUT-04` Ensure no plain password sending
+
+### 6.6 Customer support timeline foundation
+- [ ] `P6-TIMELINE-01` Add customer order summary
+- [ ] `P6-TIMELINE-02` Add recent order statuses
+- [ ] `P6-TIMELINE-03` Add internal notes foundation
+
+## Acceptance Criteria
+- Customers can manage profile and addresses.
+- Orders are visible from account.
+- Checkout-created accounts are secure.
+
+---
+
+# Phase 7 — Orders, Cart, Checkout, Thank You, and Error Flows
+
+## Phase ID
+`P7`
+
+## Objective
+Implement the full commerce flow from cart through checkout to post-order states.
+
+## Dependencies
+- Requires: Phases 4, 5, 6
+- Works with: Phase 8, Phase 9, Phase 10
+
+## Deliverables
+- Cart.
+- Checkout.
+- Order creation.
+- Thank you page.
+- Payment error page.
+- Order lifecycle foundation.
+
+## Tasks
+
+### 7.1 Cart foundation
+- [ ] `P7-CART-01` Add add/remove/update items
+- [ ] `P7-CART-02` Add quantity management
+- [ ] `P7-CART-03` Add coupon apply/remove
+- [ ] `P7-CART-04` Add cart totals
+- [ ] `P7-CART-05` Add shipping estimate foundation
+- [ ] `P7-CART-06` Add free shipping progress foundation if included
+- [ ] `P7-CART-07` Add upsell/bundle suggestion foundation
+
+### 7.2 Checkout form flow
+- [ ] `P7-CHECKOUT-01` Add guest checkout
+- [ ] `P7-CHECKOUT-02` Add logged-in checkout
+- [ ] `P7-CHECKOUT-03` Add billing address handling
+- [ ] `P7-CHECKOUT-04` Add shipping address handling
+- [ ] `P7-CHECKOUT-05` Add validation
+- [ ] `P7-CHECKOUT-06` Add address reuse
+- [ ] `P7-CHECKOUT-07` Add clear error states
+
+### 7.3 Order creation pipeline
+- [ ] `P7-ORDER-01` Add order snapshot creation
+- [ ] `P7-ORDER-02` Add line item snapshot
+- [ ] `P7-ORDER-03` Add address snapshot
+- [ ] `P7-ORDER-04` Add pricing/tax/discount/shipping summary
+- [ ] `P7-ORDER-05` Add internal order IDs/reference generation
+
+### 7.4 Account auto-creation on checkout
+- [ ] `P7-AUTOACC-01` Add secure account generation
+- [ ] `P7-AUTOACC-02` Add post-checkout access flow
+- [ ] `P7-AUTOACC-03` Add welcome communication trigger
+
+### 7.5 Thank you page
+- [ ] `P7-THANKYOU-01` Build order success summary
+- [ ] `P7-THANKYOU-02` Add next steps
+- [ ] `P7-THANKYOU-03` Add tracking/order lookup access
+
+### 7.6 Payment error page
+- [ ] `P7-PAYERR-01` Build clear failure explanation
+- [ ] `P7-PAYERR-02` Add retry or recovery CTA
+- [ ] `P7-PAYERR-03` Add order/payment reference if needed
+
+### 7.7 Order statuses and lifecycle
+- [ ] `P7-STATUS-01` Add Pending
+- [ ] `P7-STATUS-02` Add Awaiting payment
+- [ ] `P7-STATUS-03` Add Paid
+- [ ] `P7-STATUS-04` Add Preparing
+- [ ] `P7-STATUS-05` Add Shipped
+- [ ] `P7-STATUS-06` Add Delivered
+- [ ] `P7-STATUS-07` Add Failed
+- [ ] `P7-STATUS-08` Add Cancelled
+- [ ] `P7-STATUS-09` Add Returned/refund-ready states foundation
+
+### 7.8 Order admin UX
+- [ ] `P7-ADMIN-01` Build orders table
+- [ ] `P7-ADMIN-02` Add search/filter
+- [ ] `P7-ADMIN-03` Add status filters
+- [ ] `P7-ADMIN-04` Add date filters
+- [ ] `P7-ADMIN-05` Add customer filter
+- [ ] `P7-ADMIN-06` Add payment/shipping filter
+- [ ] `P7-ADMIN-07` Build order detail page with timeline
+- [ ] `P7-ADMIN-08` Add internal notes
+- [ ] `P7-ADMIN-09` Add customer notes
+- [ ] `P7-ADMIN-10` Add audit visibility
+
+## Acceptance Criteria
+- Checkout works for guest and authenticated users.
+- Orders are created correctly.
+- Thank-you and error pages exist.
+- Order snapshots are reliable.
+
+---
+
+# Phase 8 — Payments & Payment Method Adapters
+
+## Phase ID
+`P8`
+
+## Objective
+Implement a clean, extensible payments architecture with Moroccan and global payment methods.
+
+## Dependencies
+- Requires: Phase 7 foundation
+- Recommended: Phase 3 payment settings
+
+## Deliverables
+- Payment adapter layer.
+- Gateway configuration.
+- Offline payment methods.
+- Logs and callbacks foundation.
+
+## Tasks
+
+### 8.1 Payment domain foundation
+- [ ] `P8-DOMAIN-01` Define payment transaction model
+- [ ] `P8-DOMAIN-02` Define payment status model/fields
+- [ ] `P8-DOMAIN-03` Map orders and transactions
+- [ ] `P8-DOMAIN-04` Define gateway abstraction interface
+
+### 8.2 Gateway adapter architecture
+- [ ] `P8-ADAPTER-01` Define provider contract/interface
+- [ ] `P8-ADAPTER-02` Define request/response normalization
+- [ ] `P8-ADAPTER-03` Define error handling conventions
+- [ ] `P8-ADAPTER-04` Build webhook/callback handling foundation
+
+### 8.3 CMI Morocco integration foundation
+- [ ] `P8-CMI-01` Add settings fields
+- [ ] `P8-CMI-02` Add initiation flow
+- [ ] `P8-CMI-03` Add response handling
+- [ ] `P8-CMI-04` Add logging
+
+### 8.4 Payzone Morocco integration foundation
+- [ ] `P8-PAYZONE-01` Add settings fields
+- [ ] `P8-PAYZONE-02` Add initiation flow
+- [ ] `P8-PAYZONE-03` Add response handling
+- [ ] `P8-PAYZONE-04` Add logging
+
+### 8.5 Stripe integration foundation
+- [ ] `P8-STRIPE-01` Add settings fields
+- [ ] `P8-STRIPE-02` Add initiation flow
+- [ ] `P8-STRIPE-03` Add response handling
+- [ ] `P8-STRIPE-04` Add logging
+
+### 8.6 Offline payment methods
+- [ ] `P8-OFFLINE-01` Build offline method CRUD
+- [ ] `P8-OFFLINE-02` Add bank transfer default
+- [ ] `P8-OFFLINE-03` Add admin instructions
+- [ ] `P8-OFFLINE-04` Add checkout rendering
+- [ ] `P8-OFFLINE-05` Add verification workflow foundation
+
+### 8.7 Gateway settings admin
+- [ ] `P8-GATEWAY-01` Add test/live modes
+- [ ] `P8-GATEWAY-02` Add enable/disable controls
+- [ ] `P8-GATEWAY-03` Add secret storage
+- [ ] `P8-GATEWAY-04` Add validation
+
+### 8.8 Payment logs and audit
+- [ ] `P8-LOGS-01` Add request/response logging with safe redaction
+- [ ] `P8-LOGS-02` Add failure logs
+- [ ] `P8-LOGS-03` Add status change audit
+
+## Acceptance Criteria
+- Payment methods are modular.
+- Offline payment methods are configurable.
+- Logs and gateway settings exist.
+
+---
+
+# Phase 9 — Shipping, Tracking, Fulfillment, and Shipping Roles
+
+## Phase ID
+`P9`
+
+## Objective
+Build fulfillment and tracking tools for operations teams and customers.
+
+## Dependencies
+- Requires: Phase 7
+- Recommended: Phase 3 shipping settings
+
+## Deliverables
+- Shipping workflow.
+- Tracking support.
+- Shipping queues.
+- Shipping agent workspace.
+
+## Tasks
+
+### 9.1 Shipping data model
+- [ ] `P9-MODEL-01` Define shipping methods
+- [ ] `P9-MODEL-02` Define shipment records or equivalent
+- [ ] `P9-MODEL-03` Add tracking number
+- [ ] `P9-MODEL-04` Add carrier/service fields
+- [ ] `P9-MODEL-05` Add fulfillment status fields
+
+### 9.2 Shipping admin settings
+- [ ] `P9-SETTINGS-01` Add shipping methods management
+- [ ] `P9-SETTINGS-02` Add shipping defaults
+- [ ] `P9-SETTINGS-03` Add carrier metadata foundation
+
+### 9.3 Fulfillment workflow
+- [ ] `P9-FLOW-01` Add Ready to ship state
+- [ ] `P9-FLOW-02` Add Packed/prepared if needed
+- [ ] `P9-FLOW-03` Add Dispatched state
+- [ ] `P9-FLOW-04` Add Delivered state
+- [ ] `P9-FLOW-05` Add Failed delivery state
+- [ ] `P9-FLOW-06` Add Returned parcel state
+
+### 9.4 Shipping agent tools
+- [ ] `P9-AGENT-01` Build ready-to-ship queue
+- [ ] `P9-AGENT-02` Add tracking entry/update
+- [ ] `P9-AGENT-03` Add status update actions
+- [ ] `P9-AGENT-04` Add delivery issue flags
+
+### 9.5 Customer tracking visibility
+- [ ] `P9-CUSTOMER-01` Show tracking number in account
+- [ ] `P9-CUSTOMER-02` Show order detail shipping timeline
+
+### 9.6 Shipping audit and reporting
+- [ ] `P9-REPORT-01` Add shipment history
+- [ ] `P9-REPORT-02` Add status changes log
+- [ ] `P9-REPORT-03` Add failed/returned queues
+
+## Acceptance Criteria
+- Tracking numbers can be stored and shown.
+- Shipping agents have an adapted workspace.
+- Fulfillment states are usable and visible.
+
+---
+
+# Phase 10 — Notifications, Email, SMS, WhatsApp, and Messaging Center
+
+## Phase ID
+`P10`
+
+## Objective
+Build an event-driven notification system for operational and marketing communications.
+
+## Dependencies
+- Requires: Phases 3, 7, 8, 9
+- Supports: Support, Marketing, Customer experience
+
+## Deliverables
+- Notification event system.
+- Channel templates.
+- Logs/history.
+- Queue-based sending.
+
+## Tasks
+
+### 10.1 Notification architecture
+- [ ] `P10-ARCH-01` Define notification event mapping
+- [ ] `P10-ARCH-02` Define channel abstraction
+- [ ] `P10-ARCH-03` Define template variable system
+- [ ] `P10-ARCH-04` Define queue job structure
+
+### 10.2 Channels
+- [ ] `P10-CHANNEL-01` Add Email channel
+- [ ] `P10-CHANNEL-02` Add SMS channel
+- [ ] `P10-CHANNEL-03` Add WhatsApp channel
+
+### 10.3 Trigger events
+- [ ] `P10-TRIGGER-01` Add Order placed trigger
+- [ ] `P10-TRIGGER-02` Add Payment success trigger
+- [ ] `P10-TRIGGER-03` Add Payment failed trigger
+- [ ] `P10-TRIGGER-04` Add Shipped trigger
+- [ ] `P10-TRIGGER-05` Add Delivered trigger
+- [ ] `P10-TRIGGER-06` Add Cancelled trigger
+- [ ] `P10-TRIGGER-07` Add Welcome trigger
+- [ ] `P10-TRIGGER-08` Add Password setup/login link trigger
+- [ ] `P10-TRIGGER-09` Add Abandoned cart foundation trigger
+- [ ] `P10-TRIGGER-10` Add Promotional offers foundation trigger
+
+### 10.4 Templates management
+- [ ] `P10-TEMPLATE-01` Build template CRUD/listing
+- [ ] `P10-TEMPLATE-02` Add channel-specific content
+- [ ] `P10-TEMPLATE-03` Add placeholder preview
+- [ ] `P10-TEMPLATE-04` Add enable/disable per template/channel
+
+### 10.5 Logs and observability
+- [ ] `P10-LOGS-01` Add sent/failed history
+- [ ] `P10-LOGS-02` Add retry foundation
+- [ ] `P10-LOGS-03` Add error reason capture
+- [ ] `P10-LOGS-04` Add search/filter for logs
+
+### 10.6 Integration settings
+- [ ] `P10-INTEGRATION-01` Add SMTP config
+- [ ] `P10-INTEGRATION-02` Add Twilio config
+- [ ] `P10-INTEGRATION-03` Add WhatsApp API config foundation
+
+## Acceptance Criteria
+- Notifications are queued.
+- Templates are manageable.
+- Logs exist.
+- Core order/payment/shipping messages can be triggered.
+
+---
+
+# Phase 11 — Coupons, Promotions, and Abandoned Cart Foundations
+
+## Phase ID
+`P11`
+
+## Objective
+Build a robust promotions engine for ecommerce growth and retention.
+
+## Dependencies
+- Requires: Phase 7
+- Recommended: Phase 10 for recovery messaging
+
+## Deliverables
+- Coupon management.
+- Rule-based validation.
+- Basic promo reporting.
+- Abandoned cart data capture foundation.
+
+## Tasks
+
+### 11.1 Coupon data model
+- [ ] `P11-MODEL-01` Add code uniqueness
+- [ ] `P11-MODEL-02` Add fixed/percentage types
+- [ ] `P11-MODEL-03` Add active/inactive
+- [ ] `P11-MODEL-04` Add start/end dates
+- [ ] `P11-MODEL-05` Add usage limits
+- [ ] `P11-MODEL-06` Add per-user limits
+- [ ] `P11-MODEL-07` Add minimum cart
+- [ ] `P11-MODEL-08` Add product/category targeting
+- [ ] `P11-MODEL-09` Add exclusion rules
+- [ ] `P11-MODEL-10` Add stackability foundation
+
+### 11.2 Coupon admin UX
+- [ ] `P11-ADMIN-01` Build create/edit/list/search/filter
+- [ ] `P11-ADMIN-02` Add usage counters
+- [ ] `P11-ADMIN-03` Add status visibility
+
+### 11.3 Coupon validation engine
+- [ ] `P11-VALIDATE-01` Add apply/remove logic
+- [ ] `P11-VALIDATE-02` Add eligibility rules
+- [ ] `P11-VALIDATE-03` Add error messages
+- [ ] `P11-VALIDATE-04` Add order snapshot of discount usage
+
+### 11.4 Promo reporting foundation
+- [ ] `P11-REPORT-01` Add coupon usage counts
+- [ ] `P11-REPORT-02` Add revenue impact foundation
+
+### 11.5 Abandoned cart foundation
+- [ ] `P11-ABANDON-01` Define cart capture rules
+- [ ] `P11-ABANDON-02` Add trigger-ready state
+- [ ] `P11-ABANDON-03` Add recovery message hooks
+
+## Acceptance Criteria
+- Coupons are flexible and validated correctly.
+- Coupon usage is trackable.
+- Abandoned cart foundation exists.
+
+---
+
+# Phase 12 — CMS, Blog, SEO, Redirects, and Content Tools
+
+## Phase ID
+`P12`
+
+## Objective
+Build a robust content and SEO layer to support organic traffic, educational content, and campaign landing pages.
+
+## Dependencies
+- Requires: Phase 3
+- Recommended: Phase 4 for cross-entity SEO
+
+## Deliverables
+- Blog/CMS.
+- SEO metadata system.
+- Redirect-friendly architecture.
+- Content management UX.
+
+## Tasks
+
+### 12.1 Blog categories and tags
+- [ ] `P12-TAX-01` Build category CRUD
+- [ ] `P12-TAX-02` Build tag CRUD
+- [ ] `P12-TAX-03` Add slugs
+- [ ] `P12-TAX-04` Add status/ordering if needed
+
+### 12.2 Article/post management
+- [ ] `P12-POST-01` Add title
+- [ ] `P12-POST-02` Add slug
+- [ ] `P12-POST-03` Add author
+- [ ] `P12-POST-04` Add featured image
+- [ ] `P12-POST-05` Add content body
+- [ ] `P12-POST-06` Add draft/published status
+- [ ] `P12-POST-07` Add scheduling foundation
+- [ ] `P12-POST-08` Add search/filter
+
+### 12.3 Article SEO fields
+- [ ] `P12-SEO-01` Add meta title
+- [ ] `P12-SEO-02` Add meta description
+- [ ] `P12-SEO-03` Add canonical
+- [ ] `P12-SEO-04` Add OG fields if included
+- [ ] `P12-SEO-05` Add noindex foundation if included
+
+### 12.4 SEO across entities
+- [ ] `P12-ENTITYSEO-01` Add Product SEO
+- [ ] `P12-ENTITYSEO-02` Add Category SEO
+- [ ] `P12-ENTITYSEO-03` Add Blog category SEO
+- [ ] `P12-ENTITYSEO-04` Add Post SEO
+
+### 12.5 Sitemap and redirect readiness
+- [ ] `P12-SITEMAP-01` Add sitemap-ready architecture
+- [ ] `P12-SITEMAP-02` Add redirect-friendly data model or module foundation
+- [ ] `P12-SITEMAP-03` Add slug update strategy
+
+### 12.6 Content UX
+- [ ] `P12-UX-01` Add draft/publish workflow
+- [ ] `P12-UX-02` Add preview if practical
+- [ ] `P12-UX-03` Add author attribution
+- [ ] `P12-UX-04` Add media picker integration
+
+## Acceptance Criteria
+- Blog content can be created and managed.
+- SEO fields exist on core content entities.
+- Slug/redirect strategy is considered.
+
+---
+
+# Phase 13 — Finance, Transaction Visibility, Reconciliation Foundations
+
+## Phase ID
+`P13`
+
+## Objective
+Build finance visibility and reconciliation foundations for operators and finance managers.
+
+## Dependencies
+- Requires: Phases 7 and 8
+- Supports: Finance dashboard, reporting
+
+## Deliverables
+- Finance dashboard support.
+- Transaction logs.
+- COD reconciliation foundation.
+- Refund-ready financial visibility.
+
+## Tasks
+
+### 13.1 Financial data structure
+- [ ] `P13-DATA-01` Add order financial summary fields
+- [ ] `P13-DATA-02` Add transaction records
+- [ ] `P13-DATA-03` Add payment method reporting fields
+- [ ] `P13-DATA-04` Add currency/base currency handling
+
+### 13.2 Transaction visibility
+- [ ] `P13-TRANS-01` Build payment transactions list
+- [ ] `P13-TRANS-02` Add search/filter by method/status/date/order
+- [ ] `P13-TRANS-03` Link transaction to order
+
+### 13.3 Paid/unpaid reporting
+- [ ] `P13-REPORT-01` Add order payment state reporting
+- [ ] `P13-REPORT-02` Add gateway success/failure summary
+
+### 13.4 COD reconciliation foundation
+- [ ] `P13-COD-01` Add COD collection state fields
+- [ ] `P13-COD-02` Add COD reconciliation list/report foundation
+
+### 13.5 Refund-ready design
+- [ ] `P13-REFUND-01` Add refund request/record structure foundation
+- [ ] `P13-REFUND-02` Add refund totals visibility
+
+### 13.6 Discount/fee reporting
+- [ ] `P13-FEE-01` Add discount visibility
+- [ ] `P13-FEE-02` Add payment fee visibility if included
+
+## Acceptance Criteria
+- Finance managers can inspect transactions and payment states.
+- COD reconciliation foundation exists.
+- Base currency logic is preserved.
+
+---
+
+# Phase 14 — Support Tools, Customer Timeline, and Internal Notes
+
+## Phase ID
+`P14`
+
+## Objective
+Give support staff fast, scoped tools to resolve order, payment, shipping, and customer issues.
+
+## Dependencies
+- Requires: Phases 6, 7, 8, 9
+- Supports: Support dashboard
+
+## Deliverables
+- Customer lookup.
+- Order lookup.
+- Internal notes.
+- Timeline foundation.
+
+## Tasks
+
+### 14.1 Support lookup tools
+- [ ] `P14-LOOKUP-01` Add search by order ID
+- [ ] `P14-LOOKUP-02` Add search by email/phone/name where applicable
+- [ ] `P14-LOOKUP-03` Add fast filters
+
+### 14.2 Customer timeline foundation
+- [ ] `P14-TIMELINE-01` Add recent orders
+- [ ] `P14-TIMELINE-02` Add order statuses
+- [ ] `P14-TIMELINE-03` Add payment/shipping visibility
+- [ ] `P14-TIMELINE-04` Add support/internal notes
+
+### 14.3 Internal notes
+- [ ] `P14-NOTES-01` Add order-level notes
+- [ ] `P14-NOTES-02` Add customer-level notes foundation
+- [ ] `P14-NOTES-03` Add staff attribution
+- [ ] `P14-NOTES-04` Add audit visibility
+
+### 14.4 Refund/return issue queue foundation
+- [ ] `P14-QUEUE-01` Add queue/list for support attention
+- [ ] `P14-QUEUE-02` Add statuses if implemented
+
+## Acceptance Criteria
+- Support agents can quickly find customers and orders.
+- Notes and timelines exist in a usable form.
+
+---
+
+# Phase 15 — Reports, Search, Bulk Actions, Imports/Exports
+
+## Phase ID
+`P15`
+
+## Objective
+Provide operational leverage through reporting, search tools, and admin productivity features.
+
+## Dependencies
+- Requires: core commerce modules complete
+- Recommended: dashboard and finance foundations available
+
+## Deliverables
+- Basic report suite.
+- Cross-module search where practical.
+- Bulk actions.
+- Export/import foundations.
+
+## Tasks
+
+### 15.1 Reports foundation
+- [ ] `P15-REPORT-01` Add sales summary report
+- [ ] `P15-REPORT-02` Add orders report
+- [ ] `P15-REPORT-03` Add inventory report
+- [ ] `P15-REPORT-04` Add coupon usage report
+- [ ] `P15-REPORT-05` Add finance summary report
+
+### 15.2 Search and filter enhancements
+- [ ] `P15-SEARCH-01` Build reusable filter builders
+- [ ] `P15-SEARCH-02` Add search patterns across admin tables
+- [ ] `P15-SEARCH-03` Add saved views foundation if practical
+
+### 15.3 Bulk actions
+- [ ] `P15-BULK-01` Add products bulk actions
+- [ ] `P15-BULK-02` Add orders bulk actions where safe
+- [ ] `P15-BULK-03` Add content bulk actions
+
+### 15.4 Export/import foundation
+- [ ] `P15-EXPORT-01` Add CSV/XLS export for key modules
+- [ ] `P15-EXPORT-02` Add safe import design for catalog if time allows
+
+## Acceptance Criteria
+- Staff can operate large datasets more efficiently.
+- Reports and exports exist for core modules.
+
+---
+
+# Phase 16 — Audit Logs, Security Hardening, and System Observability
+
+## Phase ID
+`P16`
+
+## Objective
+Add the operational trust and traceability needed for a real commerce platform.
+
+## Dependencies
+- Requires: core commerce and IAM modules complete
+- Supports: production readiness
+
+## Deliverables
+- Audit logs.
+- Security event logging.
+- Sensitive action history.
+- Basic observability.
+
+## Tasks
+
+### 16.1 Audit log foundation
+- [ ] `P16-AUDIT-01` Define audit model/store
+- [ ] `P16-AUDIT-02` Add sensitive action hooks
+- [ ] `P16-AUDIT-03` Add actor, target, action, context logging
+
+### 16.2 Sensitive events to audit
+- [ ] `P16-EVENT-01` Audit role changes
+- [ ] `P16-EVENT-02` Audit staff creation/deactivation
+- [ ] `P16-EVENT-03` Audit product price changes
+- [ ] `P16-EVENT-04` Audit order status overrides
+- [ ] `P16-EVENT-05` Audit refund updates
+- [ ] `P16-EVENT-06` Audit stock adjustments
+- [ ] `P16-EVENT-07` Audit payment configuration changes
+- [ ] `P16-EVENT-08` Audit impersonation
+
+### 16.3 Security hardening
+- [ ] `P16-SEC-01` Add forced 2FA if enabled
+- [ ] `P16-SEC-02` Review session security
+- [ ] `P16-SEC-03` Add rate limiting where appropriate
+- [ ] `P16-SEC-04` Add safe logging/redaction rules
+
+### 16.4 Basic observability
+- [ ] `P16-OBS-01` Add notification failures visibility
+- [ ] `P16-OBS-02` Add payment callback errors visibility
+- [ ] `P16-OBS-03` Add queue visibility foundation
+- [ ] `P16-OBS-04` Add slow-operation logging foundation
+
+## Acceptance Criteria
+- Sensitive changes are traceable.
+- Security posture is materially stronger.
+
+---
+
+# Phase 17 — Community Schema & Boundaries (No Full UI Yet)
+
+## Phase ID
+`P17`
+
+## Objective
+Prepare the platform for community without allowing it to destabilize commerce delivery.
+
+## Dependencies
+- Requires: customer identity and core commerce stable
+- Does not block: release of commerce platform
+
+## Deliverables
+- Community domain boundaries.
+- Schema-ready models/migrations.
+- Role and moderation placeholders.
+
+## Not in Scope
+- Full community UI
+- Real-time chat
+- Full video moderation pipeline
+- Complex social feed ranking
+
+## Tasks
+
+### 17.1 Community domain design
+- [ ] `P17-DOMAIN-01` Define Group model
+- [ ] `P17-DOMAIN-02` Define Default group foundation
+- [ ] `P17-DOMAIN-03` Define Membership model
+- [ ] `P17-DOMAIN-04` Define Join request structure if needed
+- [ ] `P17-DOMAIN-05` Define Post model
+- [ ] `P17-DOMAIN-06` Define Media attachment structure
+- [ ] `P17-DOMAIN-07` Define Comment model
+- [ ] `P17-DOMAIN-08` Define Reaction model
+- [ ] `P17-DOMAIN-09` Define Report model
+
+### 17.2 Moderation foundation
+- [ ] `P17-MOD-01` Add Community moderator role hooks
+- [ ] `P17-MOD-02` Add moderation queue schema
+- [ ] `P17-MOD-03` Add report states
+
+### 17.3 Customer onboarding connection
+- [ ] `P17-ONBOARD-01` Add default group invitation flag/foundation for new customers
+
+### 17.4 Storage/performance planning
+- [ ] `P17-PERF-01` Define media handling rules
+- [ ] `P17-PERF-02` Define video scalability considerations
+- [ ] `P17-PERF-03` Add quota/moderation notes in docs
+
+## Acceptance Criteria
+- Community schema is prepared.
+- Commerce remains decoupled from unfinished community UI.
+
+---
+
+# Phase 18 — Final Stabilization, QA, Testing, and Release Readiness
+
+## Phase ID
+`P18`
+
+## Objective
+Harden the system for real use and make sure phase 1+2 core commerce capabilities are stable.
+
+## Dependencies
+- Requires: core target phases complete
+- Supports: release readiness
+
+## Deliverables
+- Tested core flows.
+- QA pass.
+- Docs updated.
+- Performance pass.
+
+## Tasks
+
+### 18.1 Testing priorities
+- [ ] `P18-TEST-01` Add auth and permission tests
+- [ ] `P18-TEST-02` Add checkout flow tests
+- [ ] `P18-TEST-03` Add inventory stock/reservation tests
+- [ ] `P18-TEST-04` Add payment adapter tests/mocks
+- [ ] `P18-TEST-05` Add order lifecycle tests
+- [ ] `P18-TEST-06` Add notification trigger tests
+
+### 18.2 QA walkthroughs
+- [ ] `P18-QA-01` Run Super Admin flow QA
+- [ ] `P18-QA-02` Run Support flow QA
+- [ ] `P18-QA-03` Run Shipping flow QA
+- [ ] `P18-QA-04` Run Finance flow QA
+- [ ] `P18-QA-05` Run Customer checkout/account flow QA
+
+### 18.3 Performance review
+- [ ] `P18-PERF-01` Review high-frequency queries
+- [ ] `P18-PERF-02` Review indexes
+- [ ] `P18-PERF-03` Review cache usage
+- [ ] `P18-PERF-04` Review queue usage
+
+### 18.4 Documentation review
+- [ ] `P18-DOCS-01` Update `PROJECT_PROGRESS.md`
+- [ ] `P18-DOCS-02` Update `ARCHITECTURE.md`
+- [ ] `P18-DOCS-03` Update `PHASES.md`
+- [ ] `P18-DOCS-04` Confirm `phases-tasks.md` still matches scope
+
+### 18.5 Release readiness
+- [ ] `P18-RELEASE-01` Seed demo/admin data if useful
+- [ ] `P18-RELEASE-02` Confirm migrations are clean
+- [ ] `P18-RELEASE-03` Confirm environment variable list is clear
+- [ ] `P18-RELEASE-04` Confirm fallback/error states are acceptable
+
+## Acceptance Criteria
+- Core commerce/admin operations are stable.
+- Critical flows are tested.
+- Documentation is current.
+
+---
+
+# Cross-Phase AI Execution Checklist
+
+Before starting any phase or module, the AI must:
+1. Check `READ_FIRST.md`.
+2. Check `PHASES.md`.
+3. Check `PROJECT_PROGRESS.md`.
+4. Confirm current phase and next module/task IDs.
+5. Read relevant sections of `ARCHITECTURE.md` if needed.
+6. Read relevant sections of this file for the active task IDs only.
+7. Avoid jumping ahead unless a dependency requires it.
+8. Keep docs concise.
+9. Update progress after meaningful work.
+
+# Phase Dependencies Summary
+- Phase 0 is required before everything.
+- Phase 1 is required before all scoped admin features.
+- Phase 3 settings foundation should be early because other modules depend on it.
+- Catalog and Inventory should be stable before Checkout/Orders are finalized.
+- Payments and Shipping must be connected to Orders, not built in isolation.
+- Notifications depend on Orders, Payments, Shipping, and Customers.
+- Finance depends on Orders and Payments.
+- Support depends on Customers and Orders.
+- Community must not delay core commerce.
+
+# Definition of Done for Any Module
+A module is only considered complete when:
+- Data model is clean.
+- Admin UI exists and respects permissions.
+- Validation exists.
+- Policies/authorization exist.
+- Audit logging exists where needed.
+- Basic tests exist for critical flows.
+- Performance risks are reviewed.
+- `PROJECT_PROGRESS.md` is updated.

@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 36 45% 98%;
+    --foreground: 25 20% 25%;
+
+    --card: 36 40% 96%;
+    --card-foreground: 25 20% 25%;
+
+    --popover: 36 45% 98%;
+    --popover-foreground: 25 20% 25%;
+
+    --primary: 142 30% 85%;
+    --primary-foreground: 25 20% 25%;
+
+    --secondary: 350 80% 92%;
+    --secondary-foreground: 25 20% 25%;
+
+    --muted: 36 30% 94%;
+    --muted-foreground: 25 15% 50%;
+
+    --accent: 45 90% 88%;
+    --accent-foreground: 25 20% 25%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 36 30% 90%;
+    --input: 36 30% 90%;
+    --ring: 142 30% 75%;
+
+    --radius: 1.5rem;
+
+    --sage: 142 30% 85%;
+    --blush: 350 80% 92%;
+    --sunny: 45 90% 88%;
+    --sky: 195 60% 92%;
+    --ink: 25 20% 25%;
+    --cream: 36 45% 98%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Gaegu', cursive;
+  }
+}
+
+@layer components {
+  .sticker-shadow {
+    box-shadow: 0 0 0 4px #FFFFFF, 0 8px 20px rgba(0,0,0,0.06);
+  }
+
+  .sticker-shadow-lg {
+    box-shadow: 0 0 0 6px #FFFFFF, 0 12px 30px rgba(0,0,0,0.08);
+  }
+
+  .bg-sage { background-color: hsl(var(--sage)); }
+  .bg-blush { background-color: hsl(var(--blush)); }
+  .bg-sunny { background-color: hsl(var(--sunny)); }
+  .bg-sky { background-color: hsl(var(--sky)); }
+  .bg-cream { background-color: hsl(var(--cream)); }
+  .text-ink { color: hsl(var(--ink)); }
+  .text-ink-light { color: hsl(var(--ink) / 0.7); }
+
+  .section-rounded {
+    @apply rounded-[2rem] md:rounded-[4rem];
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.animate-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}

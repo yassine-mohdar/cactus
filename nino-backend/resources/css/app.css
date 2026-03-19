@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+
+    /* NinoWorld Professional Palette */
+    --color-cream: #FFF8F0;
+    --color-cream-dark: #F5EDE3;
+    --color-sage: #7C9A6E;
+    --color-sage-light: #A4C096;
+    --color-sage-dark: #5E7A52;
+    --color-ink: #2D2D2D;
+    --color-ink-light: #6B6B6B;
+    --color-ink-muted: #9B9B9B;
+    --color-border: #E8E0D6;
+    --color-border-dark: #D4CBC0;
+    --color-surface: #FFFFFF;
+    --color-surface-hover: #FAFAF7;
+    --color-danger: #D94F4F;
+    --color-danger-light: #FEF2F2;
+    --color-warning: #E5A100;
+    --color-warning-light: #FFFBEB;
+    --color-info: #3B82F6;
+    --color-info-light: #EFF6FF;
+    --color-success: #16A34A;
+    --color-success-light: #F0FDF4;
+}

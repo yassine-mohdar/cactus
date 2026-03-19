@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Edit Product | Admin OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error": "#9f403d",
+              "surface": "#fff8f0",
+              "on-error-container": "#752121",
+              "tertiary-dim": "#56534d",
+              "surface-dim": "#e2d9c5",
+              "outline-variant": "#b8b1a1",
+              "tertiary": "#625f59",
+              "on-surface": "#363226",
+              "inverse-primary": "#edfeee",
+              "outline": "#807a6c",
+              "inverse-surface": "#100e0a",
+              "on-background": "#363226",
+              "on-primary-container": "#46554a",
+              "surface-tint": "#536256",
+              "tertiary-fixed-dim": "#eae4dd",
+              "surface-bright": "#fff8f0",
+              "error-dim": "#4e0309",
+              "on-secondary-container": "#55514d",
+              "on-primary-fixed": "#344338",
+              "on-tertiary-fixed": "#4c4944",
+              "primary-dim": "#47564b",
+              "secondary-fixed": "#e8e1db",
+              "on-tertiary-fixed-variant": "#696660",
+              "tertiary-container": "#f9f3eb",
+              "surface-container": "#f4ede0",
+              "on-error": "#fff7f6",
+              "primary-fixed": "#d6e7d8",
+              "surface-container-highest": "#eae2d0",
+              "tertiary-fixed": "#f9f3eb",
+              "on-tertiary-container": "#5e5b55",
+              "secondary": "#625e5a",
+              "on-tertiary": "#fef8f0",
+              "secondary-container": "#e8e1db",
+              "surface-variant": "#eae2d0",
+              "error-container": "#fe8983",
+              "surface-container-high": "#efe7d8",
+              "on-primary": "#ebfced",
+              "primary-fixed-dim": "#c8d9ca",
+              "on-primary-fixed-variant": "#505f53",
+              "on-secondary-fixed": "#423f3b",
+              "inverse-on-surface": "#a19c95",
+              "secondary-fixed-dim": "#d9d3ce",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f9f3e8",
+              "on-secondary": "#fff8f2",
+              "primary": "#536256",
+              "on-surface-variant": "#645f51",
+              "secondary-dim": "#56534e",
+              "primary-container": "#d6e7d8",
+              "background": "#fff8f0",
+              "on-secondary-fixed-variant": "#5f5b56"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased">
+<!-- SideNavBar (from JSON) -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-[#536256] dark:bg-[#2a312b] font-['Manrope'] antialiased tracking-tight text-sm flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">deployed_code</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-white tracking-widest uppercase">NinoWorld</h1>
+<p class="text-[10px] text-[#CEDFD0] opacity-70 tracking-widest uppercase">Admin OS</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Navigation Items Mapping -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-[#CEDFD0] opacity-70 hover:opacity-100 hover:bg-[#ffffff05]" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-[#CEDFD0] opacity-70 hover:opacity-100 hover:bg-[#ffffff05]" href="#">
+<span class="material-symbols-outlined">shopping_cart</span> Orders
+            </a>
+<!-- Active Tab: Catalog -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-white bg-[#ffffff10] border-l-4 border-[#CEDFD0] font-semibold" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">inventory_2</span> Catalog
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-[#CEDFD0] opacity-70 hover:opacity-100 hover:bg-[#ffffff05]" href="#">
+<span class="material-symbols-outlined">group</span> Customers
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-[#CEDFD0] opacity-70 hover:opacity-100 hover:bg-[#ffffff05]" href="#">
+<span class="material-symbols-outlined">warehouse</span> Inventory
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-[#CEDFD0] opacity-70 hover:opacity-100 hover:bg-[#ffffff05]" href="#">
+<span class="material-symbols-outlined">local_shipping</span> Shipping
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-[#CEDFD0] opacity-70 hover:opacity-100 hover:bg-[#ffffff05]" href="#">
+<span class="material-symbols-outlined">campaign</span> Marketing
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-[#CEDFD0] opacity-70 hover:opacity-100 hover:bg-[#ffffff05]" href="#">
+<span class="material-symbols-outlined">article</span> CMS
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-[#CEDFD0] opacity-70 hover:opacity-100 hover:bg-[#ffffff05]" href="#">
+<span class="material-symbols-outlined">payments</span> Finance
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 text-[#CEDFD0] opacity-70 hover:opacity-100 hover:bg-[#ffffff05]" href="#">
+<span class="material-symbols-outlined">settings</span> Settings
+            </a>
+</nav>
+<div class="mt-auto pt-6 border-t border-white/10">
+<div class="flex items-center gap-3 px-2">
+<img alt="Super Admin Avatar" class="w-8 h-8 rounded-full bg-white/20" data-alt="Portrait of a professional administrator avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvIj6oKrIg43P8WsOh84hT1tNQCdX9knhqoQg3Ei9LdyNu8cF9QJX1fCkWPKm7mZsW0_DJ-p2f0j1-fkCaKFKxDFbBxLQ-2IixD-DBud7R-xMBxLPi4-4f6o4e5HfkTDuHupsdaCWApFRDVC4ABOZQnJ2ECi0YXg0j_xJ5jOhNSNL75wj0oddnEcGpaZrbsjOX2rB7UuUff5AlhFi8tqIBbQu-qIsXngLvW8YivvGdezP_1kpHu0G55skIx74FZ5gAhKi4OnRhmQ"/>
+<div class="overflow-hidden">
+<p class="text-white font-medium truncate">Alex Carter</p>
+<p class="text-[#CEDFD0] text-xs opacity-60 truncate">Super Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar (from JSON) -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-white/80 dark:bg-[#363226]/80 backdrop-blur-md border-b border-[#363226]/10 flex justify-between items-center px-8 z-40 text-[#536256] font-['Manrope'] text-sm font-medium">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface w-64 placeholder:text-outline/50" placeholder="Search product IDs, SKUs..." type="text"/>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative hover:text-primary transition-colors opacity-80 active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/20"></div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-on-surface group-hover:text-primary transition-colors">Admin OS</span>
+<img alt="NW Monogram Logo" class="w-8 h-8 rounded-lg bg-primary-container p-1" data-alt="Corporate logo monogram in muted green" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDryShLAAPH4_9gyA-oHJQr49T37nPxBzNe8swNEz33aDu3bZ9trkuMWLLggLdi8Gvsq2rjnZASvGPQbpGXIPCdSW_JOSoFBNGSo_Y7jh8jUUTJyJyZtwugpbdDJS8Hv0tA3Pg8OIT84cESLhgnFNZwPTC9ivrB50ocFTi2oNmWHSjY2BgqIr0d3TIqa_4XLPUUG5uYI3wu2cipL1LG9VWAU6AYOX8ZGr1ix9HHCVVAt7FfWUSyMPD5hZeGoHttuRmLm2lWxHLe_A"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 pt-16 min-h-screen">
+<!-- Page Header -->
+<div class="px-10 py-8 flex justify-between items-end">
+<div>
+<nav class="flex items-center gap-2 text-xs text-outline mb-2">
+<span>Catalog</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Products</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-semibold">Edit</span>
+</nav>
+<h2 class="text-3xl font-extrabold text-on-surface tracking-tight">Edit Product: <span class="text-primary">Nordic Lounge Chair</span></h2>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-5 py-2.5 text-on-surface-variant font-semibold hover:bg-surface-container transition-colors rounded-lg text-sm">Discard</button>
+<button class="px-6 py-2.5 bg-primary text-on-primary font-semibold rounded-lg shadow-sm hover:bg-primary-dim active:scale-95 transition-all text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">save</span>
+                    Save Changes
+                </button>
+</div>
+</div>
+<div class="px-10 pb-20 flex gap-8">
+<!-- Left Column: Primary Details (2/3) -->
+<div class="flex-[2] space-y-8">
+<!-- Section 1: General Information -->
+<section class="bg-surface-container-lowest rounded-xl p-8 border border-white/50 shadow-sm">
+<div class="flex items-center gap-3 mb-6 border-b border-surface-container pb-4">
+<span class="material-symbols-outlined text-primary">info</span>
+<h3 class="text-lg font-bold text-on-surface">General Information</h3>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="col-span-2 space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Product Name</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary rounded-lg text-sm py-3 px-4 transition-all" type="text" value="Nordic Lounge Chair"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Slug</label>
+<div class="flex items-center">
+<span class="bg-surface-container text-outline px-3 py-3 rounded-l-lg text-[11px] border-r border-outline-variant/10">ninoworld.com/p/</span>
+<input class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary rounded-r-lg text-sm py-3 px-4" type="text" value="nordic-lounge-chair-2024"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Short Description</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary rounded-lg text-sm py-3 px-4" type="text" value="Premium oak-finished minimalist lounge furniture."/>
+</div>
+<div class="col-span-2 space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Full Description (WYSIWYG)</label>
+<div class="bg-surface-container-low rounded-lg overflow-hidden border border-outline-variant/10">
+<div class="flex gap-1 p-2 border-b border-outline-variant/10 bg-surface-container-high/30">
+<button class="p-1.5 hover:bg-surface-container rounded text-outline"><span class="material-symbols-outlined text-[18px]">format_bold</span></button>
+<button class="p-1.5 hover:bg-surface-container rounded text-outline"><span class="material-symbols-outlined text-[18px]">format_italic</span></button>
+<button class="p-1.5 hover:bg-surface-container rounded text-outline"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1.5 hover:bg-surface-container rounded text-outline"><span class="material-symbols-outlined text-[18px]">link</span></button>
+<button class="p-1.5 hover:bg-surface-container rounded text-outline"><span class="material-symbols-outlined text-[18px]">image</span></button>
+</div>
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-sm p-4 leading-relaxed" rows="8">Crafted with the finest sustainably sourced Scandinavian Oak, the Nordic Lounge Chair represents the pinnacle of minimalist ergonomics. 
+
+Featuring a hand-woven linen seat and precision-engineered structural support, this piece is designed for both aesthetic impact and long-term durability in high-end hospitality or residential environments.
+
+Key Specifications:
+- Material: Solid White Oak
+- Upholstery: Belgian Linen (Natural)
+- Finish: Matte UV Protection</textarea>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Media Gallery -->
+<section class="bg-surface-container-lowest rounded-xl p-8 border border-white/50 shadow-sm">
+<div class="flex items-center justify-between mb-6 border-b border-surface-container pb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">image</span>
+<h3 class="text-lg font-bold text-on-surface">Product Gallery</h3>
+</div>
+<span class="text-[11px] font-medium text-outline">5 of 10 slots used</span>
+</div>
+<div class="grid grid-cols-4 gap-4">
+<!-- Main Image -->
+<div class="col-span-2 row-span-2 relative group rounded-xl overflow-hidden aspect-square border-2 border-primary">
+<img alt="Primary chair view" class="w-full h-full object-cover" data-alt="High-end wooden lounge chair on a white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDNUXXjMIB4AIuGtLgK0o_hRr_ICQdKDdOot9F2VwjXMRBxY8zkmO2zd26KvEOaz69lcj3TKqQqDvIHVE48pbzIi-1j8LR2AiyeyDOwEg9yuE7xcGPp5dPd0ile2V-H2NbI1zHNKaNkDLiBxu-2RmKv-FGtron-eD1ZVTrTUt8BBKiwfIn7uPQszwykjGlWE0kAK6GkyGZF7Q6H_J0IyYZSJQ1aQipTjL59tzf6RUKMpihHj7T0UZo7m6AX8qdSAumIeofiKnfew"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+<button class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-primary shadow-lg"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-error shadow-lg"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</div>
+<div class="absolute top-3 left-3 bg-primary text-on-primary text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-tighter">Primary</div>
+</div>
+<!-- Thumbnails -->
+<div class="relative group rounded-xl overflow-hidden aspect-square border border-outline-variant/20">
+<img alt="Detail 1" class="w-full h-full object-cover" data-alt="Close up of wooden chair joinery" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABgDde-G_bGjJpsj_uKQ6qXOL7j9yZBn2S4oj6PAW1-rBxIqXTOwVCnkeFakMCjTzygQPWzXVpfp1DcKkBYsdTSI0GLTuRD0Rl0on4w8RSF5k47RWMQVka_07L9S0KhwEvHvRGe23JtVeSWpYb_L2yA58l5OXJ7fA8uzQ_ripw7LSPjbac-fxOIoqytEL-RyT_VSaKT-ubENzK5Mo3btLUM2xSfPSHm5YzfBbq8KmvV4CReK0M-7FVdw6T7uI92rk-688HmE37Zw"/>
+</div>
+<div class="relative group rounded-xl overflow-hidden aspect-square border border-outline-variant/20">
+<img alt="Detail 2" class="w-full h-full object-cover" data-alt="Side profile of Nordic designer chair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtqvVG7ei20NEnoxLeAzQ89c73rS5fN9qw-vt1usf0cCnbnmvRhvsAD4Fkv58q3kBdGSkr7vgg7cdiBJgYFgucJ-DyJ_4nbfVzeXnglCRaM985Mqajny_u9mf_mKlRmQSN8L2qRwWNXDpmoshAWkNysHs-dwthQ5KTWz8tJHLpVopwmnON4RvP64TGAtwcfqvzu4hFs_Q01EQk89a2Gslf2TwIu_aUuRdwr4t2pBFda8WN6mOXGklBt7KgmIZgX3aMD2fCO0O9QQ"/>
+</div>
+<div class="relative group rounded-xl overflow-hidden aspect-square border border-outline-variant/20">
+<img alt="Detail 3" class="w-full h-full object-cover" data-alt="Linen fabric texture close up" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD33hD1UGWX7hmq_jITedDjNLBDhIpmyvyw2s6v9PtA_tbpUp8inOo9wul95YbsQkgWGsTs1DRNb3MlKsHa6n2svdDJi13xm0GdFv53mOyomjp2pNl8E3XSVvsoab5BMRcQu2JDS4OnEgtW_yiXA9yprWUvHKk43K9LDVw-MZv2GHCJwypULt-Lv7HAyKmtpo4bckaa5EjW2I8SSmgKw58PobUs_6fJNDh_fZzood3GwXPKln8PpiFUphFZUpUzmcweS1ckH9J_aA"/>
+</div>
+<!-- Add Placeholder -->
+<button class="border-2 border-dashed border-outline-variant/30 rounded-xl aspect-square flex flex-col items-center justify-center gap-2 hover:bg-surface-container transition-colors group">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-3xl">add_photo_alternate</span>
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Add Image</span>
+</button>
+</div>
+</section>
+</div>
+<!-- Right Column: Sidebar Panels (1/3) -->
+<div class="flex-1 space-y-8">
+<!-- Organization Panel -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary text-xl">account_tree</span>
+<h4 class="font-bold text-sm">Organization</h4>
+</div>
+<div class="space-y-4">
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Category</label>
+<select class="w-full bg-surface-container-lowest border-none focus:ring-1 focus:ring-primary rounded-lg text-sm py-2 px-3">
+<option>Furniture &gt; Living Room &gt; Seating</option>
+<option>Furniture &gt; Office &gt; Chairs</option>
+<option>New Arrival &gt; 2024 Collection</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Tags</label>
+<div class="flex flex-wrap gap-2 p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/5">
+<span class="bg-primary-container text-on-primary-container text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                                    Minimalist <button class="material-symbols-outlined text-[12px]">close</button>
+</span>
+<span class="bg-primary-container text-on-primary-container text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                                    Oak <button class="material-symbols-outlined text-[12px]">close</button>
+</span>
+<button class="text-primary text-[10px] font-bold">+ Add Tag</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pricing & Inventory Panel -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary text-xl">inventory</span>
+<h4 class="font-bold text-sm">Pricing &amp; Inventory</h4>
+</div>
+<div class="space-y-4">
+<div class="grid grid-cols-2 gap-3">
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Price (USD)</label>
+<input class="w-full bg-surface-container-lowest border-none focus:ring-1 focus:ring-primary rounded-lg text-sm py-2 px-3 font-medium" type="number" value="1249.00"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Cost</label>
+<input class="w-full bg-surface-container-lowest border-none focus:ring-1 focus:ring-primary rounded-lg text-sm py-2 px-3 opacity-60" type="number" value="450.00"/>
+</div>
+</div>
+<div class="h-[1px] bg-outline-variant/10 my-2"></div>
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">SKU</label>
+<input class="w-full bg-surface-container-lowest border-none focus:ring-1 focus:ring-primary rounded-lg text-sm py-2 px-3 font-mono" type="text" value="FUR-CH-NOR-001"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Barcode (EAN-13)</label>
+<input class="w-full bg-surface-container-lowest border-none focus:ring-1 focus:ring-primary rounded-lg text-sm py-2 px-3 font-mono" type="text" value="4582910442210"/>
+</div>
+<div class="grid grid-cols-2 gap-3 pt-2">
+<div class="p-3 bg-surface-container-highest rounded-lg">
+<label class="text-[9px] font-bold uppercase text-outline block mb-1">In Stock</label>
+<span class="text-xl font-bold text-primary">42</span>
+</div>
+<div class="p-3 bg-error-container/20 rounded-lg">
+<label class="text-[9px] font-bold uppercase text-on-error-container block mb-1">Threshold</label>
+<span class="text-xl font-bold text-error">5</span>
+</div>
+</div>
+</div>
+</div>
+<!-- SEO Panel -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary text-xl">travel_explore</span>
+<h4 class="font-bold text-sm">Search Engine Optimization</h4>
+</div>
+<div class="space-y-4">
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Meta Title</label>
+<input class="w-full bg-surface-container-lowest border-none focus:ring-1 focus:ring-primary rounded-lg text-sm py-2 px-3" type="text" value="Nordic Lounge Chair | Sustainable Designer Furniture"/>
+<div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="w-[70%] h-full bg-primary/40"></div>
+</div>
+<p class="text-[9px] text-outline text-right">58 / 60 characters</p>
+</div>
+<div class="space-y-1.5">
+<label class="text-[11px] font-bold uppercase tracking-wider text-outline">Meta Description</label>
+<textarea class="w-full bg-surface-container-lowest border-none focus:ring-1 focus:ring-primary rounded-lg text-sm py-2 px-3 resize-none" rows="3">Shop our authentic Nordic Lounge Chair. Handcrafted from premium white oak with natural linen cushions. Perfect for modern living rooms. Free global shipping.</textarea>
+</div>
+</div>
+</div>
+<!-- Status Panel -->
+<div class="bg-primary-container/20 rounded-xl p-6 border border-primary/10">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-bold uppercase tracking-wider text-primary">Visibility</span>
+<div class="flex items-center gap-2">
+<span class="text-xs font-semibold text-primary">Published</span>
+<div class="w-10 h-5 bg-primary rounded-full relative">
+<div class="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>
