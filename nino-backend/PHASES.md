@@ -4,9 +4,10 @@
 Phase 1 — Core Commerce & Operations
 
 ## Overall Status
+## Overall Status
 - Project Status: IN_PROGRESS
-- Current Focus: IAM / Roles / Permissions + Auth Foundation
-- Current Milestone: Complete auth, role presets, scoped permissions, policies, organization hierarchy, and role-aware navigation
+- Current Focus: Phase 16 In Progress — Sensitive event audit coverage completed, moving into security hardening.
+- Current Milestone: Phase 16.2 Completed (`P16-EVENT-01` through `P16-EVENT-08`).
 
 ---
 
@@ -14,6 +15,7 @@ Phase 1 — Core Commerce & Operations
 - Phase 0 — Project Foundation: DONE
 - Phase 1 — Core Commerce & Operations: IN_PROGRESS
 - Phase 2 — Advanced Operations & Growth: TODO
+- Phase 2A — Admin UI/UX Design System & Stitch Implementation: TODO
 - Phase 3 — Community: TODO
 
 ---
@@ -59,6 +61,99 @@ Phase 1 — Core Commerce & Operations
 - P1-AUTH-03 — Password reset / password setup flow
 - P1-SEC-02 — 2FA foundation (email/app based)
 - P1-SEC-03 — Admin impersonation (Super Admin only)
+- P3-SETTINGS-01 — Settings storage strategy (key-value with typed groups)
+- P3-SETTINGS-02 — Grouped settings retrieval (SettingsService)
+- P3-SETTINGS-03 — Validation per settings section (SettingsDefinitions)
+- P3-SETTINGS-04 — Secure secret storage (encrypted via Crypt)
+- P3-SETTINGS-05 — Cache and cache invalidation
+- P5-MODEL-01 — Define stock item model or equivalent
+- P5-MODEL-02 — Add product-level stock
+- P5-MODEL-03 — Add variant-level stock
+- P5-MODEL-04 — Add branch-awareness
+- P5-MODEL-05 — Add reservation/release-ready fields
+- P3-GENERAL-01 through P3-GENERAL-05 — General settings fields
+- P5-ADJUST-01 — Build manual adjustment UI
+- P5-ADJUST-02 — Add adjustment reasons
+- P5-ADJUST-03 — Support positive/negative adjustments
+- P5-ADJUST-04 — Add staff attribution
+- P5-ADJUST-05 — Add audit logs
+- P5-LOWSTOCK-01 through P5-LOWSTOCK-03 — Low stock fields & lists
+- P5-DAMAGE-01 through P5-DAMAGE-03 — Damaged stock workflow
+- P5-REPORT-01 through P5-REPORT-02 — Inventory reports foundation
+- P5-RESERVE-01 through P5-RESERVE-03 — Reservation and release design
+- P5-BRANCH-01 through P5-BRANCH-03 — Branch-aware architecture
+- P6-CUSTOMER-01 through P6-CUSTOMER-03 — Add customer-specific fields
+- P6-PROFILE-01 through P6-PROFILE-06 — Implement profile fields and credentials
+- P6-ADDRESS-01 through P6-ADDRESS-06 — Schema & endpoints for address structures
+- P2A-AUDIT-01 — Run visual consistency pass across admin screens
+- P2A-DESIGN-01 — Enforce Stitch Design System core CSS (Tailwind v4 theme variables)
+- P2A-SHELL-01 — Update Sidebar, Topbar, and Dashboard for role-adapted metrics
+- P2A-COMP-01 — Generate nino component library (table, button, card, modal)
+- P6-TIMELINE-01 through P6-TIMELINE-03 — Admin Customer timeline & CustomerNote setup
+- P6-CHECKOUT-01 through P6-CHECKOUT-04 — Checkout identity automation wrapper
+- P6-ACCOUNT-01 through P6-ACCOUNT-06 — Customer Account APIs with order stubs
+- P7-ORDER-01 through P7-ORDER-05 — Order models and snapshot schema
+- P7-STATUS-01 through P7-STATUS-09 — Order status Enum definitions
+- P7-CART-01 through P7-CART-07 — DB-backed Session Cart algorithms and API Controller
+- P7-CHECKOUT-01 through P7-CHECKOUT-07 — Interactive Checkout endpoints and validation pipeline
+- P7-AUTOACC-01 through P7-AUTOACC-03 — Secure guest-account mid-transaction bootstrapping
+- P7-ADMIN-01 through P7-ADMIN-10 — Admin Orders UX, status tracking, customer notes.
+- P7-THANKYOU-01 through P7-THANKYOU-03 — Order tracking APIs supplying post-checkout success pages.
+- P7-PAYERR-01 through P7-PAYERR-03 — Order tracking APIs supplying post-checkout failure pages.
+- P8-DOMAIN-01 through P8-DOMAIN-04 — Payment transaction model, status, order mapping, gateway abstraction.
+- P8-ADAPTER-01 through P8-ADAPTER-04 — Provider contract, request/response normalization, error handling, webhook foundation.
+- P8-OFFLINE-01 through P8-OFFLINE-05 — Offline payment method CRUD, bank transfer, admin instructions, checkout rendering, verification workflow.
+- P8-GATEWAY-01 through P8-GATEWAY-04 — Test/live modes, enable/disable controls, secret storage, validation.
+- P8-CMI-01 through P8-CMI-04 — CMI Morocco settings, initiation, response handling, logging.
+- P8-PAYZONE-01 through P8-PAYZONE-04 — Payzone Morocco settings, initiation, response handling, logging.
+- P8-STRIPE-01 through P8-STRIPE-04 — Stripe settings, initiation, response handling, logging.
+- P8-LOGS-01 through P8-LOGS-03 — Payment request/response logging with redaction, failure logs, status change audit.
+- P9-MODEL-01 through P9-MODEL-05 — Shipping methods, shipment records, tracking, carrier/service fields, fulfillment status.
+- P9-SETTINGS-01 through P9-SETTINGS-03 — Shipping methods CRUD, defaults, carrier metadata.
+- P9-FLOW-01 through P9-FLOW-06 — Fulfillment states: ready to ship, packed, dispatched, delivered, failed delivery, returned.
+- P9-AGENT-01 through P9-AGENT-04 — Ready-to-ship queue, tracking entry/update, status actions, delivery issue flags.
+- P9-CUSTOMER-01 through P9-CUSTOMER-02 — Customer tracking number visibility and shipping timeline API.
+- P9-REPORT-01 through P9-REPORT-03 — Shipment history, status changes log, failed/returned queues.
+- P10-ARCH-01 through P10-ARCH-04 — Notification event mapping, channel abstraction, template variable system, queue job structure.
+- P10-CHANNEL-01 through P10-CHANNEL-03 — Email (Laravel Mail + SMTP), SMS (Twilio REST API), WhatsApp (Meta Cloud API) channels.
+- P10-TRIGGER-01 through P10-TRIGGER-10 — Order placed/cancelled, payment success/failed, shipped/delivered, welcome, password setup, abandoned cart, promotional offer triggers.
+- P10-TEMPLATE-01 through P10-TEMPLATE-04 — Template CRUD, channel-specific content, placeholder preview, enable/disable toggle.
+- P10-LOGS-01 through P10-LOGS-04 — Sent/failed history, retry with exponential backoff, error capture, search/filter.
+- P10-INTEGRATION-01 through P10-INTEGRATION-03 — SMTP config, Twilio config, WhatsApp API config.
+- P11-MODEL-01 through P11-MODEL-10 — Coupon data model: code uniqueness, fixed/percentage types, active/inactive, start/end dates, usage limits, per-user limits, minimum cart, product/category targeting, exclusion rules, stackability.
+- P11-ADMIN-01 through P11-ADMIN-03 — Coupon CRUD with search/filter, usage counters, computed status badges.
+- P11-VALIDATE-01 through P11-VALIDATE-04 — 11-rule validation engine: apply/remove with transaction, eligibility rules, structured error messages with codes, order snapshot of discount usage.
+- P11-REPORT-01 through P11-REPORT-02 — Coupon usage counts, revenue impact with 3 tabbed reports.
+- P11-ABANDON-01 through P11-ABANDON-03 — Abandoned cart capture (update-or-create), trigger-ready state with recoverable scope, recovery hooks integrated with notification system.
+- P12-TAX-01 through P12-TAX-04 — Blog categories (hierarchy, slugs, SEO, status/ordering) and tags (name, slug, post count) with full CRUD.
+- P12-POST-01 through P12-POST-08 — Blog posts with title, slug, author, featured image, body, draft/published/scheduled/archived status, scheduling foundation (publishScheduled()), search/filter.
+- P12-SEO-01 through P12-SEO-05 — Per-post meta title, meta description, canonical URL, OG fields (title, description, image), noindex toggle.
+- P12-ENTITYSEO-01 through P12-ENTITYSEO-04 — Polymorphic `seo_metadata` table attachable to products, categories, blog categories, and posts.
+- P12-SITEMAP-01 through P12-SITEMAP-03 — Sitemap-ready slug architecture, `redirects` table (301/302 with hit tracking), auto-slug generation strategy.
+- P12-UX-01 through P12-UX-04 — Publish/unpublish toggle workflow, rich post preview with SEO card, author attribution, featured image URL field.
+- P13-DATA-01 through P13-DATA-04 — Order financial summary fields (subtotal/discount/shipping/tax/total snapshot), transaction records, PaymentMethod enum (8 methods), currency/base currency (MAD default).
+- P13-TRANS-01 through P13-TRANS-03 — Payment transactions list with multi-filter (search/status/type/method/date range), transaction detail view, linked to orders.
+- P13-REPORT-01 through P13-REPORT-02 — Revenue overview (gross/net/fees/refunds/discounts), gateway success/failure summary with success rate.
+- P13-COD-01 through P13-COD-02 — CodStatus enum (5 states), COD lifecycle (collected→deposited→reconciled), discrepancy tracking, reconciliation pipeline with actions.
+- P13-REFUND-01 through P13-REFUND-02 — RefundRequest model with approval workflow (request→approve→process→complete/reject), refund totals visibility.
+- P13-FEE-01 through P13-FEE-02 — Discount visibility (total/avg per transaction), payment fee visibility (total/avg), both in reports dashboard.
+- P14-LOOKUP-01 through P14-LOOKUP-03 — Unified support search (order#/email/phone/name/txn reference), fast filter results, clickable rows.
+- P14-TIMELINE-01 through P14-TIMELINE-04 — Order timeline view with recent orders, status display, payment/shipping/transaction history, polymorphic activity timeline with performer attribution.
+- P14-NOTES-01 through P14-NOTES-04 — Polymorphic InternalNote model (attachable to orders, customers, issues), staff attribution via created_by, pin/unpin, audit visibility via ActivityTimeline.
+- P14-QUEUE-01 through P14-QUEUE-02 — SupportIssue model with IssueStatus (5 states), IssueType (7 categories), IssuePriority (4 levels), assignment, lifecycle actions (progress/resolve/close/reopen), issue queue with multi-filter.
+- P15-REPORT-01 through P15-REPORT-05 — Five core admin reports (Sales, Orders, Inventory, Coupons, Finance) with dynamic date filtering and visual summary cards.
+- P15-SEARCH-01 through P15-SEARCH-03 — Filterable trait for shared queries, SavedFilter model and migration for custom view presets.
+- P15-BULK-01 through P15-BULK-03 — BulkActionController with batch operations for products, orders, and CMS content.
+- P15-EXPORT-01 through P15-EXPORT-02 — ExportController for chunked CSV downloads (Products, Orders, Transactions, Inventory) and basic Catalog CSV importer.
+- P16-AUDIT-01 through P16-AUDIT-03 — Audit model/store, sensitive action hooks foundation, actor/target/action/context logging.
+- P16-EVENT-01 — Audit role changes
+- P16-EVENT-02 — Audit staff creation/deactivation
+- P16-EVENT-03 — Audit product price changes
+- P16-EVENT-04 — Audit order status overrides
+- P16-EVENT-05 — Audit refund updates
+- P16-EVENT-06 — Audit stock adjustments
+- P16-EVENT-07 — Audit payment configuration changes
+- P16-EVENT-08 — Audit impersonation
 
 ---
 
@@ -68,7 +163,10 @@ Phase 1 — Core Commerce & Operations
 ---
 
 ## Next Task IDs
-- P5-MODEL-01 — Define stock item model or equivalent
+- P16-SEC-01 — Add forced 2FA if enabled
+- P16-SEC-02 — Review session security
+- P16-SEC-03 — Add rate limiting where appropriate
+- P16-SEC-04 — Add safe logging/redaction rules
 
 ---
 
@@ -115,6 +213,10 @@ Phase 1 — Core Commerce & Operations
 - Completed: P1-AUTH-01 (basic staff login/logout)
 - Active: P1-AUTH-03 (password reset)
 
+## Admin UI/UX Design System
+- Status: DONE
+- Completed: P2A-DESIGN-01, P2A-SHELL-01, P2A-COMP-01, P2A-AUDIT-01
+  
 ## Organizations
 - Status: TODO
 
@@ -131,16 +233,16 @@ Phase 1 — Core Commerce & Operations
 - Status: TODO
 
 ## Payments
-- Status: TODO
+- Status: DONE
 
 ## Customers
 - Status: TODO
 
 ## Shipping
-- Status: TODO
+- Status: DONE
 
 ## Notifications
-- Status: TODO
+- Status: DONE
 
 ## Coupons / Promotions
 - Status: TODO

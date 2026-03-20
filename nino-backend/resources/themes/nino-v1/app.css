@@ -1,0 +1,252 @@
+@import 'tailwindcss';
+
+@source '../../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../../storage/framework/views/*.php';
+@source '../../views/themes/nino-v1/**/*.blade.php';
+@source '../../js/**/*.js';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* NinoWorld Admin OS Typography */
+    --font-headline: var(--font-sans);
+    --font-body: var(--font-sans);
+    --font-label: var(--font-sans);
+
+    /* NinoWorld Admin OS Color System */
+    --color-canvas: #F8FAFC;
+    --color-surface: #FFFFFF;
+    --color-surface-hover: #F8FAFC;
+    --color-surface-active: #EEF2F7;
+    --color-surface-container: #E2E8F0;
+    --color-surface-container-low: #EEF2F7;
+
+    --color-background: #F8FAFC;
+    --color-cream: #F8FAFC;
+
+    --color-border-subtle: #E2E8F0;
+    --color-border-strong: #CBD5E1;
+    --color-border: #CBD5E1;
+
+    --color-brand-action: #0F172A;
+    --color-brand-accent: #4F46E5;
+    --color-primary: #4F46E5;
+    --color-on-primary: #FFFFFF;
+    --color-primary-container: #EEF2FF;
+    --color-on-primary-container: #FFFFFF;
+
+    --color-on-surface: #0F172A;
+    --color-outline: #64748B;
+    --color-outline-variant: #E2E8F0;
+    --color-ink: #0F172A;
+    --color-ink-muted: #64748B;
+    --color-sage: #4F46E5;
+    --color-sage-dark: #3730A3;
+
+    --color-white-dim: #F8FAFC;
+    --color-white-variant: #F1F5F9;
+    --color-white-container: #F8FAFC;
+    --color-white-container-low: #F8FAFC;
+    --color-white-container-highest: #EEF2FF;
+    --color-slate-900-container: #0F172A;
+    --color-red-500-container: #FEF2F2;
+
+    --color-success: #059669;
+    --color-danger: #DC2626;
+    --color-warning: #D97706;
+    --color-on-error-container: #B91C1C;
+
+    /* Base Border Radius Settings */
+    --radius-DEFAULT: 0.125rem;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    
+    /* Strict Elevation Shadows */
+    --shadow-flyout: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+@layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+
+    body {
+        font-family: var(--font-body);
+        background-color: var(--color-canvas);
+        color: var(--color-on-surface);
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    h1, h2, h3, .headline {
+        font-family: var(--font-headline);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+        font: inherit;
+    }
+    
+    /* Custom scrollbar for data density */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+}
+
+@layer components {
+    .btn-primary {
+        @apply inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .input-field {
+        @apply w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
+    }
+
+    .page-section {
+        @apply rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5;
+    }
+
+    .page-header {
+        @apply mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between;
+    }
+
+    .page-title {
+        @apply text-2xl font-bold tracking-tight text-slate-900;
+    }
+
+    .page-subtitle {
+        @apply mt-1 text-sm text-slate-500;
+    }
+
+    .empty-state {
+        @apply rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500;
+    }
+
+    .filter-toolbar {
+        @apply rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm shadow-slate-900/5 backdrop-blur;
+    }
+
+    .filter-grid {
+        @apply grid gap-3 sm:grid-cols-2 xl:grid-cols-6;
+    }
+
+    .filter-field {
+        @apply flex flex-col gap-1.5;
+    }
+
+    .filter-label {
+        @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500;
+    }
+
+    .stats-grid {
+        @apply grid grid-cols-2 gap-4 xl:grid-cols-4;
+    }
+
+    .stat-card {
+        @apply rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5;
+    }
+
+    .stat-label {
+        @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500;
+    }
+
+    .stat-value {
+        @apply mt-3 text-2xl font-bold tracking-tight text-slate-900;
+    }
+
+    .datatable-shell {
+        @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5;
+    }
+
+    .datatable-header {
+        @apply flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-b from-white to-slate-50/70 px-5 py-4 sm:flex-row sm:items-end sm:justify-between;
+    }
+
+    .datatable-title {
+        @apply text-lg font-bold tracking-tight text-slate-900;
+    }
+
+    .datatable-subtitle {
+        @apply mt-1 text-sm text-slate-500;
+    }
+
+    .datatable-meta {
+        @apply inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500;
+    }
+
+    .datatable-scroll {
+        @apply overflow-x-auto;
+    }
+
+    .datatable-footer {
+        @apply border-t border-slate-200 bg-slate-50 px-5 py-4;
+    }
+
+    .datatable-empty {
+        @apply px-6 py-12 text-center;
+    }
+
+    .datatable-empty-panel {
+        @apply mx-auto flex max-w-md flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center;
+    }
+
+    .table-link {
+        @apply font-semibold text-slate-900 underline-offset-4 transition-colors hover:text-indigo-700 hover:underline;
+    }
+
+    .table-mono {
+        @apply font-mono text-xs;
+    }
+
+    .table-muted {
+        @apply text-sm text-slate-500;
+    }
+
+    .table-actions {
+        @apply flex items-center justify-end gap-2 whitespace-nowrap;
+    }
+
+    .table-action-link {
+        @apply inline-flex items-center rounded-md px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900;
+    }
+
+    .table-action-danger {
+        @apply inline-flex items-center rounded-md px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 hover:text-red-700;
+    }
+
+    .nino-table {
+        @apply min-w-full border-collapse text-left;
+    }
+    .nino-table thead {
+        @apply bg-slate-50/95 backdrop-blur;
+    }
+    .nino-table th {
+        @apply px-5 py-3.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 border-b border-slate-200 whitespace-nowrap;
+    }
+    .nino-table tbody {
+        @apply bg-white;
+    }
+    .nino-table td {
+        @apply px-5 py-4 text-sm text-slate-700 align-top;
+    }
+    .nino-table tbody tr {
+        @apply border-b border-slate-100 transition-colors duration-150 ease-in-out;
+    }
+    .nino-table tbody tr:hover {
+        @apply bg-slate-50/80;
+    }
+    .nino-table tbody tr:last-child {
+        @apply border-b-0;
+    }
+}

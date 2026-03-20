@@ -14,8 +14,16 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::with('parent')->orderBy('sort_order')->orderBy('name')->paginate(20);
-        
-        return view('admin.catalog.categories.index', compact('categories'));
+        $summaryBaseQuery = Category::query();
+
+        $summary = [
+            'total_categories' => (clone $summaryBaseQuery)->count(),
+            'active' => (clone $summaryBaseQuery)->where('is_active', true)->count(),
+            'root_categories' => (clone $summaryBaseQuery)->whereNull('parent_id')->count(),
+            'child_categories' => (clone $summaryBaseQuery)->whereNotNull('parent_id')->count(),
+        ];
+
+        return view('admin.catalog.categories.index', compact('categories', 'summary'));
     }
 
     public function create()

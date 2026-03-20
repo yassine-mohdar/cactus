@@ -3,17 +3,31 @@
 namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\Category;
+use App\Modules\Catalog\Models\Product;
+use App\Modules\Audit\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        private readonly AuditLogger $audit,
+    ) {}
+
     public function index()
     {
-        $products = Product::with(['categories', 'featuredImage'])->orderBy('id', 'desc')->paginate(20);
-        return view('admin.catalog.products.index', compact('products'));
+        $products = Product::with(['categories', 'featuredImage'])->orderBy('id', 'desc')->paginate(25);
+        $summaryBaseQuery = Product::query();
+
+        $summary = [
+            'total_products' => (clone $summaryBaseQuery)->count(),
+            'published' => (clone $summaryBaseQuery)->where('status', 'published')->count(),
+            'drafts' => (clone $summaryBaseQuery)->where('status', 'draft')->count(),
+            'low_stock' => (clone $summaryBaseQuery)->where('quantity', '<=', 5)->count(),
+        ];
+
+        return view('admin.catalog.products.index', compact('products', 'summary'));
     }
 
     public function create()
@@ -77,6 +91,8 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        $pricingBefore = $this->pricingSnapshot($product);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:simple,variable',
@@ -130,6 +146,23 @@ class ProductController extends Controller
             ]);
         }
 
+        $product->refresh();
+        $pricingAfter = $this->pricingSnapshot($product);
+
+        if ($pricingBefore !== $pricingAfter) {
+            $this->audit->log(
+                action: 'catalog.product.price_changed',
+                target: $product,
+                oldValues: $pricingBefore,
+                newValues: $pricingAfter,
+                notes: 'Product pricing updated',
+                context: [
+                    'module' => 'catalog',
+                    'source' => 'product_controller',
+                ],
+            );
+        }
+
         return redirect()->route('admin.catalog.products.index')->with('success', 'Product updated successfully.');
     }
 
@@ -144,5 +177,17 @@ class ProductController extends Controller
         $product->delete(); 
 
         return redirect()->route('admin.catalog.products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    /**
+     * @return array<string, float|null>
+     */
+    private function pricingSnapshot(Product $product): array
+    {
+        return [
+            'price' => $product->price !== null ? (float) $product->price : null,
+            'sale_price' => $product->sale_price !== null ? (float) $product->sale_price : null,
+            'cost_price' => $product->cost_price !== null ? (float) $product->cost_price : null,
+        ];
     }
 }

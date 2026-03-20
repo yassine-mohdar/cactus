@@ -4,22 +4,40 @@ namespace App\Modules\IAM\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Modules\Audit\Models\AuditLog;
+use App\Modules\Audit\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 
 class StaffController extends Controller
 {
+    public function __construct(
+        private readonly AuditLogger $audit,
+    ) {}
+
     /**
      * Display a listing of the staff members.
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', User::class);
 
         $query = User::staff()->with('roles');
+        $summaryBaseQuery = User::staff();
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->string('search'));
+
+            $query->where(function ($builder) use ($search) {
+                $builder
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('roles', function ($roleQuery) use ($search) {
+                        $roleQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
 
         // Apply scoping automatically: if platform/super admin, see all.
         // If franchise/branch, only see users in their scope.
@@ -31,13 +49,28 @@ class StaffController extends Controller
                       $q2->where('parent_id', $user->organization_id);
                   });
             });
+
+            $summaryBaseQuery->where(function ($q) use ($user) {
+                $q->where('organization_id', $user->organization_id)
+                  ->orWhereHas('organization', function ($q2) use ($user) {
+                      $q2->where('parent_id', $user->organization_id);
+                  });
+            });
         } elseif ($user->organization_scope === 'branch') {
             $query->where('organization_id', $user->organization_id);
+            $summaryBaseQuery->where('organization_id', $user->organization_id);
         }
 
-        $staff = $query->paginate(20);
+        $staff = $query->paginate(20)->withQueryString();
 
-        return view('admin.staff.index', compact('staff'));
+        $summary = [
+            'total_staff' => (clone $summaryBaseQuery)->count(),
+            'active' => (clone $summaryBaseQuery)->where('status', 'active')->count(),
+            'suspended' => (clone $summaryBaseQuery)->where('status', 'suspended')->count(),
+            'super_admins' => (clone $summaryBaseQuery)->whereHas('roles', fn ($roleQuery) => $roleQuery->where('name', 'Super Admin'))->count(),
+        ];
+
+        return view('admin.staff.index', compact('staff', 'summary'));
     }
 
     /**
@@ -76,6 +109,7 @@ class StaffController extends Controller
             'organization_scope' => ['nullable', Rule::in(['platform', 'franchise', 'branch'])],
         ]);
 
+        $creator = auth()->user();
         $user = new User();
         $user->name = $validated['name'];
         $user->email = $validated['email'];
@@ -85,7 +119,6 @@ class StaffController extends Controller
         $user->status = $validated['status'];
         
         // Scope constraints based on creator
-        $creator = auth()->user();
         if ($creator->organization_scope !== 'platform' && !$creator->isSuperAdmin()) {
             // Force inheritance of scope if not a platform admin
             $user->organization_scope = $creator->organization_scope;
@@ -109,7 +142,20 @@ class StaffController extends Controller
             $user->assignRole($allowedRoles);
         }
 
-        AuditLog::record('staff.created', $user, null, $user->toArray(), 'Staff created manually');
+        $createdSnapshot = $this->staffSnapshot($user->fresh(['roles']));
+
+        $this->audit->log(
+            action: 'staff.created',
+            target: $user,
+            newValues: $createdSnapshot,
+            notes: 'Staff created manually',
+            context: [
+                'module' => 'iam',
+                'source' => 'staff_controller',
+            ],
+        );
+
+        $this->auditRoleChanges($user, [], $createdSnapshot['roles'] ?? []);
 
         return redirect()->route('admin.staff.index')->with('success', 'Staff member created successfully.');
     }
@@ -148,7 +194,7 @@ class StaffController extends Controller
             'organization_scope' => ['nullable', Rule::in(['platform', 'franchise', 'branch'])],
         ]);
 
-        $oldValues = $staff->toArray();
+        $oldValues = $this->staffSnapshot($staff);
 
         $staff->name = $validated['name'];
         $staff->email = $validated['email'];
@@ -182,7 +228,23 @@ class StaffController extends Controller
             $staff->syncRoles($allowedRoles);
         }
 
-        AuditLog::record('staff.updated', $staff, $oldValues, $staff->toArray(), 'Staff updated manually');
+        $updatedStaff = $staff->fresh(['roles']);
+        $newValues = $this->staffSnapshot($updatedStaff);
+
+        $this->audit->log(
+            action: 'staff.updated',
+            target: $staff,
+            oldValues: $oldValues,
+            newValues: $newValues,
+            notes: 'Staff updated manually',
+            context: [
+                'module' => 'iam',
+                'source' => 'staff_controller',
+            ],
+        );
+
+        $this->auditRoleChanges($updatedStaff, $oldValues['roles'] ?? [], $newValues['roles'] ?? []);
+        $this->auditStaffLifecycleChanges($updatedStaff, (string) ($oldValues['status'] ?? ''), (string) ($newValues['status'] ?? ''));
 
         return redirect()->route('admin.staff.index')->with('success', 'Staff member updated successfully.');
     }
@@ -194,11 +256,92 @@ class StaffController extends Controller
     {
         $this->authorize('delete', $staff);
         
-        $oldValues = $staff->toArray();
+        $oldValues = $this->staffSnapshot($staff);
         $staff->delete();
         
-        AuditLog::record('staff.deleted', null, $oldValues, null, 'Staff ID ' . $staff->id . ' deleted manually');
+        $this->audit->log(
+            action: 'staff.deleted',
+            target: $staff,
+            oldValues: $oldValues,
+            notes: 'Staff deleted manually',
+            context: [
+                'module' => 'iam',
+                'source' => 'staff_controller',
+                'deleted_staff_id' => $staff->id,
+            ],
+        );
 
         return redirect()->route('admin.staff.index')->with('success', 'Staff member deleted successfully.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function staffSnapshot(User $staff): array
+    {
+        $staff->loadMissing('roles');
+
+        return [
+            'id' => $staff->id,
+            'name' => $staff->name,
+            'email' => $staff->email,
+            'phone' => $staff->phone,
+            'status' => $staff->status,
+            'type' => $staff->type,
+            'organization_id' => $staff->organization_id,
+            'organization_scope' => $staff->organization_scope,
+            'roles' => $staff->roles
+                ->pluck('name')
+                ->sort()
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * @param  array<int, string>  $oldRoles
+     * @param  array<int, string>  $newRoles
+     */
+    private function auditRoleChanges(User $staff, array $oldRoles, array $newRoles): void
+    {
+        $oldRoles = collect($oldRoles)->filter()->sort()->values()->all();
+        $newRoles = collect($newRoles)->filter()->sort()->values()->all();
+
+        if ($oldRoles === $newRoles) {
+            return;
+        }
+
+        $this->audit->log(
+            action: 'staff.roles.changed',
+            target: $staff,
+            oldValues: ['roles' => $oldRoles],
+            newValues: ['roles' => $newRoles],
+            notes: 'Staff roles changed',
+            context: [
+                'module' => 'iam',
+                'source' => 'staff_controller',
+            ],
+        );
+    }
+
+    private function auditStaffLifecycleChanges(User $staff, string $oldStatus, string $newStatus): void
+    {
+        if ($oldStatus === $newStatus) {
+            return;
+        }
+
+        if ($oldStatus === 'active' && in_array($newStatus, ['inactive', 'suspended'], true)) {
+            $this->audit->log(
+                action: 'staff.deactivated',
+                target: $staff,
+                oldValues: ['status' => $oldStatus],
+                newValues: ['status' => $newStatus],
+                notes: 'Staff deactivated',
+                context: [
+                    'module' => 'iam',
+                    'source' => 'staff_controller',
+                ],
+            );
+        }
     }
 }

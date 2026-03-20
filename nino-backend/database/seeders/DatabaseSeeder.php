@@ -44,5 +44,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $superAdmin->assignRole('Super Admin');
+
+        $this->call([
+            PermissionsSeeder::class,
+            SettingsSeeder::class,
+            IntegrationSettingsSeeder::class,
+            GatewaySettingsSeeder::class,
+        ]);
     }
 }

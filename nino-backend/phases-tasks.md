@@ -367,7 +367,152 @@ Provide each role with a focused dashboard and workspace entry point.
 - No dashboard makes unnecessary heavy queries.
 
 ---
+# Phase 2A — Admin UI/UX Design System & Stitch Implementation
 
+## Phase ID
+`P2A`
+
+## Objective
+Implement the actual admin platform UI/UX design generated in Stitch and apply it as the visual/design-system foundation for the backend.
+
+This phase exists to transform the current generic admin UI into a production-grade, reusable, professional interface aligned with the Stitch design assets stored in `stitch_assets`.
+
+This is not a static HTML copy task.
+This is a real implementation phase where the Stitch assets are translated into a maintainable Laravel admin design system using reusable layouts, components, tables, filters, forms, and dashboard patterns.
+
+## Dependencies
+- Requires: Phase 0 complete
+- Recommended: Phase 1 and Phase 2 foundations available
+- Supports: all later CRUD/admin modules
+
+## Deliverables
+- Stitch design assets audited and interpreted
+- Reusable admin design system implemented
+- Global admin layout updated
+- Sidebar/topbar/page-shell aligned with Stitch
+- Dashboard UI aligned with Stitch
+- Tables/list pages aligned with Stitch
+- Forms/settings pages aligned with Stitch
+- Design consistency applied across core admin screens
+- Existing functionality preserved
+
+## Not in Scope
+- Marketing/landing-page style playful frontend
+- Rebuilding business logic
+- Replacing backend functionality with static HTML
+- Blindly dumping Stitch export into production templates
+- Full customer storefront redesign unless explicitly requested
+
+## Tasks
+
+### 2A.1 Stitch asset audit
+- [ ] `P2A-AUDIT-01` Inspect `stitch_assets` folder
+- [ ] `P2A-AUDIT-02` Identify layout patterns
+- [ ] `P2A-AUDIT-03` Identify navigation/sidebar patterns
+- [ ] `P2A-AUDIT-04` Identify dashboard widget patterns
+- [ ] `P2A-AUDIT-05` Identify card, table, form, filter, and settings patterns
+- [ ] `P2A-AUDIT-06` Extract color tokens from Stitch assets
+- [ ] `P2A-AUDIT-07` Extract typography scale from Stitch assets
+- [ ] `P2A-AUDIT-08` Extract spacing system from Stitch assets
+- [ ] `P2A-AUDIT-09` Extract button hierarchy and interaction states
+- [ ] `P2A-AUDIT-10` Compare current admin UI against Stitch UI and document gaps briefly
+
+### 2A.2 Design system foundation
+- [ ] `P2A-DESIGN-01` Define admin color tokens in code
+- [ ] `P2A-DESIGN-02` Define typography tokens/classes
+- [ ] `P2A-DESIGN-03` Define spacing system
+- [ ] `P2A-DESIGN-04` Define border radius, shadows, and surface styles
+- [ ] `P2A-DESIGN-05` Define status/badge color system
+- [ ] `P2A-DESIGN-06` Define button variants
+- [ ] `P2A-DESIGN-07` Define input/select/textarea field styles
+- [ ] `P2A-DESIGN-08` Define table/listing styles
+- [ ] `P2A-DESIGN-09` Define empty/loading/error state styles
+- [ ] `P2A-DESIGN-10` Define reusable layout and container rules
+
+### 2A.3 Global admin shell implementation
+- [ ] `P2A-SHELL-01` Refactor global admin layout to match Stitch direction
+- [ ] `P2A-SHELL-02` Implement Stitch-aligned sidebar
+- [ ] `P2A-SHELL-03` Implement Stitch-aligned topbar
+- [ ] `P2A-SHELL-04` Implement role-aware navigation visuals using existing menu system
+- [ ] `P2A-SHELL-05` Implement page header pattern
+- [ ] `P2A-SHELL-06` Implement breadcrumb pattern if applicable
+- [ ] `P2A-SHELL-07` Implement flash/alert presentation aligned with Stitch
+- [ ] `P2A-SHELL-08` Implement responsive admin layout behavior
+
+### 2A.4 Reusable component system
+- [ ] `P2A-COMP-01` Build reusable card component styles
+- [ ] `P2A-COMP-02` Build stat/KPI widget component styles
+- [ ] `P2A-COMP-03` Build badge/status chip components
+- [ ] `P2A-COMP-04` Build button components/variants
+- [ ] `P2A-COMP-05` Build dropdown/menu styles
+- [ ] `P2A-COMP-06` Build tabs/section navigation styles
+- [ ] `P2A-COMP-07` Build modal/drawer styles if needed
+- [ ] `P2A-COMP-08` Build search/filter bar pattern
+- [ ] `P2A-COMP-09` Build pagination pattern
+- [ ] `P2A-COMP-10` Build form section/card pattern
+- [ ] `P2A-COMP-11` Build empty state pattern
+- [ ] `P2A-COMP-12` Build confirmation/destructive action pattern
+
+### 2A.5 Dashboard UI implementation
+- [ ] `P2A-DASH-01` Apply Stitch layout to dashboard page shell
+- [ ] `P2A-DASH-02` Refactor KPI/stat widgets to Stitch style
+- [ ] `P2A-DASH-03` Refactor dashboard cards and sections to Stitch style
+- [ ] `P2A-DASH-04` Align dashboard spacing/grid with Stitch
+- [ ] `P2A-DASH-05` Align loading/empty/error dashboard states with Stitch
+
+### 2A.6 Table and list-page implementation
+- [ ] `P2A-TABLE-01` Refactor table/list page shell to Stitch style
+- [ ] `P2A-TABLE-02` Refactor filters/search bar to Stitch style
+- [ ] `P2A-TABLE-03` Refactor status columns/badges to Stitch style
+- [ ] `P2A-TABLE-04` Refactor row action patterns
+- [ ] `P2A-TABLE-05` Refactor bulk action bar
+- [ ] `P2A-TABLE-06` Refactor pagination/list footer
+- [ ] `P2A-TABLE-07` Refactor empty list states
+- [ ] `P2A-TABLE-08` Ensure dense but readable operational table UX
+
+### 2A.7 Forms and CRUD pages
+- [ ] `P2A-FORM-01` Refactor create/edit page shell to Stitch style
+- [ ] `P2A-FORM-02` Refactor grouped form sections/cards
+- [ ] `P2A-FORM-03` Refactor labels/helper/error states
+- [ ] `P2A-FORM-04` Refactor save/cancel/action bar patterns
+- [ ] `P2A-FORM-05` Refactor long-form layouts for settings and complex CRUD
+- [ ] `P2A-FORM-06` Refactor file/image upload presentation
+- [ ] `P2A-FORM-07` Ensure form interaction states align with Stitch
+
+### 2A.8 Settings UI implementation
+- [ ] `P2A-SETTINGS-01` Apply Stitch design to settings shell
+- [ ] `P2A-SETTINGS-02` Implement tab/subnavigation style for settings
+- [ ] `P2A-SETTINGS-03` Refactor secret/API key fields presentation
+- [ ] `P2A-SETTINGS-04` Refactor toggle/checkbox/radio patterns
+- [ ] `P2A-SETTINGS-05` Refactor helper descriptions and save feedback
+- [ ] `P2A-SETTINGS-06` Ensure settings UX feels enterprise-grade and clean
+
+### 2A.9 Functional safety and refactor discipline
+- [ ] `P2A-SAFE-01` Preserve existing data rendering
+- [ ] `P2A-SAFE-02` Preserve existing forms and submissions
+- [ ] `P2A-SAFE-03` Preserve existing filters/search behavior
+- [ ] `P2A-SAFE-04` Preserve permissions/policies visibility rules
+- [ ] `P2A-SAFE-05` Preserve Livewire/Blade interactions
+- [ ] `P2A-SAFE-06` Remove duplicated UI markup where possible
+- [ ] `P2A-SAFE-07` Avoid raw Stitch HTML copy-paste debt
+
+### 2A.10 Final polish and consistency pass
+- [ ] `P2A-POLISH-01` Run visual consistency pass across admin screens
+- [ ] `P2A-POLISH-02` Fix spacing inconsistencies
+- [ ] `P2A-POLISH-03` Fix responsiveness issues
+- [ ] `P2A-POLISH-04` Fix state inconsistencies
+- [ ] `P2A-POLISH-05` Ensure UI remains professional, dense, and fast
+- [ ] `P2A-POLISH-06` Update `PROJECT_PROGRESS.md`
+- [ ] `P2A-POLISH-07` Update `PHASES.md`
+
+## Acceptance Criteria
+- Stitch assets are used as the visual source of truth
+- Admin layout clearly reflects Stitch design direction
+- Dashboard/list/form/settings screens align with the same design system
+- UI is implemented through reusable components, not static pasted HTML
+- Existing backend functionality remains intact
+- Role-aware navigation still works
+- UI is professional, fast, maintainable, and production-ready
 # Phase 3 — Settings & System Configuration
 
 ## Phase ID
@@ -882,39 +1027,39 @@ Build fulfillment and tracking tools for operations teams and customers.
 ## Tasks
 
 ### 9.1 Shipping data model
-- [ ] `P9-MODEL-01` Define shipping methods
-- [ ] `P9-MODEL-02` Define shipment records or equivalent
-- [ ] `P9-MODEL-03` Add tracking number
-- [ ] `P9-MODEL-04` Add carrier/service fields
-- [ ] `P9-MODEL-05` Add fulfillment status fields
+- [x] `P9-MODEL-01` Define shipping methods
+- [x] `P9-MODEL-02` Define shipment records or equivalent
+- [x] `P9-MODEL-03` Add tracking number
+- [x] `P9-MODEL-04` Add carrier/service fields
+- [x] `P9-MODEL-05` Add fulfillment status fields
 
 ### 9.2 Shipping admin settings
-- [ ] `P9-SETTINGS-01` Add shipping methods management
-- [ ] `P9-SETTINGS-02` Add shipping defaults
-- [ ] `P9-SETTINGS-03` Add carrier metadata foundation
+- [x] `P9-SETTINGS-01` Add shipping methods management
+- [x] `P9-SETTINGS-02` Add shipping defaults
+- [x] `P9-SETTINGS-03` Add carrier metadata foundation
 
 ### 9.3 Fulfillment workflow
-- [ ] `P9-FLOW-01` Add Ready to ship state
-- [ ] `P9-FLOW-02` Add Packed/prepared if needed
-- [ ] `P9-FLOW-03` Add Dispatched state
-- [ ] `P9-FLOW-04` Add Delivered state
-- [ ] `P9-FLOW-05` Add Failed delivery state
-- [ ] `P9-FLOW-06` Add Returned parcel state
+- [x] `P9-FLOW-01` Add Ready to ship state
+- [x] `P9-FLOW-02` Add Packed/prepared if needed
+- [x] `P9-FLOW-03` Add Dispatched state
+- [x] `P9-FLOW-04` Add Delivered state
+- [x] `P9-FLOW-05` Add Failed delivery state
+- [x] `P9-FLOW-06` Add Returned parcel state
 
 ### 9.4 Shipping agent tools
-- [ ] `P9-AGENT-01` Build ready-to-ship queue
-- [ ] `P9-AGENT-02` Add tracking entry/update
-- [ ] `P9-AGENT-03` Add status update actions
-- [ ] `P9-AGENT-04` Add delivery issue flags
+- [x] `P9-AGENT-01` Build ready-to-ship queue
+- [x] `P9-AGENT-02` Add tracking entry/update
+- [x] `P9-AGENT-03` Add status update actions
+- [x] `P9-AGENT-04` Add delivery issue flags
 
 ### 9.5 Customer tracking visibility
-- [ ] `P9-CUSTOMER-01` Show tracking number in account
-- [ ] `P9-CUSTOMER-02` Show order detail shipping timeline
+- [x] `P9-CUSTOMER-01` Show tracking number in account
+- [x] `P9-CUSTOMER-02` Show order detail shipping timeline
 
 ### 9.6 Shipping audit and reporting
-- [ ] `P9-REPORT-01` Add shipment history
-- [ ] `P9-REPORT-02` Add status changes log
-- [ ] `P9-REPORT-03` Add failed/returned queues
+- [x] `P9-REPORT-01` Add shipment history
+- [x] `P9-REPORT-02` Add status changes log
+- [x] `P9-REPORT-03` Add failed/returned queues
 
 ## Acceptance Criteria
 - Tracking numbers can be stored and shown.
@@ -944,44 +1089,44 @@ Build an event-driven notification system for operational and marketing communic
 ## Tasks
 
 ### 10.1 Notification architecture
-- [ ] `P10-ARCH-01` Define notification event mapping
-- [ ] `P10-ARCH-02` Define channel abstraction
-- [ ] `P10-ARCH-03` Define template variable system
-- [ ] `P10-ARCH-04` Define queue job structure
+- [x] `P10-ARCH-01` Define notification event mapping
+- [x] `P10-ARCH-02` Define channel abstraction
+- [x] `P10-ARCH-03` Define template variable system
+- [x] `P10-ARCH-04` Define queue job structure
 
 ### 10.2 Channels
-- [ ] `P10-CHANNEL-01` Add Email channel
-- [ ] `P10-CHANNEL-02` Add SMS channel
-- [ ] `P10-CHANNEL-03` Add WhatsApp channel
+- [x] `P10-CHANNEL-01` Add Email channel
+- [x] `P10-CHANNEL-02` Add SMS channel
+- [x] `P10-CHANNEL-03` Add WhatsApp channel
 
 ### 10.3 Trigger events
-- [ ] `P10-TRIGGER-01` Add Order placed trigger
-- [ ] `P10-TRIGGER-02` Add Payment success trigger
-- [ ] `P10-TRIGGER-03` Add Payment failed trigger
-- [ ] `P10-TRIGGER-04` Add Shipped trigger
-- [ ] `P10-TRIGGER-05` Add Delivered trigger
-- [ ] `P10-TRIGGER-06` Add Cancelled trigger
-- [ ] `P10-TRIGGER-07` Add Welcome trigger
-- [ ] `P10-TRIGGER-08` Add Password setup/login link trigger
-- [ ] `P10-TRIGGER-09` Add Abandoned cart foundation trigger
-- [ ] `P10-TRIGGER-10` Add Promotional offers foundation trigger
+- [x] `P10-TRIGGER-01` Add Order placed trigger
+- [x] `P10-TRIGGER-02` Add Payment success trigger
+- [x] `P10-TRIGGER-03` Add Payment failed trigger
+- [x] `P10-TRIGGER-04` Add Shipped trigger
+- [x] `P10-TRIGGER-05` Add Delivered trigger
+- [x] `P10-TRIGGER-06` Add Cancelled trigger
+- [x] `P10-TRIGGER-07` Add Welcome trigger
+- [x] `P10-TRIGGER-08` Add Password setup/login link trigger
+- [x] `P10-TRIGGER-09` Add Abandoned cart foundation trigger
+- [x] `P10-TRIGGER-10` Add Promotional offers foundation trigger
 
 ### 10.4 Templates management
-- [ ] `P10-TEMPLATE-01` Build template CRUD/listing
-- [ ] `P10-TEMPLATE-02` Add channel-specific content
-- [ ] `P10-TEMPLATE-03` Add placeholder preview
-- [ ] `P10-TEMPLATE-04` Add enable/disable per template/channel
+- [x] `P10-TEMPLATE-01` Build template CRUD/listing
+- [x] `P10-TEMPLATE-02` Add channel-specific content
+- [x] `P10-TEMPLATE-03` Add placeholder preview
+- [x] `P10-TEMPLATE-04` Add enable/disable per template/channel
 
 ### 10.5 Logs and observability
-- [ ] `P10-LOGS-01` Add sent/failed history
-- [ ] `P10-LOGS-02` Add retry foundation
-- [ ] `P10-LOGS-03` Add error reason capture
-- [ ] `P10-LOGS-04` Add search/filter for logs
+- [x] `P10-LOGS-01` Add sent/failed history
+- [x] `P10-LOGS-02` Add retry foundation
+- [x] `P10-LOGS-03` Add error reason capture
+- [x] `P10-LOGS-04` Add search/filter for logs
 
 ### 10.6 Integration settings
-- [ ] `P10-INTEGRATION-01` Add SMTP config
-- [ ] `P10-INTEGRATION-02` Add Twilio config
-- [ ] `P10-INTEGRATION-03` Add WhatsApp API config foundation
+- [x] `P10-INTEGRATION-01` Add SMTP config
+- [x] `P10-INTEGRATION-02` Add Twilio config
+- [x] `P10-INTEGRATION-03` Add WhatsApp API config foundation
 
 ## Acceptance Criteria
 - Notifications are queued.
@@ -1012,36 +1157,36 @@ Build a robust promotions engine for ecommerce growth and retention.
 ## Tasks
 
 ### 11.1 Coupon data model
-- [ ] `P11-MODEL-01` Add code uniqueness
-- [ ] `P11-MODEL-02` Add fixed/percentage types
-- [ ] `P11-MODEL-03` Add active/inactive
-- [ ] `P11-MODEL-04` Add start/end dates
-- [ ] `P11-MODEL-05` Add usage limits
-- [ ] `P11-MODEL-06` Add per-user limits
-- [ ] `P11-MODEL-07` Add minimum cart
-- [ ] `P11-MODEL-08` Add product/category targeting
-- [ ] `P11-MODEL-09` Add exclusion rules
-- [ ] `P11-MODEL-10` Add stackability foundation
+- [x] `P11-MODEL-01` Add code uniqueness
+- [x] `P11-MODEL-02` Add fixed/percentage types
+- [x] `P11-MODEL-03` Add active/inactive
+- [x] `P11-MODEL-04` Add start/end dates
+- [x] `P11-MODEL-05` Add usage limits
+- [x] `P11-MODEL-06` Add per-user limits
+- [x] `P11-MODEL-07` Add minimum cart
+- [x] `P11-MODEL-08` Add product/category targeting
+- [x] `P11-MODEL-09` Add exclusion rules
+- [x] `P11-MODEL-10` Add stackability foundation
 
 ### 11.2 Coupon admin UX
-- [ ] `P11-ADMIN-01` Build create/edit/list/search/filter
-- [ ] `P11-ADMIN-02` Add usage counters
-- [ ] `P11-ADMIN-03` Add status visibility
+- [x] `P11-ADMIN-01` Build create/edit/list/search/filter
+- [x] `P11-ADMIN-02` Add usage counters
+- [x] `P11-ADMIN-03` Add status visibility
 
 ### 11.3 Coupon validation engine
-- [ ] `P11-VALIDATE-01` Add apply/remove logic
-- [ ] `P11-VALIDATE-02` Add eligibility rules
-- [ ] `P11-VALIDATE-03` Add error messages
-- [ ] `P11-VALIDATE-04` Add order snapshot of discount usage
+- [x] `P11-VALIDATE-01` Add apply/remove logic
+- [x] `P11-VALIDATE-02` Add eligibility rules
+- [x] `P11-VALIDATE-03` Add error messages
+- [x] `P11-VALIDATE-04` Add order snapshot of discount usage
 
 ### 11.4 Promo reporting foundation
-- [ ] `P11-REPORT-01` Add coupon usage counts
-- [ ] `P11-REPORT-02` Add revenue impact foundation
+- [x] `P11-REPORT-01` Add coupon usage counts
+- [x] `P11-REPORT-02` Add revenue impact foundation
 
 ### 11.5 Abandoned cart foundation
-- [ ] `P11-ABANDON-01` Define cart capture rules
-- [ ] `P11-ABANDON-02` Add trigger-ready state
-- [ ] `P11-ABANDON-03` Add recovery message hooks
+- [x] `P11-ABANDON-01` Define cart capture rules
+- [x] `P11-ABANDON-02` Add trigger-ready state
+- [x] `P11-ABANDON-03` Add recovery message hooks
 
 ## Acceptance Criteria
 - Coupons are flexible and validated correctly.
@@ -1071,44 +1216,44 @@ Build a robust content and SEO layer to support organic traffic, educational con
 ## Tasks
 
 ### 12.1 Blog categories and tags
-- [ ] `P12-TAX-01` Build category CRUD
-- [ ] `P12-TAX-02` Build tag CRUD
-- [ ] `P12-TAX-03` Add slugs
-- [ ] `P12-TAX-04` Add status/ordering if needed
+- [x] `P12-TAX-01` Build category CRUD
+- [x] `P12-TAX-02` Build tag CRUD
+- [x] `P12-TAX-03` Add slugs
+- [x] `P12-TAX-04` Add status/ordering if needed
 
 ### 12.2 Article/post management
-- [ ] `P12-POST-01` Add title
-- [ ] `P12-POST-02` Add slug
-- [ ] `P12-POST-03` Add author
-- [ ] `P12-POST-04` Add featured image
-- [ ] `P12-POST-05` Add content body
-- [ ] `P12-POST-06` Add draft/published status
-- [ ] `P12-POST-07` Add scheduling foundation
-- [ ] `P12-POST-08` Add search/filter
+- [x] `P12-POST-01` Add title
+- [x] `P12-POST-02` Add slug
+- [x] `P12-POST-03` Add author
+- [x] `P12-POST-04` Add featured image
+- [x] `P12-POST-05` Add content body
+- [x] `P12-POST-06` Add draft/published status
+- [x] `P12-POST-07` Add scheduling foundation
+- [x] `P12-POST-08` Add search/filter
 
 ### 12.3 Article SEO fields
-- [ ] `P12-SEO-01` Add meta title
-- [ ] `P12-SEO-02` Add meta description
-- [ ] `P12-SEO-03` Add canonical
-- [ ] `P12-SEO-04` Add OG fields if included
-- [ ] `P12-SEO-05` Add noindex foundation if included
+- [x] `P12-SEO-01` Add meta title
+- [x] `P12-SEO-02` Add meta description
+- [x] `P12-SEO-03` Add canonical
+- [x] `P12-SEO-04` Add OG fields if included
+- [x] `P12-SEO-05` Add noindex foundation if included
 
 ### 12.4 SEO across entities
-- [ ] `P12-ENTITYSEO-01` Add Product SEO
-- [ ] `P12-ENTITYSEO-02` Add Category SEO
-- [ ] `P12-ENTITYSEO-03` Add Blog category SEO
-- [ ] `P12-ENTITYSEO-04` Add Post SEO
+- [x] `P12-ENTITYSEO-01` Add Product SEO
+- [x] `P12-ENTITYSEO-02` Add Category SEO
+- [x] `P12-ENTITYSEO-03` Add Blog category SEO
+- [x] `P12-ENTITYSEO-04` Add Post SEO
 
 ### 12.5 Sitemap and redirect readiness
-- [ ] `P12-SITEMAP-01` Add sitemap-ready architecture
-- [ ] `P12-SITEMAP-02` Add redirect-friendly data model or module foundation
-- [ ] `P12-SITEMAP-03` Add slug update strategy
+- [x] `P12-SITEMAP-01` Add sitemap-ready architecture
+- [x] `P12-SITEMAP-02` Add redirect-friendly data model or module foundation
+- [x] `P12-SITEMAP-03` Add slug update strategy
 
 ### 12.6 Content UX
-- [ ] `P12-UX-01` Add draft/publish workflow
-- [ ] `P12-UX-02` Add preview if practical
-- [ ] `P12-UX-03` Add author attribution
-- [ ] `P12-UX-04` Add media picker integration
+- [x] `P12-UX-01` Add draft/publish workflow
+- [x] `P12-UX-02` Add preview if practical
+- [x] `P12-UX-03` Add author attribution
+- [x] `P12-UX-04` Add media picker integration
 
 ## Acceptance Criteria
 - Blog content can be created and managed.
@@ -1138,31 +1283,31 @@ Build finance visibility and reconciliation foundations for operators and financ
 ## Tasks
 
 ### 13.1 Financial data structure
-- [ ] `P13-DATA-01` Add order financial summary fields
-- [ ] `P13-DATA-02` Add transaction records
-- [ ] `P13-DATA-03` Add payment method reporting fields
-- [ ] `P13-DATA-04` Add currency/base currency handling
+- [x] `P13-DATA-01` Add order financial summary fields
+- [x] `P13-DATA-02` Add transaction records
+- [x] `P13-DATA-03` Add payment method reporting fields
+- [x] `P13-DATA-04` Add currency/base currency handling
 
 ### 13.2 Transaction visibility
-- [ ] `P13-TRANS-01` Build payment transactions list
-- [ ] `P13-TRANS-02` Add search/filter by method/status/date/order
-- [ ] `P13-TRANS-03` Link transaction to order
+- [x] `P13-TRANS-01` Build payment transactions list
+- [x] `P13-TRANS-02` Add search/filter by method/status/date/order
+- [x] `P13-TRANS-03` Link transaction to order
 
 ### 13.3 Paid/unpaid reporting
-- [ ] `P13-REPORT-01` Add order payment state reporting
-- [ ] `P13-REPORT-02` Add gateway success/failure summary
+- [x] `P13-REPORT-01` Add order payment state reporting
+- [x] `P13-REPORT-02` Add gateway success/failure summary
 
 ### 13.4 COD reconciliation foundation
-- [ ] `P13-COD-01` Add COD collection state fields
-- [ ] `P13-COD-02` Add COD reconciliation list/report foundation
+- [x] `P13-COD-01` Add COD collection state fields
+- [x] `P13-COD-02` Add COD reconciliation list/report foundation
 
 ### 13.5 Refund-ready design
-- [ ] `P13-REFUND-01` Add refund request/record structure foundation
-- [ ] `P13-REFUND-02` Add refund totals visibility
+- [x] `P13-REFUND-01` Add refund request/record structure foundation
+- [x] `P13-REFUND-02` Add refund totals visibility
 
 ### 13.6 Discount/fee reporting
-- [ ] `P13-FEE-01` Add discount visibility
-- [ ] `P13-FEE-02` Add payment fee visibility if included
+- [x] `P13-FEE-01` Add discount visibility
+- [x] `P13-FEE-02` Add payment fee visibility if included
 
 ## Acceptance Criteria
 - Finance managers can inspect transactions and payment states.
@@ -1192,25 +1337,25 @@ Give support staff fast, scoped tools to resolve order, payment, shipping, and c
 ## Tasks
 
 ### 14.1 Support lookup tools
-- [ ] `P14-LOOKUP-01` Add search by order ID
-- [ ] `P14-LOOKUP-02` Add search by email/phone/name where applicable
-- [ ] `P14-LOOKUP-03` Add fast filters
+- [x] `P14-LOOKUP-01` Add search by order ID
+- [x] `P14-LOOKUP-02` Add search by email/phone/name where applicable
+- [x] `P14-LOOKUP-03` Add fast filters
 
 ### 14.2 Customer timeline foundation
-- [ ] `P14-TIMELINE-01` Add recent orders
-- [ ] `P14-TIMELINE-02` Add order statuses
-- [ ] `P14-TIMELINE-03` Add payment/shipping visibility
-- [ ] `P14-TIMELINE-04` Add support/internal notes
+- [x] `P14-TIMELINE-01` Add recent orders
+- [x] `P14-TIMELINE-02` Add order statuses
+- [x] `P14-TIMELINE-03` Add payment/shipping visibility
+- [x] `P14-TIMELINE-04` Add support/internal notes
 
 ### 14.3 Internal notes
-- [ ] `P14-NOTES-01` Add order-level notes
-- [ ] `P14-NOTES-02` Add customer-level notes foundation
-- [ ] `P14-NOTES-03` Add staff attribution
-- [ ] `P14-NOTES-04` Add audit visibility
+- [x] `P14-NOTES-01` Add order-level notes
+- [x] `P14-NOTES-02` Add customer-level notes foundation
+- [x] `P14-NOTES-03` Add staff attribution
+- [x] `P14-NOTES-04` Add audit visibility
 
 ### 14.4 Refund/return issue queue foundation
-- [ ] `P14-QUEUE-01` Add queue/list for support attention
-- [ ] `P14-QUEUE-02` Add statuses if implemented
+- [x] `P14-QUEUE-01` Add queue/list for support attention
+- [x] `P14-QUEUE-02` Add statuses if implemented
 
 ## Acceptance Criteria
 - Support agents can quickly find customers and orders.
@@ -1239,25 +1384,25 @@ Provide operational leverage through reporting, search tools, and admin producti
 ## Tasks
 
 ### 15.1 Reports foundation
-- [ ] `P15-REPORT-01` Add sales summary report
-- [ ] `P15-REPORT-02` Add orders report
-- [ ] `P15-REPORT-03` Add inventory report
-- [ ] `P15-REPORT-04` Add coupon usage report
-- [ ] `P15-REPORT-05` Add finance summary report
+- [x] `P15-REPORT-01` Add sales summary report
+- [x] `P15-REPORT-02` Add orders report
+- [x] `P15-REPORT-03` Add inventory report
+- [x] `P15-REPORT-04` Add coupon usage report
+- [x] `P15-REPORT-05` Add finance summary report
 
 ### 15.2 Search and filter enhancements
-- [ ] `P15-SEARCH-01` Build reusable filter builders
-- [ ] `P15-SEARCH-02` Add search patterns across admin tables
-- [ ] `P15-SEARCH-03` Add saved views foundation if practical
+- [x] `P15-SEARCH-01` Build reusable filter builders
+- [x] `P15-SEARCH-02` Add search patterns across admin tables
+- [x] `P15-SEARCH-03` Add saved views foundation if practical
 
 ### 15.3 Bulk actions
-- [ ] `P15-BULK-01` Add products bulk actions
-- [ ] `P15-BULK-02` Add orders bulk actions where safe
-- [ ] `P15-BULK-03` Add content bulk actions
+- [x] `P15-BULK-01` Add products bulk actions
+- [x] `P15-BULK-02` Add orders bulk actions where safe
+- [x] `P15-BULK-03` Add content bulk actions
 
 ### 15.4 Export/import foundation
-- [ ] `P15-EXPORT-01` Add CSV/XLS export for key modules
-- [ ] `P15-EXPORT-02` Add safe import design for catalog if time allows
+- [x] `P15-EXPORT-01` Add CSV/XLS export for key modules
+- [x] `P15-EXPORT-02` Add safe import design for catalog if time allows
 
 ## Acceptance Criteria
 - Staff can operate large datasets more efficiently.
@@ -1286,22 +1431,22 @@ Add the operational trust and traceability needed for a real commerce platform.
 ## Tasks
 
 ### 16.1 Audit log foundation
-- [ ] `P16-AUDIT-01` Define audit model/store
-- [ ] `P16-AUDIT-02` Add sensitive action hooks
-- [ ] `P16-AUDIT-03` Add actor, target, action, context logging
+- [x] `P16-AUDIT-01` Define audit model/store
+- [x] `P16-AUDIT-02` Add sensitive action hooks
+- [x] `P16-AUDIT-03` Add actor, target, action, context logging
 
 ### 16.2 Sensitive events to audit
-- [ ] `P16-EVENT-01` Audit role changes
-- [ ] `P16-EVENT-02` Audit staff creation/deactivation
-- [ ] `P16-EVENT-03` Audit product price changes
-- [ ] `P16-EVENT-04` Audit order status overrides
-- [ ] `P16-EVENT-05` Audit refund updates
-- [ ] `P16-EVENT-06` Audit stock adjustments
-- [ ] `P16-EVENT-07` Audit payment configuration changes
-- [ ] `P16-EVENT-08` Audit impersonation
+- [x] `P16-EVENT-01` Audit role changes
+- [x] `P16-EVENT-02` Audit staff creation/deactivation
+- [x] `P16-EVENT-03` Audit product price changes
+- [x] `P16-EVENT-04` Audit order status overrides
+- [x] `P16-EVENT-05` Audit refund updates
+- [x] `P16-EVENT-06` Audit stock adjustments
+- [x] `P16-EVENT-07` Audit payment configuration changes
+- [x] `P16-EVENT-08` Audit impersonation
 
 ### 16.3 Security hardening
-- [ ] `P16-SEC-01` Add forced 2FA if enabled
+- [ ] `P16-SEC-01` Add forced 2FA if enabled with qr code 
 - [ ] `P16-SEC-02` Review session security
 - [ ] `P16-SEC-03` Add rate limiting where appropriate
 - [ ] `P16-SEC-04` Add safe logging/redaction rules

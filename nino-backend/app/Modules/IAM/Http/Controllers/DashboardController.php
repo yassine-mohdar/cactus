@@ -2,13 +2,17 @@
 
 namespace App\Modules\IAM\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Modules\IAM\Services\DashboardMetricsService;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request, DashboardMetricsService $dashboardMetrics)
     {
-        return view('admin.dashboard');
+        $user = auth()->user();
+        $dashboard = $dashboardMetrics->build($user);
+
+        return view('admin.dashboard', compact('dashboard'));
     }
 }

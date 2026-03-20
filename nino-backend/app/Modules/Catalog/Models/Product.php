@@ -47,12 +47,17 @@ class Product extends Model
     protected static function boot()
     {
         parent::boot();
-
+        
         static::saving(function ($product) {
             if (empty($product->slug)) {
                 $product->slug = Str::slug($product->name);
             }
         });
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'published');
     }
 
     public function categories()

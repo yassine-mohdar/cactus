@@ -59,6 +59,11 @@ class Organization extends Model
         return $query->where('type', 'branch');
     }
 
+    public function scopeSupplier($query)
+    {
+        return $query->where('type', 'supplier');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
@@ -79,6 +84,11 @@ class Organization extends Model
     public function isBranch(): bool
     {
         return $this->type === 'branch';
+    }
+
+    public function isSupplier(): bool
+    {
+        return $this->type === 'supplier';
     }
 
     public function getBranches(): HasMany
