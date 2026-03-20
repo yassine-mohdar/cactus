@@ -36,6 +36,7 @@ class SettingsController extends Controller
         
         $integrations = [];
         if ($activeTab === 'mail') {
+            IntegrationSetting::ensureDefaultsExist();
             $integrations = IntegrationSetting::orderBy('provider')->get();
         }
 

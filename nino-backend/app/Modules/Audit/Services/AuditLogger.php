@@ -17,6 +17,7 @@ class AuditLogger
     private const REDACTED_KEYS = [
         'password',
         'password_confirmation',
+        'current_password',
         'secret',
         'secret_key',
         'api_key',
@@ -36,6 +37,14 @@ class AuditLogger
         'signature',
         'passphrase',
         'remember_token',
+        'recovery_code',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'otp',
+        'one_time_password',
+        'card_number',
+        'cvv',
+        'cvc',
     ];
 
     public function log(
@@ -146,7 +155,7 @@ class AuditLogger
         return array_filter([
             'request_id' => $request->headers->get('X-Request-Id'),
             'route_name' => $route?->getName(),
-            'route_uri' => method_exists($route, 'uri') ? $route->uri() : null,
+            'route_uri' => is_object($route) && method_exists($route, 'uri') ? $route->uri() : null,
             'method' => $request->method(),
             'url' => $request->fullUrl(),
         ], fn ($value) => $value !== null && $value !== '');

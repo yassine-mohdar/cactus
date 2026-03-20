@@ -26,6 +26,12 @@
         </x-nino.inline-alert>
     @endif
 
+    @if(session('warning'))
+        <x-nino.inline-alert tone="warning" title="Integration check" class="mb-6">
+            {{ session('warning') }}
+        </x-nino.inline-alert>
+    @endif
+
     <div class="stats-grid mb-6">
         <div class="stat-card">
             <p class="stat-label">Channels</p>
@@ -147,7 +153,12 @@
                     <x-slot:footer>
                         <div class="flex items-center justify-between gap-3">
                             <p class="text-xs text-[#61706B]">Masked secrets stay unchanged until you submit a different value.</p>
-                            <x-nino.button type="submit" variant="primary">Save {{ $integration->name }}</x-nino.button>
+                            <div class="flex items-center gap-3">
+                                <a href="{{ route('admin.notifications.integrations.test', $integration) }}" class="inline-flex items-center rounded-md border border-[rgba(120,112,95,0.16)] bg-white px-3 py-2 text-sm font-semibold text-[#1E2B27] transition-colors hover:bg-[#F7F4EF]">
+                                    Safe Test
+                                </a>
+                                <x-nino.button type="submit" variant="primary">Save {{ $integration->name }}</x-nino.button>
+                            </div>
                         </div>
                     </x-slot:footer>
                 </x-nino.integration-card>

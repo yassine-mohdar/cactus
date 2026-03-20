@@ -30,7 +30,8 @@ class SendNotificationJob implements ShouldQueue
     public function __construct(
         private int $logId
     ) {
-        $this->onQueue('notifications');
+        $this->afterCommit();
+        $this->onQueue(config('performance.queues.notifications', 'notifications'));
     }
 
     public function handle(): void

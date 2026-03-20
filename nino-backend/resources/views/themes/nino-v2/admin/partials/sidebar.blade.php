@@ -1,3 +1,7 @@
+@php
+    $adminHomeRoute = auth()->check() ? app(\App\Modules\IAM\Services\AdminHomeRouteService::class)->routeNameFor(auth()->user()) : 'admin.dashboard';
+@endphp
+
 <nav
     id="admin-sidebar"
     x-cloak
@@ -22,7 +26,7 @@
     </div>
 
     <div class="mt-5 flex-1 space-y-1 overflow-y-auto pr-1">
-        <a href="{{ route('admin.dashboard') }}" wire:navigate class="flex items-center gap-3 rounded-md border px-3 py-2.5 font-semibold transition-colors {{ request()->routeIs('admin.dashboard') ? 'border-[#D7E7DA] bg-[#ECF4EE] text-[#1E2B27]' : 'border-transparent text-[#5F6F67] hover:border-[rgba(120,112,95,0.14)] hover:bg-[#FCFBF8] hover:text-[#1E2B27]' }}">
+        <a href="{{ route($adminHomeRoute) }}" wire:navigate class="flex items-center gap-3 rounded-md border px-3 py-2.5 font-semibold transition-colors {{ request()->routeIs($adminHomeRoute) ? 'border-[#D7E7DA] bg-[#ECF4EE] text-[#1E2B27]' : 'border-transparent text-[#5F6F67] hover:border-[rgba(120,112,95,0.14)] hover:bg-[#FCFBF8] hover:text-[#1E2B27]' }}">
             <span class="flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-[#F6F2EC] text-[#245848]">
                 <span class="material-symbols-outlined text-[1.15rem]">dashboard</span>
             </span>

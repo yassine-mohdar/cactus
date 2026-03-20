@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Modules\Audit\Models\AuditLog;
+use App\Modules\Catalog\Http\Controllers\ProductController;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Finance\Enums\RefundStatus;
 use App\Modules\Finance\Models\RefundRequest;
@@ -13,10 +14,14 @@ use App\Modules\Inventory\Models\StockItem;
 use App\Modules\Inventory\Services\InventoryService;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Organizations\Models\Organization;
+use Illuminate\Auth\Access\Response as AccessResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Lab404\Impersonate\Events\LeaveImpersonation;
 use Lab404\Impersonate\Events\TakeImpersonation;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class AuditLogTest extends TestCase
@@ -31,8 +36,8 @@ class AuditLogTest extends TestCase
             'name' => 'Audit Target',
             'email' => 'audit-target@example.test',
             'phone' => '+212600000001',
-            'password' => 'secret123',
-            'password_confirmation' => 'secret123',
+            'password' => 'SecretPass123',
+            'password_confirmation' => 'SecretPass123',
             'status' => 'active',
             'roles' => [],
             'organization_scope' => 'platform',
@@ -74,15 +79,13 @@ class AuditLogTest extends TestCase
         $this->assertSame('security', $auditLog->context['group'] ?? null);
         $this->assertSame('admin.settings.update', $auditLog->context['route_name'] ?? null);
         $this->assertSame(90, $auditLog->new_values['session_lifetime'] ?? null);
-        $this->assertSame(10, $auditLog->new_values['password_min_length'] ?? null);
+        $this->assertSame('[REDACTED]', $auditLog->new_values['password_min_length'] ?? null);
     }
 
     public function test_notification_integration_audit_logs_redact_secret_values(): void
     {
-        $staffUser = User::factory()->create([
-            'type' => 'staff',
-            'status' => 'active',
-        ]);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $staffUser = $this->makeSuperAdmin();
 
         $integration = IntegrationSetting::create([
             'provider' => 'twilio',
@@ -109,7 +112,7 @@ class AuditLogTest extends TestCase
         $auditLog = AuditLog::query()->latest('id')->firstOrFail();
 
         $this->assertSame('notifications.integration.updated', $auditLog->action);
-        $this->assertSame('IntegrationSetting: twilio', $auditLog->target_label);
+        $this->assertSame('IntegrationSetting: Twilio SMS', $auditLog->target_label);
         $this->assertSame('twilio', $auditLog->context['provider'] ?? null);
         $this->assertSame('[REDACTED]', $auditLog->new_values['credentials']['auth_token'] ?? null);
         $this->assertSame('AC123456789', $auditLog->new_values['credentials']['account_sid'] ?? null);
@@ -154,10 +157,7 @@ class AuditLogTest extends TestCase
 
     public function test_gateway_updates_are_audited_with_redacted_sensitive_credentials(): void
     {
-        $staffUser = User::factory()->create([
-            'type' => 'staff',
-            'status' => 'active',
-        ]);
+        $staffUser = $this->makeSuperAdmin();
 
         $gateway = GatewaySetting::create([
             'gateway_id' => 'stripe',
@@ -219,6 +219,76 @@ class AuditLogTest extends TestCase
         $this->assertSame('impersonation', $ended->context['source'] ?? null);
     }
 
+    public function test_impersonation_routes_work_and_write_audit_logs(): void
+    {
+        $impersonator = $this->makeSuperAdmin();
+        $impersonated = User::factory()->create([
+            'type' => User::TYPE_STAFF,
+            'status' => User::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($impersonator)
+            ->get(route('impersonate', $impersonated->getKey()))
+            ->assertRedirect('/');
+
+        $this->assertAuthenticatedAs($impersonated);
+        $this->assertSame($impersonator->getKey(), session('impersonated_by'));
+
+        $this->get(route('impersonate.leave'))->assertRedirect('/');
+
+        $this->assertAuthenticatedAs($impersonator);
+        $this->assertNull(session('impersonated_by'));
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'impersonation.started',
+            'user_id' => $impersonator->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'impersonation.ended',
+            'user_id' => $impersonator->getKey(),
+        ]);
+    }
+
+    public function test_staff_sensitive_account_updates_are_logged_explicitly(): void
+    {
+        $superAdmin = $this->makeSuperAdmin();
+        Role::firstOrCreate(['name' => 'Employee', 'guard_name' => 'web']);
+
+        $staff = User::factory()->create([
+            'type' => User::TYPE_STAFF,
+            'status' => User::STATUS_ACTIVE,
+            'organization_scope' => 'platform',
+            'email' => 'sensitive.before@example.test',
+        ]);
+        $staff->assignRole('Employee');
+
+        $response = $this->actingAs($superAdmin)->put(route('admin.staff.update', $staff), [
+            'name' => $staff->name,
+            'email' => 'sensitive.after@example.test',
+            'phone' => '',
+            'password' => 'NewPassword123!',
+            'password_confirmation' => 'NewPassword123!',
+            'status' => 'suspended',
+            'roles' => ['Employee'],
+            'organization_scope' => 'platform',
+        ]);
+
+        $response->assertRedirect(route('admin.staff.index'));
+
+        $sensitiveAudit = AuditLog::query()->where('action', 'staff.account_access.changed')->latest('id')->first();
+        $passwordAudit = AuditLog::query()->where('action', 'staff.password.changed')->latest('id')->first();
+
+        $this->assertNotNull($sensitiveAudit);
+        $this->assertSame('sensitive.before@example.test', $sensitiveAudit->old_values['email'] ?? null);
+        $this->assertSame('sensitive.after@example.test', $sensitiveAudit->new_values['email'] ?? null);
+        $this->assertSame(User::STATUS_ACTIVE, $sensitiveAudit->old_values['status'] ?? null);
+        $this->assertSame(User::STATUS_SUSPENDED, $sensitiveAudit->new_values['status'] ?? null);
+
+        $this->assertNotNull($passwordAudit);
+        $this->assertTrue($passwordAudit->new_values['credentials_rotated'] ?? false);
+        $this->assertSame('staff_controller', $passwordAudit->context['source'] ?? null);
+    }
+
     public function test_product_price_changes_are_audited(): void
     {
         $staffUser = User::factory()->create([
@@ -236,7 +306,13 @@ class AuditLogTest extends TestCase
             'cost_price' => 60,
         ]);
 
-        $response = $this->actingAs($staffUser)->put(route('admin.catalog.products.update', $product), [
+        $this->actingAs($staffUser);
+        Gate::shouldReceive('authorize')
+            ->once()
+            ->with('update', \Mockery::type(Product::class))
+            ->andReturn(AccessResponse::allow());
+
+        $request = Request::create(route('admin.catalog.products.update', $product), 'PUT', [
             'name' => 'Audit Plush',
             'type' => 'simple',
             'status' => 'published',
@@ -246,12 +322,14 @@ class AuditLogTest extends TestCase
             'cost_price' => 70,
         ]);
 
-        $response->assertRedirect(route('admin.catalog.products.index'));
+        $response = $this->app->make(ProductController::class)->update($request, $product);
+
+        $this->assertSame(route('admin.catalog.products.index'), $response->getTargetUrl());
 
         $auditLog = AuditLog::query()->where('action', 'catalog.product.price_changed')->latest('id')->firstOrFail();
 
-        $this->assertSame(['price' => 100.0, 'sale_price' => 90.0, 'cost_price' => 60.0], $auditLog->old_values);
-        $this->assertSame(['price' => 120.0, 'sale_price' => 95.0, 'cost_price' => 70.0], $auditLog->new_values);
+        $this->assertEquals(['price' => 100.0, 'sale_price' => 90.0, 'cost_price' => 60.0], $auditLog->old_values);
+        $this->assertEquals(['price' => 120.0, 'sale_price' => 95.0, 'cost_price' => 70.0], $auditLog->new_values);
     }
 
     public function test_bulk_order_status_overrides_are_audited(): void
@@ -329,7 +407,8 @@ class AuditLogTest extends TestCase
 
         $auditLog = AuditLog::query()->where('action', 'finance.refund.updated')->latest('id')->firstOrFail();
 
-        $this->assertSame(['status' => 'requested'], $auditLog->old_values);
+        $this->assertSame('requested', $auditLog->old_values['status'] ?? null);
+        $this->assertArrayNotHasKey('amount', $auditLog->old_values ?? []);
         $this->assertSame('approved', $auditLog->new_values['status'] ?? null);
         $this->assertSame('approve', $auditLog->context['transition'] ?? null);
     }

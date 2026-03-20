@@ -12,6 +12,14 @@
     <div class="mb-4 p-3 rounded-lg bg-green-50 text-green-700 text-sm border border-green-200">{{ session('success') }}</div>
 @endif
 
+@if(session('warning'))
+    <div class="mb-4 p-3 rounded-lg bg-amber-50 text-amber-700 text-sm border border-amber-200">{{ session('warning') }}</div>
+@endif
+
+@if(session('error'))
+    <div class="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm border border-red-200">{{ session('error') }}</div>
+@endif
+
 <div class="space-y-6">
     @foreach($integrations as $integration)
     <form action="{{ route('admin.notifications.integrations.update', $integration) }}" method="POST" class="bg-white border border-slate-200 rounded-md shadow-sm p-6">
@@ -99,7 +107,8 @@
             @endif
         </div>
 
-        <div class="flex justify-end mt-4">
+        <div class="flex justify-end gap-3 mt-4">
+            <a href="{{ route('admin.notifications.integrations.test', $integration) }}" class="px-5 py-2 text-sm font-medium border border-slate-200 text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Safe Test</a>
             <button type="submit" class="px-5 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-sm">Save {{ $integration->name }}</button>
         </div>
     </form>

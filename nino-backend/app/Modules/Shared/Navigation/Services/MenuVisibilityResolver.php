@@ -2,11 +2,15 @@
 
 namespace App\Modules\Shared\Navigation\Services;
 
+use App\Modules\IAM\Services\ScopeAuthorizationService;
 use App\Modules\Shared\Navigation\DTOs\MenuItem;
-use Illuminate\Support\Facades\Gate;
 
 class MenuVisibilityResolver
 {
+    public function __construct(
+        private readonly ScopeAuthorizationService $scopes = new ScopeAuthorizationService(),
+    ) {}
+
     public function isVisible(MenuItem $item): bool
     {
         $user = auth()->user();
@@ -32,8 +36,9 @@ class MenuVisibilityResolver
             }
         }
 
-        // Phase B placeholder: Scopes logic here (check $user->organization_scope vs $item->scopes)
-        // Phase B placeholder: Feature Flags logic here
+        if (!empty($item->scopes) && !$this->scopes->allowsRequiredScopes($user, $item->scopes)) {
+            return false;
+        }
 
         return true;
     }

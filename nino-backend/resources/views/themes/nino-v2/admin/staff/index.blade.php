@@ -6,6 +6,9 @@
         title="Staff Management"
         subtitle="Manage access, role scope, and internal user status from one operational roster.">
         <x-slot:actions>
+            @can('viewAny', \Spatie\Permission\Models\Role::class)
+                <x-nino.button href="{{ route('admin.staff.roles.index') }}" variant="secondary" icon="shield_person">Manage Roles</x-nino.button>
+            @endcan
             @can('create', App\Models\User::class)
                 <x-nino.button href="{{ route('admin.staff.create') }}" variant="primary" icon="add">New Staff Member</x-nino.button>
             @endcan
@@ -40,17 +43,47 @@
 
         <div class="filter-toolbar">
             <form method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div class="filter-field w-full sm:max-w-md">
+                <div class="grid w-full gap-3 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
+                <div class="filter-field w-full">
                     <label class="filter-label" for="staff-search">Search</label>
                     <div class="relative">
                         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#7A8681] text-sm">search</span>
                         <input id="staff-search" type="text" name="search" value="{{ request('search') }}" placeholder="Name, email, or role..." class="input-field pl-9">
                     </div>
                 </div>
+                <div class="filter-field">
+                    <label class="filter-label" for="staff-status">Status</label>
+                    <select id="staff-status" name="status" class="input-field">
+                        <option value="">All statuses</option>
+                        <option value="active" @selected(request('status') === 'active')>Active</option>
+                        <option value="inactive" @selected(request('status') === 'inactive')>Inactive</option>
+                        <option value="suspended" @selected(request('status') === 'suspended')>Suspended</option>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label class="filter-label" for="staff-scope">Scope</label>
+                    <select id="staff-scope" name="scope" class="input-field">
+                        <option value="">All scopes</option>
+                        <option value="platform" @selected(request('scope') === 'platform')>Platform</option>
+                        <option value="franchise" @selected(request('scope') === 'franchise')>Franchise</option>
+                        <option value="branch" @selected(request('scope') === 'branch')>Branch</option>
+                        <option value="own" @selected(request('scope') === 'own')>Own</option>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label class="filter-label" for="staff-organization">Organization</label>
+                    <select id="staff-organization" name="organization_id" class="input-field">
+                        <option value="">All units</option>
+                        @foreach($organizationOptions as $organizationOption)
+                            <option value="{{ $organizationOption['id'] }}" @selected((string) request('organization_id') === (string) $organizationOption['id'])>{{ $organizationOption['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                </div>
 
                 <div class="flex items-center gap-3">
                     <x-nino.button type="submit" variant="primary">Search</x-nino.button>
-                    @if(request()->filled('search'))
+                    @if(request()->filled('search') || request()->filled('status') || request()->filled('scope') || request()->filled('organization_id'))
                         <x-nino.button href="{{ route('admin.staff.index') }}" variant="outline">Clear</x-nino.button>
                     @endif
                 </div>
@@ -104,8 +137,11 @@
                             </td>
                             <td class="text-sm font-medium text-[#61706B]">
                                 {{ ucfirst($user->organization_scope ?? 'Platform') }}
-                                @if($user->organization_id)
-                                    <span class="mt-1 block font-mono text-[10px] uppercase tracking-[0.16em] text-[#7A8681]">Org ID: {{ $user->organization_id }}</span>
+                                @if($user->organization)
+                                    <span class="mt-1 block text-[11px] text-[#7A8681]">{{ $user->organization->name }}</span>
+                                    @if($user->organization->parent)
+                                        <span class="block font-mono text-[10px] uppercase tracking-[0.16em] text-[#7A8681]">{{ $user->organization->parent->name }}</span>
+                                    @endif
                                 @endif
                             </td>
                             <td>
@@ -123,6 +159,18 @@
 
                                     @can('update', $user)
                                         <a href="{{ route('admin.staff.edit', $user) }}" class="table-action-link">Edit</a>
+                                    @endcan
+
+                                    @can('update', $user)
+                                        <form action="{{ route('admin.staff.access-link.store', $user) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit" class="table-action-link">Send Setup Link</button>
+                                        </form>
+
+                                        <form action="{{ route('admin.staff.sessions.revoke', $user) }}" method="POST" class="inline" onsubmit="return confirm('Revoke all active sessions for this staff member?');">
+                                            @csrf
+                                            <button type="submit" class="table-action-link">Revoke Sessions</button>
+                                        </form>
                                     @endcan
                                     
                                     @can('delete', $user)

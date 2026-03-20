@@ -2,6 +2,7 @@
 
 namespace App\Modules\Customers\Navigation;
 
+use App\Modules\IAM\Models\Role;
 use App\Modules\Shared\Navigation\Contracts\RegistersAdminMenu;
 use App\Modules\Shared\Navigation\DTOs\MenuItem;
 use App\Modules\Shared\Navigation\Services\MenuRegistry;
@@ -17,6 +18,7 @@ class CustomersMenu implements RegistersAdminMenu
                 ->setParent('commerce_header')
                 ->setRoute('admin.customers.index')
                 ->requirePermission('customers.viewAny')
+                ->prioritizeForRoles([Role::SALES_MANAGER, Role::CUSTOMER_SUPPORT_AGENT, Role::MARKETING_MANAGER], 70)
                 ->activeWhen('admin.customers.*')
                 ->setOrder(4)
         );

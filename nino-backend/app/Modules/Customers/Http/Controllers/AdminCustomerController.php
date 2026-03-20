@@ -4,7 +4,9 @@ namespace App\Modules\Customers\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Community\Services\CommunityOnboardingService;
 use App\Modules\Orders\Models\Order;
+use App\Modules\Settings\Services\PasswordPolicyService;
 use Illuminate\Http\Request;
 
 class AdminCustomerController extends Controller
@@ -14,6 +16,8 @@ class AdminCustomerController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAnyCustomers', User::class);
+
         $query = User::customers()
             ->withCount('orders')
             ->withSum('orders as lifetime_value', 'grand_total');
@@ -52,10 +56,11 @@ class AdminCustomerController extends Controller
      */
     public function show(User $customer)
     {
-        // Enforce type checking (ensure this user is actually a customer)
-        if ($customer->type !== 'customer') {
+        if (! $customer->isCustomer()) {
             abort(404, 'Customer not found.');
         }
+
+        $this->authorize('viewCustomer', $customer);
 
         // Load the customer's addresses and recent order history.
         $customer->load([
@@ -103,6 +108,8 @@ class AdminCustomerController extends Controller
      */
     public function create()
     {
+        $this->authorize('createCustomer', User::class);
+
         $customer = new User(['type' => 'customer', 'status' => 'active']);
         return view('admin.customers.create', compact('customer'));
     }
@@ -110,14 +117,20 @@ class AdminCustomerController extends Controller
     /**
      * Store a newly created customer in storage.
      */
-    public function store(Request $request)
+    public function store(
+        Request $request,
+        CommunityOnboardingService $communityOnboardingService,
+        PasswordPolicyService $passwordPolicy,
+    )
     {
+        $this->authorize('createCustomer', User::class);
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => $passwordPolicy->requiredRules(),
             'status' => 'required|in:active,suspended',
         ]);
 
@@ -132,6 +145,8 @@ class AdminCustomerController extends Controller
             'status' => $validated['status'],
         ]);
 
+        $communityOnboardingService->inviteNewCustomerToDefaultGroup($customer, 'admin_customer_create');
+
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', 'Customer created successfully.');
     }
@@ -141,9 +156,11 @@ class AdminCustomerController extends Controller
      */
     public function edit(User $customer)
     {
-        if ($customer->type !== 'customer') {
+        if (! $customer->isCustomer()) {
             abort(404, 'Customer not found.');
         }
+
+        $this->authorize('updateCustomer', $customer);
 
         return view('admin.customers.edit', compact('customer'));
     }
@@ -153,16 +170,20 @@ class AdminCustomerController extends Controller
      */
     public function update(Request $request, User $customer)
     {
-        if ($customer->type !== 'customer') {
+        if (! $customer->isCustomer()) {
             abort(404, 'Customer not found.');
         }
+
+        $this->authorize('updateCustomer', $customer);
+
+        $passwordPolicy = app(PasswordPolicyService::class);
 
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $customer->id,
             'phone' => 'nullable|string|max:20',
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => $passwordPolicy->optionalRules(),
             'status' => 'required|in:active,suspended',
         ]);
 

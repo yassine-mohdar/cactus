@@ -109,6 +109,20 @@ const destroyCharts = () => {
     chartRegistry.clear();
 };
 
+const setChartState = (canvas, state) => {
+    const shell = canvas.closest('[data-chart-shell]');
+
+    if (shell) {
+        shell.dataset.chartState = state;
+
+        const loadingPanel = shell.querySelector('[data-chart-loading]');
+
+        if (loadingPanel) {
+            loadingPanel.hidden = state === 'ready';
+        }
+    }
+};
+
 const initializeCharts = () => {
     destroyCharts();
 
@@ -121,16 +135,17 @@ const initializeCharts = () => {
 
         try {
             const parsed = JSON.parse(config);
+            const baseOptions = defaultChartOptions();
             const options = parsed.options ?? {};
             const mergedOptions = {
-                ...defaultChartOptions(),
+                ...baseOptions,
                 ...options,
                 plugins: {
-                    ...defaultChartOptions().plugins,
+                    ...baseOptions.plugins,
                     ...(options.plugins ?? {}),
                 },
                 scales: {
-                    ...defaultChartOptions().scales,
+                    ...baseOptions.scales,
                     ...(options.scales ?? {}),
                 },
             };
@@ -143,7 +158,9 @@ const initializeCharts = () => {
             });
 
             chartRegistry.set(canvas.id || `chart-${chartRegistry.size}`, chart);
+            setChartState(canvas, 'ready');
         } catch (error) {
+            setChartState(canvas, 'error');
             console.error('Unable to initialize dashboard chart.', error);
         }
     });

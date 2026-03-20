@@ -2,6 +2,7 @@
 
 namespace App\Modules\Settings\Navigation;
 
+use App\Modules\IAM\Models\Role;
 use App\Modules\Shared\Navigation\Contracts\RegistersAdminMenu;
 use App\Modules\Shared\Navigation\DTOs\MenuItem;
 use App\Modules\Shared\Navigation\Services\MenuRegistry;
@@ -17,6 +18,7 @@ class SettingsMenu implements RegistersAdminMenu
                 ->setParent('system_header')
                 ->setRoute('admin.settings.index')
                 ->requirePermission('settings.manage')
+                ->prioritizeForRoles([Role::SUPER_ADMIN, Role::PLATFORM_ADMIN], 100)
                 ->activeWhen('admin.settings.*')
                 ->setOrder(10)
         );

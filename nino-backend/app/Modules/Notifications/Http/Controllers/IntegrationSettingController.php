@@ -5,18 +5,19 @@ namespace App\Modules\Notifications\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Audit\Services\AuditLogger;
 use App\Modules\Notifications\Models\IntegrationSetting;
+use App\Modules\Notifications\Services\IntegrationConnectionTestService;
 use Illuminate\Http\Request;
 
 class IntegrationSettingController extends Controller
 {
     public function __construct(
         private readonly AuditLogger $audit,
+        private readonly IntegrationConnectionTestService $tester,
     ) {}
 
     public function index()
     {
-        // Auto-seed default providers if they don't exist
-        $this->seedDefaults();
+        IntegrationSetting::ensureDefaultsExist();
 
         $integrations = IntegrationSetting::orderBy('provider')->get();
 
@@ -32,10 +33,7 @@ class IntegrationSettingController extends Controller
 
     public function update(Request $request, IntegrationSetting $integration)
     {
-        $validated = $request->validate([
-            'is_enabled' => 'nullable|boolean',
-            'credentials' => 'nullable|array',
-        ]);
+        $validated = $request->validate($this->rulesFor($integration));
 
         $before = [
             'is_enabled' => $integration->is_enabled,
@@ -76,13 +74,50 @@ class IntegrationSettingController extends Controller
             ->with('success', "{$integration->name} settings updated.");
     }
 
-    private function seedDefaults(): void
+    public function test(IntegrationSetting $integration)
     {
-        foreach (IntegrationSetting::defaultDefinitions() as $default) {
-            IntegrationSetting::firstOrCreate(
-                ['provider' => $default['provider']],
-                $default
-            );
-        }
+        $result = $this->tester->test($integration);
+
+        return redirect()
+            ->route('admin.notifications.integrations.index')
+            ->with($result['status'], $result['message']);
+    }
+
+    private function rulesFor(IntegrationSetting $integration): array
+    {
+        $enabledRule = $integration->is_enabled ? 'nullable' : 'required_if:is_enabled,1';
+
+        return match ($integration->provider) {
+            'smtp' => [
+                'is_enabled' => 'nullable|boolean',
+                'credentials' => 'nullable|array',
+                'credentials.host' => "{$enabledRule}|string|max:255",
+                'credentials.port' => "{$enabledRule}|integer|min:1|max:65535",
+                'credentials.username' => 'nullable|string|max:255',
+                'credentials.password' => 'nullable|string|max:255',
+                'credentials.encryption' => 'nullable|in:tls,ssl,',
+                'credentials.from_address' => "{$enabledRule}|email|max:150",
+                'credentials.from_name' => 'nullable|string|max:150',
+            ],
+            'twilio' => [
+                'is_enabled' => 'nullable|boolean',
+                'credentials' => 'nullable|array',
+                'credentials.account_sid' => "{$enabledRule}|string|max:100",
+                'credentials.auth_token' => "{$enabledRule}|string|max:255",
+                'credentials.from_number' => "{$enabledRule}|string|max:30",
+            ],
+            'whatsapp_api' => [
+                'is_enabled' => 'nullable|boolean',
+                'credentials' => 'nullable|array',
+                'credentials.access_token' => "{$enabledRule}|string|max:255",
+                'credentials.phone_number_id' => "{$enabledRule}|string|max:100",
+                'credentials.business_account_id' => "{$enabledRule}|string|max:100",
+                'credentials.api_version' => 'nullable|string|max:20',
+            ],
+            default => [
+                'is_enabled' => 'nullable|boolean',
+                'credentials' => 'nullable|array',
+            ],
+        };
     }
 }

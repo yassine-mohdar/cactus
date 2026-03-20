@@ -13,6 +13,8 @@ class CategoryController extends Controller
 {
     public function index()
     {
+        $this->authorize('viewAny', Category::class);
+
         $categories = Category::with('parent')->orderBy('sort_order')->orderBy('name')->paginate(20);
         $summaryBaseQuery = Category::query();
 
@@ -28,12 +30,16 @@ class CategoryController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Category::class);
+
         $categories = Category::orderBy('name')->get();
         return view('admin.catalog.categories.create', compact('categories'));
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Category::class);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:categories,id',
@@ -66,6 +72,8 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
+        $this->authorize('update', $category);
+
         // Prevent setting a category as its own parent
         $categories = Category::where('id', '!=', $category->id)->orderBy('name')->get();
         return view('admin.catalog.categories.edit', compact('category', 'categories'));
@@ -73,6 +81,8 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
+        $this->authorize('update', $category);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'parent_id' => [
@@ -111,6 +121,8 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        $this->authorize('delete', $category);
+
         if ($category->children()->count() > 0) {
             return back()->with('error', 'Cannot delete a category that has child categories.');
         }

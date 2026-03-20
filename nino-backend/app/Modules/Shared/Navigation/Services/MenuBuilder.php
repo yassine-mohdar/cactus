@@ -56,20 +56,43 @@ class MenuBuilder
      */
     protected function finalizeTree(array $nodes): array
     {
+        $finalized = [];
+
         // Sort by order ASC
         usort($nodes, function(MenuItem $a, MenuItem $b) {
-            return $a->order <=> $b->order;
+            return $this->effectiveOrder($a) <=> $this->effectiveOrder($b);
         });
 
         foreach ($nodes as $node) {
             if (!empty($node->children)) {
                 $node->children = $this->finalizeTree($node->children);
             }
-            
+
+            if ($node->isHeader && empty($node->children)) {
+                continue;
+            }
+
             // Determine active state out of the current routing context
             $node->_isActive = $this->activeResolver->isActive($node);
+            $finalized[] = $node;
         }
 
-        return $nodes;
+        return $finalized;
+    }
+
+    protected function effectiveOrder(MenuItem $item): int
+    {
+        $user = auth()->user();
+
+        if (
+            $user
+            && ! empty($item->priorityRoles)
+            && method_exists($user, 'hasAnyRole')
+            && $user->hasAnyRole($item->priorityRoles)
+        ) {
+            return $item->order - $item->priorityBoost;
+        }
+
+        return $item->order;
     }
 }

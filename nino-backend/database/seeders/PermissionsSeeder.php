@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Modules\IAM\Models\Permission;
+use App\Modules\IAM\Models\Role;
+use App\Modules\IAM\Services\RolePresetRegistry;
+use App\Modules\IAM\Support\PermissionNaming;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class PermissionsSeeder extends Seeder
 {
@@ -14,151 +16,57 @@ class PermissionsSeeder extends Seeder
     public function run(): void
     {
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $rolePresets = app(RolePresetRegistry::class);
 
         // 1. Define all permissions (P1-IAM-01)
-        $permissions = [
-            // IAM / Users
-            'users.viewAny', 'users.view', 'users.create', 'users.update', 'users.delete', 'users.manage_roles',
-            
-            // Organizations
-            'organizations.viewAny', 'organizations.view', 'organizations.create', 'organizations.update', 'organizations.delete',
-            
-            // Catalog
-            'categories.viewAny', 'categories.create', 'categories.update', 'categories.delete',
-            'products.viewAny', 'products.view', 'products.create', 'products.update', 'products.delete', 'products.publish',
-            
-            // Inventory
-            'inventory.viewAny', 'inventory.adjust', 'inventory.transfer',
-            
-            // Orders
-            'orders.viewAny', 'orders.view', 'orders.create', 'orders.update', 'orders.cancel', 'orders.refund',
-            
-            // Customers
-            'customers.viewAny', 'customers.view', 'customers.create', 'customers.update', 'customers.delete',
-            
-            // Shipping
-            'shipping.viewAny', 'shipping.update', 'shipping.manage_carriers',
-            
-            // Finance / Payments
-            'finance.viewAny', 'finance.manage_gateways', 'payments.viewAny', 'payments.refund',
-            
-            // CMS / Marketing
-            'cms.viewAny', 'cms.manage_pages', 'cms.manage_blog',
-            'coupons.viewAny', 'coupons.create', 'coupons.update', 'coupons.delete',
-            
-            // Support
-            'support.viewAny', 'support.manage_tickets',
-            
-            // Reports
-            'reports.viewAny',
-
-            // Settings
-            'settings.view', 'settings.update',
-            'settings.manage',
-
-            // Catalog
-            'catalog.categories.viewAny',
-            'catalog.categories.create',
-            'catalog.categories.update',
-            'catalog.categories.delete',
-
-            'catalog.products.viewAny',
-            'catalog.products.create',
-            'catalog.products.update',
-            'catalog.products.delete',
-        ];
+        $permissions = array_merge(
+            PermissionNaming::domain('users', ['viewAny', 'view', 'create', 'update', 'delete', 'manage_roles']),
+            PermissionNaming::domain('organizations', ['viewAny', 'view', 'create', 'update', 'delete']),
+            PermissionNaming::domain('categories', ['viewAny', 'create', 'update', 'delete']),
+            PermissionNaming::domain('products', ['viewAny', 'view', 'create', 'update', 'delete', 'publish']),
+            PermissionNaming::domain('inventory', ['viewAny', 'adjust', 'transfer']),
+            PermissionNaming::domain('orders', ['viewAny', 'view', 'create', 'update', 'cancel', 'refund']),
+            PermissionNaming::domain('customers', ['viewAny', 'view', 'create', 'update', 'delete']),
+            PermissionNaming::domain('shipping', ['viewAny', 'update', 'manage_carriers']),
+            PermissionNaming::domain('finance', ['viewAny', 'manage_gateways']),
+            PermissionNaming::domain('payments', ['viewAny', 'refund']),
+            PermissionNaming::domain('cms', ['viewAny', 'manage_pages', 'manage_blog']),
+            PermissionNaming::domain('coupons', ['viewAny', 'create', 'update', 'delete']),
+            PermissionNaming::domain('support', ['viewAny', 'manage_tickets']),
+            PermissionNaming::domain('reports', ['viewAny']),
+            PermissionNaming::domain('community', ['viewAny']),
+            PermissionNaming::domain('community.groups', ['viewAny']),
+            PermissionNaming::domain('community.posts', ['viewAny']),
+            PermissionNaming::domain('community.reports', ['viewAny', 'update']),
+            PermissionNaming::domain('community.moderation', ['viewAny', 'update']),
+            PermissionNaming::domain('settings', ['view', 'update', 'manage']),
+            PermissionNaming::domain('catalog.categories', ['viewAny', 'create', 'update', 'delete']),
+            PermissionNaming::domain('catalog.products', ['viewAny', 'create', 'update', 'delete']),
+        );
 
         // Create all permissions
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        // 2. Fetch or create roles
-        $superAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
-        $platformAdmin = Role::firstOrCreate(['name' => 'Platform Admin', 'guard_name' => 'web']);
-        $franchiseManager = Role::firstOrCreate(['name' => 'Franchise Manager', 'guard_name' => 'web']);
-        $branchManager = Role::firstOrCreate(['name' => 'Branch Manager', 'guard_name' => 'web']);
-        $customerSupport = Role::firstOrCreate(['name' => 'Customer Support Agent', 'guard_name' => 'web']);
-        $shippingAgent = Role::firstOrCreate(['name' => 'Shipping Agent', 'guard_name' => 'web']);
-        $financeManager = Role::firstOrCreate(['name' => 'Finance Manager', 'guard_name' => 'web']);
-        $contentManager = Role::firstOrCreate(['name' => 'SEO / Content Manager', 'guard_name' => 'web']);
-        $marketingManager = Role::firstOrCreate(['name' => 'Media Buying / Marketing Manager', 'guard_name' => 'web']);
-        $stockManager = Role::firstOrCreate(['name' => 'Stock Manager', 'guard_name' => 'web']);
-        
-        // 3. Assign permissions to roles (P1-IAM-03)
+        // 2. Fetch or create role presets and attach permissions (P1-IAM-03 / P1-IAM-04)
+        foreach ($rolePresets->definitions() as $definition) {
+            $role = Role::firstOrCreate([
+                'name' => $definition['name'],
+                'guard_name' => 'web',
+            ]);
 
-        // Super Admin gets everything via a Gate::before rule usually, but we can assign all just in case
-        $superAdmin->givePermissionTo(Permission::all());
+            if ($definition['permissions'] === ['*']) {
+                $role->syncPermissions(Permission::query()->ordered()->pluck('name')->all());
 
-        // Platform Admin (Everything except highly sensitive destructive or foundational settings maybe, but here mostly everything)
-        $platformAdmin->givePermissionTo(Permission::all());
+                continue;
+            }
+
+            $role->syncPermissions($definition['permissions']);
+        }
+
+        // Platform Admin is intentionally broad, but not allowed the most destructive permissions.
+        $platformAdmin = Role::findByName(Role::PLATFORM_ADMIN, 'web');
         $platformAdmin->revokePermissionTo(['users.delete', 'organizations.delete', 'finance.manage_gateways']);
-
-        // Franchise Manager (Scoped later to franchise via policies, but gets foundational rights here)
-        $franchiseManager->givePermissionTo([
-            'users.viewAny', 'users.view', 'users.create', 'users.update',
-            'organizations.viewAny', 'organizations.view',
-            'products.viewAny', 'products.view',
-            'inventory.viewAny', 'inventory.adjust', 'inventory.transfer',
-            'orders.viewAny', 'orders.view', 'orders.create', 'orders.update', 'orders.cancel',
-            'customers.viewAny', 'customers.view',
-            'reports.viewAny' ?? 'settings.view', // Note: missing reports.viewAny from array above, adding placeholder
-        ]);
-
-        // Branch Manager (Scoped later to branch. More limited)
-        $branchManager->givePermissionTo([
-            'users.viewAny', 'users.view',
-            'organizations.view',
-            'products.viewAny', 'products.view',
-            'inventory.viewAny', 'inventory.adjust',
-            'orders.viewAny', 'orders.view', 'orders.update', // Mostly order fulfillment
-            'customers.viewAny', 'customers.view',
-            'shipping.viewAny', 'shipping.update'
-        ]);
-
-        // Customer Support Agent
-        $customerSupport->givePermissionTo([
-            'users.viewAny', 'users.view',
-            'orders.viewAny', 'orders.view', 'orders.update', 'orders.cancel', // maybe refunds if policy allows
-            'customers.viewAny', 'customers.view', 'customers.update',
-            'support.viewAny', 'support.manage_tickets',
-            'shipping.viewAny'
-        ]);
-
-        // Shipping Agent
-        $shippingAgent->givePermissionTo([
-            'orders.viewAny', 'orders.view', 'orders.update', // specifically marking shipped
-            'shipping.viewAny', 'shipping.update'
-        ]);
-
-        // Finance Manager
-        $financeManager->givePermissionTo([
-            'orders.viewAny', 'orders.view',
-            'finance.viewAny', 'finance.manage_gateways',
-            'payments.viewAny', 'payments.refund',
-            'reports.viewAny' ?? 'settings.view',
-        ]);
-
-        // Content / SEO
-        $contentManager->givePermissionTo([
-            'categories.viewAny', 'categories.create', 'categories.update',
-            'products.viewAny', 'products.view', 'products.create', 'products.update',
-            'cms.viewAny', 'cms.manage_pages', 'cms.manage_blog',
-            'settings.view'
-        ]);
-
-        // Stock Manager
-        $stockManager->givePermissionTo([
-            'products.viewAny', 'products.view',
-            'inventory.viewAny', 'inventory.adjust', 'inventory.transfer',
-        ]);
-        
-        // Marketing Manager
-        $marketingManager->givePermissionTo([
-            'products.viewAny', 'products.view',
-            'customers.viewAny', 'customers.view',
-            'coupons.viewAny', 'coupons.create', 'coupons.update', 'coupons.delete',
-            'cms.viewAny',
-        ]);
     }
 }

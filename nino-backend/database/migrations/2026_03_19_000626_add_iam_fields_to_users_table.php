@@ -25,7 +25,7 @@ return new class extends Migration
 
             // P1-ORG-04: Organization assignment
             $table->unsignedBigInteger('organization_id')->nullable()->after('status');
-            $table->enum('organization_scope', ['platform', 'franchise', 'branch'])->nullable()->after('organization_id');
+            $table->enum('organization_scope', ['platform', 'franchise', 'branch', 'own'])->nullable()->after('organization_id');
 
             // Indexes
             $table->index('type');

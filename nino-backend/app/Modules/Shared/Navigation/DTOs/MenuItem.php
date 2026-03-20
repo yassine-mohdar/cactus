@@ -14,6 +14,8 @@ class MenuItem
     public int $order = 0;
     public array $permissions = [];
     public array $scopes = [];
+    public array $priorityRoles = [];
+    public int $priorityBoost = 0;
     public ?string $featureFlag = null;
     public array $activePatterns = [];
     public $badgeResolver = null;
@@ -79,6 +81,14 @@ class MenuItem
     public function requireScope(string|array $scopes): self
     {
         $this->scopes = (array) $scopes;
+        return $this;
+    }
+
+    public function prioritizeForRoles(string|array $roles, int $boost = 100): self
+    {
+        $this->priorityRoles = array_values(array_unique(array_merge($this->priorityRoles, (array) $roles)));
+        $this->priorityBoost = max($this->priorityBoost, $boost);
+
         return $this;
     }
 

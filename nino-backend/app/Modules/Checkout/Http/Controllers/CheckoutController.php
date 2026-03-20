@@ -33,7 +33,7 @@ class CheckoutController extends Controller
 
             return response()->json([
                 'message' => 'Checkout failed.',
-                'error' => tap(config('app.debug'), fn($debug) => $debug ? $e->getMessage() : 'An unexpected error occurred.')
+                'error' => config('app.debug') ? $e->getMessage() : 'An unexpected error occurred.',
             ], 422);
         }
     }

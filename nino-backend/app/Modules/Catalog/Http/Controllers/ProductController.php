@@ -17,6 +17,8 @@ class ProductController extends Controller
 
     public function index()
     {
+        $this->authorize('viewAny', Product::class);
+
         $products = Product::with(['categories', 'featuredImage'])->orderBy('id', 'desc')->paginate(25);
         $summaryBaseQuery = Product::query();
 
@@ -32,12 +34,16 @@ class ProductController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Product::class);
+
         $categories = Category::orderBy('name')->get();
         return view('admin.catalog.products.create', compact('categories'));
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Product::class);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:simple,variable',
@@ -85,12 +91,16 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
+        $this->authorize('update', $product);
+
         $categories = Category::orderBy('name')->get();
         return view('admin.catalog.products.edit', compact('product', 'categories'));
     }
 
     public function update(Request $request, Product $product)
     {
+        $this->authorize('update', $product);
+
         $pricingBefore = $this->pricingSnapshot($product);
 
         $validated = $request->validate([
@@ -168,6 +178,8 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        $this->authorize('delete', $product);
+
         // Delete all images from storage
         foreach ($product->images as $image) {
             Storage::disk('public')->delete($image->path);

@@ -3,9 +3,14 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Modules\IAM\Services\ScopeAuthorizationService;
 
 class UserPolicy
 {
+    public function __construct(
+        private readonly ScopeAuthorizationService $scopes = new ScopeAuthorizationService(),
+    ) {}
+
     /**
      * Determine whether the user can view any models.
      */
@@ -30,6 +35,55 @@ class UserPolicy
     public function create(User $user): bool
     {
         return $user->hasPermissionTo('users.create');
+    }
+
+    public function viewAnyCustomers(User $user): bool
+    {
+        return $user->can('customers.viewAny');
+    }
+
+    public function viewCustomer(User $user, User $model): bool
+    {
+        if (! $model->isCustomer() || ! $user->can('customers.view')) {
+            return false;
+        }
+
+        if (! $model->organization_id) {
+            return true;
+        }
+
+        return $this->isInScope($user, $model);
+    }
+
+    public function createCustomer(User $user): bool
+    {
+        return $user->can('customers.create');
+    }
+
+    public function updateCustomer(User $user, User $model): bool
+    {
+        if (! $model->isCustomer() || ! $user->can('customers.update')) {
+            return false;
+        }
+
+        if (! $model->organization_id) {
+            return true;
+        }
+
+        return $this->isInScope($user, $model);
+    }
+
+    public function deleteCustomer(User $user, User $model): bool
+    {
+        if (! $model->isCustomer() || ! $user->can('customers.delete')) {
+            return false;
+        }
+
+        if (! $model->organization_id) {
+            return true;
+        }
+
+        return $this->isInScope($user, $model);
     }
 
     /**
@@ -70,30 +124,6 @@ class UserPolicy
      */
     protected function isInScope(User $user, User $target): bool
     {
-        // Platform scope covers all users
-        if ($user->organization_scope === 'platform' || $user->isSuperAdmin()) {
-            return true;
-        }
-
-        // If target has no org, only platform/super admins can see them
-        if (! $target->organization_id) {
-            return false;
-        }
-
-        if ($user->organization_scope === 'franchise') {
-            // Can see users in exact franchise, OR in a branch that belongs to this franchise
-            if ($user->organization_id === $target->organization_id) return true;
-            
-            // Check if target is in a child branch 
-            $targetFranchiseId = $target->organization?->parent_id;
-            return $user->organization_id === $targetFranchiseId;
-        }
-
-        if ($user->organization_scope === 'branch') {
-            // Can only see users in the exact same branch
-            return $user->organization_id === $target->organization_id;
-        }
-
-        return false;
+        return $this->scopes->userIsInScope($user, $target);
     }
 }

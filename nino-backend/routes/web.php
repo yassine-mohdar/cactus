@@ -2,7 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Modules\IAM\Http\Controllers\AuthController;
+use App\Modules\IAM\Http\Controllers\CustomerAuthController;
+use App\Modules\IAM\Http\Controllers\CustomerPasswordSetupController;
+use App\Modules\IAM\Http\Controllers\CustomerPasswordResetController;
 use App\Modules\IAM\Http\Controllers\DashboardController;
+use App\Modules\IAM\Http\Controllers\RoleController;
+use App\Modules\IAM\Http\Controllers\StaffAccessLinkController;
+use App\Modules\IAM\Http\Controllers\StaffAccessSetupController;
+use App\Modules\IAM\Http\Controllers\StaffSessionController;
+use App\Modules\IAM\Http\Controllers\TwoFactorSetupController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +22,35 @@ use App\Modules\IAM\Http\Controllers\DashboardController;
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+
+    Route::get('/staff/access/setup/{token}', [StaffAccessSetupController::class, 'show'])
+        ->middleware('signed')
+        ->name('staff.access.setup.show');
+    Route::post('/staff/access/setup', [StaffAccessSetupController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('staff.access.setup.store');
+});
+
+// Customer auth surface
+Route::prefix('account')->name('customer.')->group(function () {
+    Route::get('login', [CustomerAuthController::class, 'showLogin'])->name('login');
+    Route::post('login', [CustomerAuthController::class, 'login'])->middleware('throttle:6,1')->name('login.store');
+    Route::get('forgot-password', [CustomerPasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('forgot-password', [CustomerPasswordResetController::class, 'sendResetLink'])->middleware('throttle:6,1')->name('password.email');
+    Route::get('reset-password/{token}', [CustomerPasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('reset-password', [CustomerPasswordResetController::class, 'reset'])->middleware('throttle:6,1')->name('password.reset.store');
+
+    Route::get('password/setup/{token}', [CustomerPasswordSetupController::class, 'show'])
+        ->middleware('signed')
+        ->name('password.setup.show');
+    Route::post('password/setup', [CustomerPasswordSetupController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('password.setup.store');
+
+    Route::middleware('customer.only')->group(function () {
+        Route::get('/', [CustomerAuthController::class, 'home'])->name('account.home');
+        Route::post('logout', [CustomerAuthController::class, 'logout'])->name('logout');
+    });
 });
 
 // Authenticated routes
@@ -21,13 +58,30 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Admin
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->middleware(['staff.only', 'staff.2fa.enforced'])->group(function () {
+        Route::prefix('security')->name('admin.security.')->group(function () {
+            Route::get('two-factor-setup', [TwoFactorSetupController::class, 'show'])->name('two-factor.setup');
+            Route::post('two-factor-setup/password', [TwoFactorSetupController::class, 'prepare'])->name('two-factor.prepare');
+            Route::post('two-factor-setup/confirm', [TwoFactorSetupController::class, 'confirm'])->name('two-factor.confirm');
+        });
+
         Route::get('/', DashboardController::class)->name('admin.dashboard');
 
         // Impersonation routes
         Route::impersonate();
 
         // IAM / Staff
+        Route::prefix('staff/roles')->name('admin.staff.roles.')->group(function () {
+            Route::get('/', [RoleController::class, 'index'])->name('index');
+            Route::get('create', [RoleController::class, 'create'])->name('create');
+            Route::post('/', [RoleController::class, 'store'])->name('store');
+            Route::get('{role}/edit', [RoleController::class, 'edit'])->name('edit');
+            Route::put('{role}', [RoleController::class, 'update'])->name('update');
+            Route::delete('{role}', [RoleController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::post('staff/{staff}/access-link', [StaffAccessLinkController::class, 'store'])->name('admin.staff.access-link.store');
+        Route::post('staff/{staff}/revoke-sessions', [StaffSessionController::class, 'store'])->name('admin.staff.sessions.revoke');
         Route::resource('staff', \App\Modules\IAM\Http\Controllers\StaffController::class)
             ->except(['show'])
             ->names('admin.staff');
@@ -47,13 +101,13 @@ Route::middleware('auth')->group(function () {
         });
 
         // Settings & Configurations
-        Route::prefix('settings')->group(function () {
+        Route::prefix('settings')->middleware('permission.any:settings.manage')->group(function () {
             Route::get('/', [\App\Modules\Settings\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings.index');
             Route::put('/', [\App\Modules\Settings\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');
         });
 
         // Payment Gateways
-        Route::prefix('gateways')->group(function () {
+        Route::prefix('gateways')->middleware('permission.any:finance.manage_gateways')->group(function () {
             Route::get('/', [\App\Modules\Payments\Http\Controllers\AdminGatewaySettingController::class, 'index'])->name('admin.gateways.index');
             Route::put('/{gateway}', [\App\Modules\Payments\Http\Controllers\AdminGatewaySettingController::class, 'update'])->name('admin.gateways.update');
         });
@@ -121,6 +175,7 @@ Route::middleware('auth')->group(function () {
             // Integrations
             Route::get('integrations', [\App\Modules\Notifications\Http\Controllers\IntegrationSettingController::class, 'index'])->name('integrations.index');
             Route::put('integrations/{integration}', [\App\Modules\Notifications\Http\Controllers\IntegrationSettingController::class, 'update'])->name('integrations.update');
+            Route::get('integrations/{integration}/test', [\App\Modules\Notifications\Http\Controllers\IntegrationSettingController::class, 'test'])->name('integrations.test');
         });
 
         // Promotions & Coupons
@@ -192,12 +247,13 @@ Route::middleware('auth')->group(function () {
         });
 
         // Reports & Analytics
-        Route::prefix('reports')->name('admin.reports.')->group(function () {
+        Route::prefix('reports')->name('admin.reports.')->middleware('permission.any:reports.viewAny')->group(function () {
             Route::get('sales', [\App\Modules\Reports\Http\Controllers\SalesReportController::class, 'index'])->name('sales');
             Route::get('orders', [\App\Modules\Reports\Http\Controllers\OrdersReportController::class, 'index'])->name('orders');
             Route::get('inventory', [\App\Modules\Reports\Http\Controllers\InventoryReportController::class, 'index'])->name('inventory');
             Route::get('coupons', [\App\Modules\Reports\Http\Controllers\CouponReportController::class, 'index'])->name('coupons');
             Route::get('finance', [\App\Modules\Reports\Http\Controllers\FinanceSummaryReportController::class, 'index'])->name('finance');
+            Route::get('observability', [\App\Modules\Reports\Http\Controllers\ObservabilityReportController::class, 'index'])->name('observability');
 
             // Exports
             Route::prefix('export')->name('export.')->group(function () {
@@ -225,16 +281,17 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    // Customer API
-    Route::prefix('api/customer')->name('api.customer.')->group(function () {
-        Route::get('overview', [\App\Modules\Customers\Http\Controllers\AccountOverviewController::class, 'index'])->name('overview');
-        Route::put('profile', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'updateProfile'])->name('profile.update');
-        Route::put('password', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'updatePassword'])->name('password.update');
-        Route::apiResource('addresses', \App\Modules\Customers\Http\Controllers\AddressController::class);
+});
 
-        // Shipping / Tracking
-        Route::get('orders/{order}/tracking', [\App\Modules\Shipping\Http\Controllers\CustomerTrackingController::class, 'show'])->name('orders.tracking');
-    });
+// Customer API
+Route::prefix('api/customer')->name('api.customer.')->middleware('customer.only')->group(function () {
+    Route::get('overview', [\App\Modules\Customers\Http\Controllers\AccountOverviewController::class, 'index'])->name('overview');
+    Route::put('profile', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::put('password', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'updatePassword'])->name('password.update');
+    Route::apiResource('addresses', \App\Modules\Customers\Http\Controllers\AddressController::class);
+
+    // Shipping / Tracking
+    Route::get('orders/{order}/tracking', [\App\Modules\Shipping\Http\Controllers\CustomerTrackingController::class, 'show'])->name('orders.tracking');
 });
 
 // Cart API (Open to Guests & Authenticated via X-Cart-Session-Id/Sanctum)

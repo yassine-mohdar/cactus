@@ -18,6 +18,19 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+            @can('viewAny', \Spatie\Permission\Models\Role::class)
+                <x-nino.button href="{{ route('admin.staff.roles.index') }}" variant="secondary" icon="shield_person">Manage Roles</x-nino.button>
+            @endcan
+            @can('update', $staff)
+                <form action="{{ route('admin.staff.access-link.store', $staff) }}" method="POST">
+                    @csrf
+                    <x-nino.button type="submit" variant="secondary" icon="mail">Send Access Setup Link</x-nino.button>
+                </form>
+                <form action="{{ route('admin.staff.sessions.revoke', $staff) }}" method="POST" onsubmit="return confirm('Revoke all active sessions for this staff member?');">
+                    @csrf
+                    <x-nino.button type="submit" variant="secondary" icon="lock_reset">Revoke Sessions</x-nino.button>
+                </form>
+            @endcan
             <span class="datatable-meta">Staff ID {{ $staff->id }}</span>
             <span class="inline-flex items-center rounded-full border border-[rgba(36,88,72,0.16)] bg-[#E7F0EA] px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-[#245848]">{{ \Illuminate\Support\Str::headline($staffStatus) }}</span>
         </div>

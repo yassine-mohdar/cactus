@@ -34,6 +34,18 @@ class ShipmentController extends Controller
             $query->withIssues();
         }
 
+        if ($request->filled('tracking')) {
+            if ($request->tracking === 'missing') {
+                $query->where(function ($builder) {
+                    $builder->whereNull('tracking_number')->orWhere('tracking_number', '');
+                });
+            }
+
+            if ($request->tracking === 'present') {
+                $query->whereNotNull('tracking_number')->where('tracking_number', '!=', '');
+            }
+        }
+
         // Search by tracking or order reference
         if ($request->filled('search')) {
             $search = $request->search;

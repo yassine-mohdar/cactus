@@ -11,7 +11,10 @@ class DashboardController extends Controller
     public function __invoke(Request $request, DashboardMetricsService $dashboardMetrics)
     {
         $user = auth()->user();
-        $dashboard = $dashboardMetrics->build($user);
+        $dashboard = $dashboardMetrics->build(
+            $user,
+            $request->string('preset')->toString()
+        );
 
         return view('admin.dashboard', compact('dashboard'));
     }

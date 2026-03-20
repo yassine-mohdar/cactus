@@ -18,18 +18,30 @@ class SettingsSeeder extends Seeder
             // General Group
             ['group' => 'general', 'key' => 'site_name', 'value' => 'NinoWorld', 'type' => 'string'],
             ['group' => 'general', 'key' => 'site_tagline', 'value' => 'Playful commerce operations for Morocco.', 'type' => 'string'],
+            ['group' => 'general', 'key' => 'site_url', 'value' => 'https://ninoworld.ma', 'type' => 'url'],
             ['group' => 'general', 'key' => 'company_name', 'value' => 'NinoWorld SARL', 'type' => 'string'],
+            ['group' => 'general', 'key' => 'company_legal_name', 'value' => 'NinoWorld SARL AU', 'type' => 'string'],
+            ['group' => 'general', 'key' => 'company_registration_id', 'value' => 'RC Casablanca 123456', 'type' => 'string'],
             ['group' => 'general', 'key' => 'company_email', 'value' => 'hello@ninoworld.ma', 'type' => 'string'],
+            ['group' => 'general', 'key' => 'support_email', 'value' => 'support@ninoworld.ma', 'type' => 'string'],
             ['group' => 'general', 'key' => 'company_phone', 'value' => '+212 5 22 00 00 00', 'type' => 'string'],
             ['group' => 'general', 'key' => 'company_address', 'value' => '201 Boulevard Ghandi, Casablanca, Morocco', 'type' => 'string'],
+            ['group' => 'general', 'key' => 'brand_logo_url', 'value' => 'https://cdn.ninoworld.ma/brand/logo.svg', 'type' => 'url'],
+            ['group' => 'general', 'key' => 'brand_favicon_url', 'value' => 'https://cdn.ninoworld.ma/brand/favicon.ico', 'type' => 'url'],
+            ['group' => 'general', 'key' => 'brand_primary_color', 'value' => '#17302A', 'type' => 'color'],
+            ['group' => 'general', 'key' => 'brand_accent_color', 'value' => '#C18B3B', 'type' => 'color'],
+            ['group' => 'general', 'key' => 'locale', 'value' => 'en', 'type' => 'string'],
             ['group' => 'general', 'key' => 'timezone', 'value' => 'Africa/Casablanca', 'type' => 'string'],
             ['group' => 'general', 'key' => 'currency', 'value' => 'MAD', 'type' => 'string'],
 
             // SEO Group
-            ['group' => 'seo', 'key' => 'default_meta_title', 'value' => 'NinoWorld - Adopt Your Magical Best Friend', 'type' => 'string'],
-            ['group' => 'seo', 'key' => 'default_meta_description', 'value' => 'Discover the magic of NinoWorld. Adopt cute companions, explore the universe, and bring joy to your everyday life.', 'type' => 'string'],
-            ['group' => 'seo', 'key' => 'google_analytics_id', 'value' => '', 'type' => 'string'],
-            ['group' => 'seo', 'key' => 'facebook_pixel_id', 'value' => '', 'type' => 'string'],
+            ['group' => 'seo', 'key' => 'meta_title', 'value' => 'NinoWorld - Adopt Your Magical Best Friend', 'type' => 'string'],
+            ['group' => 'seo', 'key' => 'meta_description', 'value' => 'Discover the magic of NinoWorld. Adopt cute companions, explore the universe, and bring joy to your everyday life.', 'type' => 'string'],
+            ['group' => 'seo', 'key' => 'google_analytics', 'value' => '', 'type' => 'string'],
+            ['group' => 'seo', 'key' => 'google_tag_manager', 'value' => '', 'type' => 'string'],
+            ['group' => 'seo', 'key' => 'google_verification', 'value' => '', 'type' => 'string'],
+            ['group' => 'seo', 'key' => 'facebook_pixel', 'value' => '', 'type' => 'string'],
+            ['group' => 'seo', 'key' => 'tiktok_pixel', 'value' => '', 'type' => 'string'],
 
             // Mail Group
             ['group' => 'mail', 'key' => 'mail_mailer', 'value' => 'smtp', 'type' => 'string'],
@@ -42,10 +54,12 @@ class SettingsSeeder extends Seeder
             ['group' => 'mail', 'key' => 'mail_from_name', 'value' => 'NinoWorld', 'type' => 'string'],
 
             // Security Group
-            ['group' => 'security', 'key' => 'force_2fa_staff', 'value' => '0', 'type' => 'boolean'], // Stored as '0' or '1'
-            ['group' => 'security', 'key' => 'session_timeout', 'value' => '120', 'type' => 'integer'],
-            ['group' => 'security', 'key' => 'password_expiry_days', 'value' => '90', 'type' => 'integer'],
-            ['group' => 'security', 'key' => 'security_alert_email', 'value' => 'security@ninoworld.example.com', 'type' => 'string'],
+            ['group' => 'security', 'key' => 'force_2fa', 'value' => false, 'type' => 'boolean'],
+            ['group' => 'security', 'key' => 'session_lifetime', 'value' => 120, 'type' => 'integer'],
+            ['group' => 'security', 'key' => 'password_min_length', 'value' => 8, 'type' => 'integer'],
+            ['group' => 'security', 'key' => 'password_require_mixed_case', 'value' => true, 'type' => 'boolean'],
+            ['group' => 'security', 'key' => 'password_require_numbers', 'value' => true, 'type' => 'boolean'],
+            ['group' => 'security', 'key' => 'password_require_symbols', 'value' => false, 'type' => 'boolean'],
         ];
 
         foreach ($settings as $settingData) {

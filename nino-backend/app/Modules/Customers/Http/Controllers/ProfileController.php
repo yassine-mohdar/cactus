@@ -3,12 +3,21 @@
 namespace App\Modules\Customers\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\IAM\Services\SessionManagementService;
+use App\Modules\IAM\Services\UserAvatarService;
+use App\Modules\Settings\Services\PasswordPolicyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Str;
 
 class ProfileController extends Controller
 {
+    public function __construct(
+        private readonly SessionManagementService $sessions,
+        private readonly UserAvatarService $avatars,
+        private readonly PasswordPolicyService $passwordPolicy,
+    ) {}
+
     /**
      * Update the customer's profile details.
      */
@@ -21,9 +30,16 @@ class ProfileController extends Controller
             'last_name' => 'nullable|string|max:255',
             'username' => 'nullable|string|max:255|unique:users,username,' . $user->id,
             'marketing_opt_in' => 'nullable|boolean',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
-        $user->update($validated);
+        $user->update(collect($validated)->except('avatar')->all());
+
+        if ($request->hasFile('avatar')) {
+            $this->avatars->replace($user, $request->file('avatar'));
+        }
+
+        $user->refresh();
 
         return response()->json([
             'message' => 'Profile updated successfully.',
@@ -38,12 +54,18 @@ class ProfileController extends Controller
     {
         $validated = $request->validate([
             'current_password' => 'required|current_password',
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => $this->passwordPolicy->requiredRules(),
         ]);
 
         $request->user()->update([
             'password' => Hash::make($validated['password']),
+            'remember_token' => Str::random(60),
         ]);
+
+        $this->sessions->invalidateUserSessions(
+            $request->user(),
+            $request->session()->getId(),
+        );
 
         return response()->json([
             'message' => 'Password updated successfully.'

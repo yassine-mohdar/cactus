@@ -16,6 +16,7 @@
     @php
         $secureFieldCount = collect($fields)->where('encrypt', true)->count();
         $enabledIntegrations = collect($integrations)->where('is_enabled', true)->count();
+        $fieldSections = collect($fields)->groupBy(fn ($field) => $field['section'] ?? 'Settings');
     @endphp
 
     @if(session('success'))
@@ -27,6 +28,12 @@
     @if(session('error'))
         <x-nino.inline-alert tone="danger" title="Update failed" class="mb-6">
             {{ session('error') }}
+        </x-nino.inline-alert>
+    @endif
+
+    @if(session('warning'))
+        <x-nino.inline-alert tone="warning" title="Configuration check" class="mb-6">
+            {{ session('warning') }}
         </x-nino.inline-alert>
     @endif
 
@@ -155,9 +162,14 @@
 
                         <x-slot:footer>
                             <div class="flex items-center justify-end">
-                                <x-nino.button type="submit" variant="primary">
-                                    Save {{ $integration->name }}
-                                </x-nino.button>
+                                <div class="flex items-center gap-3">
+                                    <a href="{{ route('admin.notifications.integrations.test', $integration) }}" class="inline-flex items-center rounded-md border border-[rgba(120,112,95,0.16)] bg-white px-3 py-2 text-sm font-semibold text-[#1E2B27] transition-colors hover:bg-[#F7F4EF]">
+                                        Safe Test
+                                    </a>
+                                    <x-nino.button type="submit" variant="primary">
+                                        Save {{ $integration->name }}
+                                    </x-nino.button>
+                                </div>
                             </div>
                         </x-slot:footer>
                     </x-nino.integration-card>
@@ -175,79 +187,97 @@
             <input type="hidden" name="group" value="{{ $activeTab }}">
 
             <x-nino.settings-panel :title="$groups[$activeTab] ?? 'Settings'" subtitle="Update the defaults and operational rules that drive this area of the platform.">
-            <div class="grid gap-4 lg:grid-cols-2">
-                @foreach($fields as $field)
-                    <div class="rounded-xl border border-[rgba(120,112,95,0.14)] bg-[#FCFBF8] p-5 shadow-[0_1px_2px_rgba(17,24,39,0.05)]">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <label for="{{ $field['key'] }}" class="text-sm font-bold text-[#17302A]">{{ $field['label'] }}</label>
-                                <p class="mt-1 text-xs leading-5 text-[#708078]">
-                                    @if($field['encrypt'] ?? false)
-                                        Stored as a protected secret.
-                                    @elseif($field['type'] === 'boolean')
-                                        Toggle this operational rule on or off.
-                                    @else
-                                        {{ $field['placeholder'] !== '' ? 'Suggested value: '.$field['placeholder'] : 'Update this setting as needed for the current workflow.' }}
-                                    @endif
-                                </p>
+                <div class="space-y-6">
+                    @foreach($fieldSections as $section => $sectionFields)
+                        <div class="rounded-2xl border border-[rgba(120,112,95,0.14)] bg-[#FCFBF8] p-5 shadow-[0_1px_2px_rgba(17,24,39,0.05)]">
+                            <div class="mb-5 border-b border-[rgba(120,112,95,0.12)] pb-4">
+                                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#7A8681]">{{ $groups[$activeTab] ?? 'Settings' }}</p>
+                                <h2 class="mt-2 text-lg font-bold text-[#17302A]">{{ $section }}</h2>
                             </div>
 
-                            @if($field['encrypt'] ?? false)
-                                <span class="inline-flex items-center rounded-full border border-[#ECD9A9] bg-[#FFF7E4] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8A671E]">
-                                    Locked
-                                </span>
-                            @endif
-                        </div>
+                            <div class="grid gap-4 lg:grid-cols-2">
+                                @foreach($sectionFields as $field)
+                                    <div class="rounded-xl border border-[rgba(120,112,95,0.14)] bg-white p-5 shadow-[0_1px_2px_rgba(17,24,39,0.05)]">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div>
+                                                <label for="{{ $field['key'] }}" class="text-sm font-bold text-[#17302A]">{{ $field['label'] }}</label>
+                                                <p class="mt-1 text-xs leading-5 text-[#708078]">
+                                                    @if($field['encrypt'] ?? false)
+                                                        Stored as a protected secret.
+                                                    @elseif($field['type'] === 'boolean')
+                                                        Toggle this operational rule on or off.
+                                                    @else
+                                                        {{ $field['placeholder'] !== '' ? 'Suggested value: '.$field['placeholder'] : 'Update this setting as needed for the current workflow.' }}
+                                                    @endif
+                                                </p>
+                                            </div>
 
-                        <div class="mt-4">
-                            @if($field['type'] === 'boolean')
-                                <label class="inline-flex items-center gap-3">
-                                    <input type="hidden" name="{{ $field['key'] }}" value="0">
-                                    <span class="relative inline-flex h-7 w-[3.25rem] items-center">
-                                        <input
-                                            type="checkbox"
-                                            name="{{ $field['key'] }}"
-                                            value="1"
-                                            class="peer sr-only"
-                                            {{ ($values[$field['key']] ?? false) ? 'checked' : '' }}
-                                        >
-                                        <span class="toggle-track"></span>
-                                        <span class="toggle-thumb"></span>
-                                    </span>
-                                    <span class="text-sm font-semibold text-[#17302A]">
-                                        {{ ($values[$field['key']] ?? false) ? 'Enabled' : 'Disabled' }}
-                                    </span>
-                                </label>
-                            @elseif($field['type'] === 'secret')
-                                <input
-                                    type="password"
-                                    name="{{ $field['key'] }}"
-                                    id="{{ $field['key'] }}"
-                                    class="input-field"
-                                    placeholder="{{ isset($values[$field['key']]) ? '••••••••' : ($field['placeholder'] ?? '') }}"
-                                    autocomplete="off"
-                                >
-                                @if(isset($values[$field['key']]))
-                                    <p class="mt-2 text-xs text-[#708078]">Leave blank to keep the current secret.</p>
-                                @endif
-                            @else
-                                <input
-                                    type="{{ $field['type'] === 'integer' ? 'number' : 'text' }}"
-                                    name="{{ $field['key'] }}"
-                                    id="{{ $field['key'] }}"
-                                    value="{{ old($field['key'], $values[$field['key']] ?? '') }}"
-                                    class="input-field"
-                                    placeholder="{{ $field['placeholder'] ?? '' }}"
-                                >
-                            @endif
+                                            @if($field['encrypt'] ?? false)
+                                                <span class="inline-flex items-center rounded-full border border-[#ECD9A9] bg-[#FFF7E4] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8A671E]">
+                                                    Locked
+                                                </span>
+                                            @endif
+                                        </div>
 
-                            @error($field['key'])
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                                        <div class="mt-4">
+                                            @if($field['type'] === 'boolean')
+                                                <label class="inline-flex items-center gap-3">
+                                                    <input type="hidden" name="{{ $field['key'] }}" value="0">
+                                                    <span class="relative inline-flex h-7 w-[3.25rem] items-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            name="{{ $field['key'] }}"
+                                                            value="1"
+                                                            class="peer sr-only"
+                                                            {{ ($values[$field['key']] ?? false) ? 'checked' : '' }}
+                                                        >
+                                                        <span class="toggle-track"></span>
+                                                        <span class="toggle-thumb"></span>
+                                                    </span>
+                                                    <span class="text-sm font-semibold text-[#17302A]">
+                                                        {{ ($values[$field['key']] ?? false) ? 'Enabled' : 'Disabled' }}
+                                                    </span>
+                                                </label>
+                                            @elseif($field['type'] === 'secret')
+                                                <input
+                                                    type="password"
+                                                    name="{{ $field['key'] }}"
+                                                    id="{{ $field['key'] }}"
+                                                    class="input-field"
+                                                    placeholder="{{ isset($values[$field['key']]) ? '••••••••' : ($field['placeholder'] ?? '') }}"
+                                                    autocomplete="off"
+                                                >
+                                                @if(isset($values[$field['key']]))
+                                                    <p class="mt-2 text-xs text-[#708078]">Leave blank to keep the current secret.</p>
+                                                @endif
+                                            @elseif($field['type'] === 'textarea')
+                                                <textarea
+                                                    name="{{ $field['key'] }}"
+                                                    id="{{ $field['key'] }}"
+                                                    class="input-field min-h-[7rem]"
+                                                    placeholder="{{ $field['placeholder'] ?? '' }}"
+                                                >{{ old($field['key'], $values[$field['key']] ?? '') }}</textarea>
+                                            @else
+                                                <input
+                                                    type="{{ $field['type'] === 'integer' ? 'number' : $field['type'] }}"
+                                                    name="{{ $field['key'] }}"
+                                                    id="{{ $field['key'] }}"
+                                                    value="{{ old($field['key'], $values[$field['key']] ?? '') }}"
+                                                    class="input-field"
+                                                    placeholder="{{ $field['placeholder'] ?? '' }}"
+                                                >
+                                            @endif
+
+                                            @error($field['key'])
+                                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
+                    @endforeach
+                </div>
                 <x-slot:footer>
                     <div class="flex items-center justify-end">
                         <x-nino.button type="submit" variant="primary">

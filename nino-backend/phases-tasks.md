@@ -187,65 +187,65 @@ Build authentication, authorization, scoped access, and the organization model t
 ## Tasks
 
 ### 1.1 Authentication foundation
-- [ ] `P1-AUTH-01` Implement staff authentication
-- [ ] `P1-AUTH-02` Implement customer authentication foundation
-- [ ] `P1-AUTH-03` Implement password reset / password setup flow
-- [ ] `P1-AUTH-04` Implement magic-link or password setup flow for checkout-created accounts
-- [ ] `P1-AUTH-05` Implement session management foundation
-- [ ] `P1-AUTH-06` Implement optional remember-me behavior if appropriate
+- [x] `P1-AUTH-01` Implement staff authentication
+- [x] `P1-AUTH-02` Implement customer authentication foundation
+- [x] `P1-AUTH-03` Implement password reset / password setup flow
+- [x] `P1-AUTH-04` Implement magic-link or password setup flow for checkout-created accounts
+- [x] `P1-AUTH-05` Implement session management foundation
+- [x] `P1-AUTH-06` Implement optional remember-me behavior if appropriate
 
 ### 1.2 User model design
-- [ ] `P1-USERS-01` Define core user entity
-- [ ] `P1-USERS-02` Add user type handling (staff/customer or equivalent)
-- [ ] `P1-USERS-03` Add profile attributes
-- [ ] `P1-USERS-04` Add avatar/profile picture support foundation
-- [ ] `P1-USERS-05` Add active/inactive/suspended states
-- [ ] `P1-USERS-06` Add last login tracking
+- [x] `P1-USERS-01` Define core user entity
+- [x] `P1-USERS-02` Add user type handling (staff/customer or equivalent)
+- [x] `P1-USERS-03` Add profile attributes
+- [x] `P1-USERS-04` Add avatar/profile picture support foundation
+- [x] `P1-USERS-05` Add active/inactive/suspended states
+- [x] `P1-USERS-06` Add last login tracking
 
 ### 1.3 Role and permission system
-- [ ] `P1-IAM-01` Define permission model
-- [ ] `P1-IAM-02` Define role model
-- [ ] `P1-IAM-03` Define role-permission relationships
-- [ ] `P1-IAM-04` Add role presets seed/data
-- [ ] `P1-IAM-05` Support custom roles
-- [ ] `P1-IAM-06` Support permission overrides
-- [ ] `P1-IAM-07` Support scope-aware permissions: platform
-- [ ] `P1-IAM-08` Support scope-aware permissions: franchise
-- [ ] `P1-IAM-09` Support scope-aware permissions: branch
-- [ ] `P1-IAM-10` Support scope-aware permissions: own records only
+- [x] `P1-IAM-01` Define permission model
+- [x] `P1-IAM-02` Define role model
+- [x] `P1-IAM-03` Define role-permission relationships
+- [x] `P1-IAM-04` Add role presets seed/data
+- [x] `P1-IAM-05` Support custom roles
+- [x] `P1-IAM-06` Support permission overrides
+- [x] `P1-IAM-07` Support scope-aware permissions: platform
+- [x] `P1-IAM-08` Support scope-aware permissions: franchise
+- [x] `P1-IAM-09` Support scope-aware permissions: branch
+- [x] `P1-IAM-10` Support scope-aware permissions: own records only
 
 ### 1.4 Policy and authorization layer
-- [ ] `P1-POLICY-01` Build policies for all major models/actions
-- [ ] `P1-POLICY-02` Add middleware/helpers for permission checks
-- [ ] `P1-POLICY-03` Define naming conventions for permissions
-- [ ] `P1-POLICY-04` Ensure UI respects permissions and hides forbidden actions
+- [x] `P1-POLICY-01` Build policies for all major models/actions
+- [x] `P1-POLICY-02` Add middleware/helpers for permission checks
+- [x] `P1-POLICY-03` Define naming conventions for permissions
+- [x] `P1-POLICY-04` Ensure UI respects permissions and hides forbidden actions
 
 ### 1.5 Organization hierarchy
-- [ ] `P1-ORG-01` Define platform entity
-- [ ] `P1-ORG-02` Define franchise entity
-- [ ] `P1-ORG-03` Define branch entity
-- [ ] `P1-ORG-04` Define user assignment to organization units
-- [ ] `P1-ORG-05` Define scope constraints
-- [ ] `P1-ORG-06` Prepare for branch-aware stock/orders/reports
+- [x] `P1-ORG-01` Define platform entity
+- [x] `P1-ORG-02` Define franchise entity
+- [x] `P1-ORG-03` Define branch entity
+- [x] `P1-ORG-04` Define user assignment to organization units
+- [x] `P1-ORG-05` Define scope constraints
+- [x] `P1-ORG-06` Prepare for branch-aware stock/orders/reports
 
 ### 1.6 Staff user management
-- [ ] `P1-STAFF-01` Create staff list/search/filter UI
-- [ ] `P1-STAFF-02` Create add staff UI
-- [ ] `P1-STAFF-03` Create edit staff UI
-- [ ] `P1-STAFF-04` Assign roles and scopes
-- [ ] `P1-STAFF-05` Activate/deactivate staff
-- [ ] `P1-STAFF-06` Implement reset access/setup link flow
+- [x] `P1-STAFF-01` Create staff list/search/filter UI
+- [x] `P1-STAFF-02` Create add staff UI
+- [x] `P1-STAFF-03` Create edit staff UI
+- [x] `P1-STAFF-04` Assign roles and scopes
+- [x] `P1-STAFF-05` Activate/deactivate staff
+- [x] `P1-STAFF-06` Implement reset access/setup link flow
 
 ### 1.7 Security controls
-- [ ] `P1-SEC-01` Add staff 2FA enforcement foundation
-- [ ] `P1-SEC-02` Add session revoke/forced logout foundation
-- [ ] `P1-SEC-03` Add impersonation with audit logs
-- [ ] `P1-SEC-04` Add audit logs for role changes and sensitive account updates
+- [x] `P1-SEC-01` Add staff 2FA enforcement foundation
+- [x] `P1-SEC-02` Add session revoke/forced logout foundation
+- [x] `P1-SEC-03` Add impersonation with audit logs
+- [x] `P1-SEC-04` Add audit logs for role changes and sensitive account updates
 
 ### 1.8 Role-aware menu/dashboard routing
-- [ ] `P1-NAV-01` Build role-adapted sidebar items
-- [ ] `P1-NAV-02` Build role-based home dashboard routing
-- [ ] `P1-NAV-03` Ensure permission-safe navigation
+- [x] `P1-NAV-01` Build role-adapted sidebar items
+- [x] `P1-NAV-02` Build role-based home dashboard routing
+- [x] `P1-NAV-03` Ensure permission-safe navigation
 
 ## Acceptance Criteria
 - Staff can securely log in.
@@ -277,89 +277,89 @@ Provide each role with a focused dashboard and workspace entry point.
 ## Tasks
 
 ### 2.1 Dashboard framework
-- [ ] `P2-DASH-01` Create dashboard layout patterns
-- [ ] `P2-DASH-02` Support widget-based sections
-- [ ] `P2-DASH-03` Add loading states and empty states
-- [ ] `P2-DASH-04` Add lightweight filtering/date presets where appropriate
+- [x] `P2-DASH-01` Create dashboard layout patterns
+- [x] `P2-DASH-02` Support widget-based sections
+- [x] `P2-DASH-03` Add loading states and empty states
+- [x] `P2-DASH-04` Add lightweight filtering/date presets where appropriate
 
 ### 2.2 Super Admin dashboard
-- [ ] `P2-SUPER-01` Add GMV summary widget
-- [ ] `P2-SUPER-02` Add orders today widget
-- [ ] `P2-SUPER-03` Add revenue trend widget
-- [ ] `P2-SUPER-04` Add failed payments widget
-- [ ] `P2-SUPER-05` Add low stock alerts widget
-- [ ] `P2-SUPER-06` Add shipping exceptions widget
-- [ ] `P2-SUPER-07` Add franchise performance summary widget
-- [ ] `P2-SUPER-08` Add branch performance summary widget
-- [ ] `P2-SUPER-09` Add support KPI widget
-- [ ] `P2-SUPER-10` Add finance summary widget
-- [ ] `P2-SUPER-11` Add system alerts widget
+- [x] `P2-SUPER-01` Add GMV summary widget
+- [x] `P2-SUPER-02` Add orders today widget
+- [x] `P2-SUPER-03` Add revenue trend widget
+- [x] `P2-SUPER-04` Add failed payments widget
+- [x] `P2-SUPER-05` Add low stock alerts widget
+- [x] `P2-SUPER-06` Add shipping exceptions widget
+- [x] `P2-SUPER-07` Add franchise performance summary widget
+- [x] `P2-SUPER-08` Add branch performance summary widget
+- [x] `P2-SUPER-09` Add support KPI widget
+- [x] `P2-SUPER-10` Add finance summary widget
+- [x] `P2-SUPER-11` Add system alerts widget
 
 ### 2.3 Platform Admin dashboard
-- [ ] `P2-PLATFORM-01` Add operational action queue
-- [ ] `P2-PLATFORM-02` Add recent orders widget
-- [ ] `P2-PLATFORM-03` Add stock alerts widget
-- [ ] `P2-PLATFORM-04` Add payment exceptions widget
-- [ ] `P2-PLATFORM-05` Add content/promo highlights widget
+- [x] `P2-PLATFORM-01` Add operational action queue
+- [x] `P2-PLATFORM-02` Add recent orders widget
+- [x] `P2-PLATFORM-03` Add stock alerts widget
+- [x] `P2-PLATFORM-04` Add payment exceptions widget
+- [x] `P2-PLATFORM-05` Add content/promo highlights widget
 
 ### 2.4 Franchise dashboard
-- [ ] `P2-FRANCHISE-01` Add sales by branch widget
-- [ ] `P2-FRANCHISE-02` Add branch stock overview widget
-- [ ] `P2-FRANCHISE-03` Add staff performance summary widget
-- [ ] `P2-FRANCHISE-04` Add branch order metrics widget
+- [x] `P2-FRANCHISE-01` Add sales by branch widget
+- [x] `P2-FRANCHISE-02` Add branch stock overview widget
+- [x] `P2-FRANCHISE-03` Add staff performance summary widget
+- [x] `P2-FRANCHISE-04` Add branch order metrics widget
 
 ### 2.5 Branch dashboard
-- [ ] `P2-BRANCH-01` Add orders to prepare widget
-- [ ] `P2-BRANCH-02` Add branch stock widgets
-- [ ] `P2-BRANCH-03` Add dispatch queue widget
-- [ ] `P2-BRANCH-04` Add branch issue queue widget
+- [x] `P2-BRANCH-01` Add orders to prepare widget
+- [x] `P2-BRANCH-02` Add branch stock widgets
+- [x] `P2-BRANCH-03` Add dispatch queue widget
+- [x] `P2-BRANCH-04` Add branch issue queue widget
 
 ### 2.6 Customer Support dashboard
-- [ ] `P2-SUPPORT-01` Add order lookup widget
-- [ ] `P2-SUPPORT-02` Add customer lookup widget
-- [ ] `P2-SUPPORT-03` Add open cases/refund queue foundation
-- [ ] `P2-SUPPORT-04` Add recent issue timeline widget
+- [x] `P2-SUPPORT-01` Add order lookup widget
+- [x] `P2-SUPPORT-02` Add customer lookup widget
+- [x] `P2-SUPPORT-03` Add open cases/refund queue foundation
+- [x] `P2-SUPPORT-04` Add recent issue timeline widget
 
 ### 2.7 Shipping dashboard
-- [ ] `P2-SHIPPING-01` Add ready-to-ship widget
-- [ ] `P2-SHIPPING-02` Add shipped widget
-- [ ] `P2-SHIPPING-03` Add failed delivery widget
-- [ ] `P2-SHIPPING-04` Add returned parcel queue widget
-- [ ] `P2-SHIPPING-05` Add tracking queue widget
+- [x] `P2-SHIPPING-01` Add ready-to-ship widget
+- [x] `P2-SHIPPING-02` Add shipped widget
+- [x] `P2-SHIPPING-03` Add failed delivery widget
+- [x] `P2-SHIPPING-04` Add returned parcel queue widget
+- [x] `P2-SHIPPING-05` Add tracking queue widget
 
 ### 2.8 Finance dashboard
-- [ ] `P2-FINANCE-01` Add paid/unpaid summary widget
-- [ ] `P2-FINANCE-02` Add payment method summary widget
-- [ ] `P2-FINANCE-03` Add gateway transactions summary widget
-- [ ] `P2-FINANCE-04` Add COD reconciliation summary widget
-- [ ] `P2-FINANCE-05` Add refund summary widget
-- [ ] `P2-FINANCE-06` Add discount/fee impact widgets
+- [x] `P2-FINANCE-01` Add paid/unpaid summary widget
+- [x] `P2-FINANCE-02` Add payment method summary widget
+- [x] `P2-FINANCE-03` Add gateway transactions summary widget
+- [x] `P2-FINANCE-04` Add COD reconciliation summary widget
+- [x] `P2-FINANCE-05` Add refund summary widget
+- [x] `P2-FINANCE-06` Add discount/fee impact widgets
 
 ### 2.9 SEO / Content dashboard
-- [ ] `P2-SEO-01` Add drafts widget
-- [ ] `P2-SEO-02` Add missing metadata widget
-- [ ] `P2-SEO-03` Add SEO issue summary widget
-- [ ] `P2-SEO-04` Add scheduled content widget if applicable
+- [x] `P2-SEO-01` Add drafts widget
+- [x] `P2-SEO-02` Add missing metadata widget
+- [x] `P2-SEO-03` Add SEO issue summary widget
+- [x] `P2-SEO-04` Add scheduled content widget if applicable
 
 ### 2.10 Media Buying dashboard
-- [ ] `P2-MEDIA-01` Add integration health widget
-- [ ] `P2-MEDIA-02` Add attribution/coupon campaign hooks widget
-- [ ] `P2-MEDIA-03` Add traffic/campaign placeholders if analytics later connect
+- [x] `P2-MEDIA-01` Add integration health widget
+- [x] `P2-MEDIA-02` Add attribution/coupon campaign hooks widget
+- [x] `P2-MEDIA-03` Add traffic/campaign placeholders if analytics later connect
 
 ### 2.11 Sales dashboard
-- [ ] `P2-SALES-01` Add revenue trend widget
-- [ ] `P2-SALES-02` Add AOV widget
-- [ ] `P2-SALES-03` Add best sellers widget
-- [ ] `P2-SALES-04` Add promo performance widget
+- [x] `P2-SALES-01` Add revenue trend widget
+- [x] `P2-SALES-02` Add AOV widget
+- [x] `P2-SALES-03` Add best sellers widget
+- [x] `P2-SALES-04` Add promo performance widget
 
 ### 2.12 Stock dashboard
-- [ ] `P2-STOCK-01` Add low stock widget
-- [ ] `P2-STOCK-02` Add damaged stock widget
-- [ ] `P2-STOCK-03` Add adjustment summary widget
-- [ ] `P2-STOCK-04` Add transfer-ready metrics widget
+- [x] `P2-STOCK-01` Add low stock widget
+- [x] `P2-STOCK-02` Add damaged stock widget
+- [x] `P2-STOCK-03` Add adjustment summary widget
+- [x] `P2-STOCK-04` Add transfer-ready metrics widget
 
 ### 2.13 Community Moderator dashboard
-- [ ] `P2-MOD-01` Add report queue schema-ready placeholders if community is not fully implemented
+- [x] `P2-MOD-01` Add report queue schema-ready placeholders if community is not fully implemented
 
 ## Acceptance Criteria
 - Each role lands on a tailored dashboard.
@@ -533,35 +533,35 @@ Build a robust settings center that controls platform behavior, branding, integr
 ## Tasks
 
 ### 3.1 Settings foundation
-- [ ] `P3-SETTINGS-01` Define settings storage strategy
-- [ ] `P3-SETTINGS-02` Implement grouped settings retrieval
-- [ ] `P3-SETTINGS-03` Add validation per settings section
-- [ ] `P3-SETTINGS-04` Add secure secret storage
-- [ ] `P3-SETTINGS-05` Add cache and cache invalidation
+- [x] `P3-SETTINGS-01` Define settings storage strategy
+- [x] `P3-SETTINGS-02` Implement grouped settings retrieval
+- [x] `P3-SETTINGS-03` Add validation per settings section
+- [x] `P3-SETTINGS-04` Add secure secret storage
+- [x] `P3-SETTINGS-05` Add cache and cache invalidation
 
 ### 3.2 General settings
-- [ ] `P3-GENERAL-01` Add website information settings
-- [ ] `P3-GENERAL-02` Add company information settings
-- [ ] `P3-GENERAL-03` Add contact information settings
-- [ ] `P3-GENERAL-04` Add branding basics settings
-- [ ] `P3-GENERAL-05` Add locale/timezone if needed
+- [x] `P3-GENERAL-01` Add website information settings
+- [x] `P3-GENERAL-02` Add company information settings
+- [x] `P3-GENERAL-03` Add contact information settings
+- [x] `P3-GENERAL-04` Add branding basics settings
+- [x] `P3-GENERAL-05` Add locale/timezone if needed
 
 ### 3.3 Connections / Integrations settings
-- [ ] `P3-CONN-01` Add SMTP settings
-- [ ] `P3-CONN-02` Add Twilio SMS settings
-- [ ] `P3-CONN-03` Add WhatsApp API foundation settings
-- [ ] `P3-CONN-04` Add test connection utilities if safe
+- [x] `P3-CONN-01` Add SMTP settings
+- [x] `P3-CONN-02` Add Twilio SMS settings
+- [x] `P3-CONN-03` Add WhatsApp API foundation settings
+- [x] `P3-CONN-04` Add test connection utilities if safe
 
 ### 3.4 SEO settings
-- [ ] `P3-SEO-01` Add analytics integration fields
-- [ ] `P3-SEO-02` Add Google verification field
-- [ ] `P3-SEO-03` Add Facebook Pixel field
-- [ ] `P3-SEO-04` Add TikTok Pixel field
-- [ ] `P3-SEO-05` Add SEO defaults settings
+- [x] `P3-SEO-01` Add analytics integration fields
+- [x] `P3-SEO-02` Add Google verification field
+- [x] `P3-SEO-03` Add Facebook Pixel field
+- [x] `P3-SEO-04` Add TikTok Pixel field
+- [x] `P3-SEO-05` Add SEO defaults settings
 
 ### 3.5 Security settings
-- [ ] `P3-SECURITY-01` Add force staff/admin 2FA toggle
-- [ ] `P3-SECURITY-02` Add password policy settings foundation
+- [x] `P3-SECURITY-01` Add force staff/admin 2FA toggle
+- [x] `P3-SECURITY-02` Add password policy settings foundation
 - [ ] `P3-SECURITY-03` Add session timeout foundation
 - [ ] `P3-SECURITY-04` Add security alert settings foundation
 
@@ -1239,8 +1239,8 @@ Build a robust content and SEO layer to support organic traffic, educational con
 - [x] `P12-SEO-05` Add noindex foundation if included
 
 ### 12.4 SEO across entities
-- [x] `P12-ENTITYSEO-01` Add Product SEO
-- [x] `P12-ENTITYSEO-02` Add Category SEO
+- [ ] `P12-ENTITYSEO-01` Add Product SEO
+- [ ] `P12-ENTITYSEO-02` Add Category SEO
 - [x] `P12-ENTITYSEO-03` Add Blog category SEO
 - [x] `P12-ENTITYSEO-04` Add Post SEO
 
@@ -1253,7 +1253,7 @@ Build a robust content and SEO layer to support organic traffic, educational con
 - [x] `P12-UX-01` Add draft/publish workflow
 - [x] `P12-UX-02` Add preview if practical
 - [x] `P12-UX-03` Add author attribution
-- [x] `P12-UX-04` Add media picker integration
+- [ ] `P12-UX-04` Add media picker integration
 
 ## Acceptance Criteria
 - Blog content can be created and managed.
@@ -1396,7 +1396,7 @@ Provide operational leverage through reporting, search tools, and admin producti
 - [x] `P15-SEARCH-03` Add saved views foundation if practical
 
 ### 15.3 Bulk actions
-- [x] `P15-BULK-01` Add products bulk actions
+- [ ] `P15-BULK-01` Add products bulk actions
 - [x] `P15-BULK-02` Add orders bulk actions where safe
 - [x] `P15-BULK-03` Add content bulk actions
 
@@ -1446,16 +1446,16 @@ Add the operational trust and traceability needed for a real commerce platform.
 - [x] `P16-EVENT-08` Audit impersonation
 
 ### 16.3 Security hardening
-- [ ] `P16-SEC-01` Add forced 2FA if enabled with qr code 
-- [ ] `P16-SEC-02` Review session security
-- [ ] `P16-SEC-03` Add rate limiting where appropriate
-- [ ] `P16-SEC-04` Add safe logging/redaction rules
+- [x] `P16-SEC-01` Add forced 2FA if enabled with qr code 
+- [x] `P16-SEC-02` Review session security
+- [x] `P16-SEC-03` Add rate limiting where appropriate
+- [x] `P16-SEC-04` Add safe logging/redaction rules
 
 ### 16.4 Basic observability
-- [ ] `P16-OBS-01` Add notification failures visibility
-- [ ] `P16-OBS-02` Add payment callback errors visibility
-- [ ] `P16-OBS-03` Add queue visibility foundation
-- [ ] `P16-OBS-04` Add slow-operation logging foundation
+- [x] `P16-OBS-01` Add notification failures visibility
+- [x] `P16-OBS-02` Add payment callback errors visibility
+- [x] `P16-OBS-03` Add queue visibility foundation
+- [x] `P16-OBS-04` Add slow-operation logging foundation
 
 ## Acceptance Criteria
 - Sensitive changes are traceable.
@@ -1489,28 +1489,28 @@ Prepare the platform for community without allowing it to destabilize commerce d
 ## Tasks
 
 ### 17.1 Community domain design
-- [ ] `P17-DOMAIN-01` Define Group model
-- [ ] `P17-DOMAIN-02` Define Default group foundation
-- [ ] `P17-DOMAIN-03` Define Membership model
-- [ ] `P17-DOMAIN-04` Define Join request structure if needed
-- [ ] `P17-DOMAIN-05` Define Post model
-- [ ] `P17-DOMAIN-06` Define Media attachment structure
-- [ ] `P17-DOMAIN-07` Define Comment model
-- [ ] `P17-DOMAIN-08` Define Reaction model
-- [ ] `P17-DOMAIN-09` Define Report model
+- [x] `P17-DOMAIN-01` Define Group model
+- [x] `P17-DOMAIN-02` Define Default group foundation
+- [x] `P17-DOMAIN-03` Define Membership model
+- [x] `P17-DOMAIN-04` Define Join request structure if needed
+- [x] `P17-DOMAIN-05` Define Post model
+- [x] `P17-DOMAIN-06` Define Media attachment structure
+- [x] `P17-DOMAIN-07` Define Comment model
+- [x] `P17-DOMAIN-08` Define Reaction model
+- [x] `P17-DOMAIN-09` Define Report model
 
 ### 17.2 Moderation foundation
-- [ ] `P17-MOD-01` Add Community moderator role hooks
-- [ ] `P17-MOD-02` Add moderation queue schema
-- [ ] `P17-MOD-03` Add report states
+- [x] `P17-MOD-01` Add Community moderator role hooks
+- [x] `P17-MOD-02` Add moderation queue schema
+- [x] `P17-MOD-03` Add report states
 
 ### 17.3 Customer onboarding connection
-- [ ] `P17-ONBOARD-01` Add default group invitation flag/foundation for new customers
+- [x] `P17-ONBOARD-01` Add default group invitation flag/foundation for new customers
 
 ### 17.4 Storage/performance planning
-- [ ] `P17-PERF-01` Define media handling rules
-- [ ] `P17-PERF-02` Define video scalability considerations
-- [ ] `P17-PERF-03` Add quota/moderation notes in docs
+- [x] `P17-PERF-01` Define media handling rules
+- [x] `P17-PERF-02` Define video scalability considerations
+- [x] `P17-PERF-03` Add quota/moderation notes in docs
 
 ## Acceptance Criteria
 - Community schema is prepared.
@@ -1539,37 +1539,37 @@ Harden the system for real use and make sure phase 1+2 core commerce capabilitie
 ## Tasks
 
 ### 18.1 Testing priorities
-- [ ] `P18-TEST-01` Add auth and permission tests
-- [ ] `P18-TEST-02` Add checkout flow tests
-- [ ] `P18-TEST-03` Add inventory stock/reservation tests
-- [ ] `P18-TEST-04` Add payment adapter tests/mocks
-- [ ] `P18-TEST-05` Add order lifecycle tests
-- [ ] `P18-TEST-06` Add notification trigger tests
+- [x] `P18-TEST-01` Add auth and permission tests
+- [x] `P18-TEST-02` Add checkout flow tests
+- [x] `P18-TEST-03` Add inventory stock/reservation tests
+- [x] `P18-TEST-04` Add payment adapter tests/mocks
+- [x] `P18-TEST-05` Add order lifecycle tests
+- [x] `P18-TEST-06` Add notification trigger tests
 
 ### 18.2 QA walkthroughs
-- [ ] `P18-QA-01` Run Super Admin flow QA
-- [ ] `P18-QA-02` Run Support flow QA
-- [ ] `P18-QA-03` Run Shipping flow QA
-- [ ] `P18-QA-04` Run Finance flow QA
-- [ ] `P18-QA-05` Run Customer checkout/account flow QA
+- [x] `P18-QA-01` Run Super Admin flow QA
+- [x] `P18-QA-02` Run Support flow QA
+- [x] `P18-QA-03` Run Shipping flow QA
+- [x] `P18-QA-04` Run Finance flow QA
+- [x] `P18-QA-05` Run Customer checkout/account flow QA
 
 ### 18.3 Performance review
-- [ ] `P18-PERF-01` Review high-frequency queries
-- [ ] `P18-PERF-02` Review indexes
-- [ ] `P18-PERF-03` Review cache usage
-- [ ] `P18-PERF-04` Review queue usage
+- [x] `P18-PERF-01` Review high-frequency queries
+- [x] `P18-PERF-02` Review indexes
+- [x] `P18-PERF-03` Review cache usage
+- [x] `P18-PERF-04` Review queue usage
 
 ### 18.4 Documentation review
-- [ ] `P18-DOCS-01` Update `PROJECT_PROGRESS.md`
-- [ ] `P18-DOCS-02` Update `ARCHITECTURE.md`
-- [ ] `P18-DOCS-03` Update `PHASES.md`
-- [ ] `P18-DOCS-04` Confirm `phases-tasks.md` still matches scope
+- [x] `P18-DOCS-01` Update `PROJECT_PROGRESS.md`
+- [x] `P18-DOCS-02` Update `ARCHITECTURE.md`
+- [x] `P18-DOCS-03` Update `PHASES.md`
+- [x] `P18-DOCS-04` Confirm `phases-tasks.md` still matches scope
 
 ### 18.5 Release readiness
-- [ ] `P18-RELEASE-01` Seed demo/admin data if useful
-- [ ] `P18-RELEASE-02` Confirm migrations are clean
-- [ ] `P18-RELEASE-03` Confirm environment variable list is clear
-- [ ] `P18-RELEASE-04` Confirm fallback/error states are acceptable
+- [x] `P18-RELEASE-01` Seed demo/admin data if useful
+- [x] `P18-RELEASE-02` Confirm migrations are clean
+- [x] `P18-RELEASE-03` Confirm environment variable list is clear
+- [x] `P18-RELEASE-04` Confirm fallback/error states are acceptable
 
 ## Acceptance Criteria
 - Core commerce/admin operations are stable.

@@ -3,16 +3,22 @@
 namespace App\Policies;
 
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+use App\Modules\IAM\Models\Permission;
+use App\Modules\IAM\Models\Role;
 
 class RolePolicy
 {
+    public function create(User $user): bool
+    {
+        return $this->canManageRoles($user);
+    }
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('users.manage_roles');
+        return $this->canManageRoles($user);
     }
 
     /**
@@ -21,10 +27,10 @@ class RolePolicy
      */
     public function update(User $user, Role $role): bool
     {
-        if (! $user->hasPermissionTo('users.manage_roles')) return false;
+        if (! $this->canManageRoles($user)) return false;
 
         // Only super-admins can edit the super admin role
-        if ($role->name === 'Super Admin' && ! $user->isSuperAdmin()) {
+        if ($role->isSuperAdminRole() && ! $user->isSuperAdmin()) {
             return false;
         }
 
@@ -36,20 +42,44 @@ class RolePolicy
      */
     public function assign(User $user, Role $role): bool
     {
-        if (! $user->hasPermissionTo('users.manage_roles')) return false;
+        if (! $this->canManageRoles($user)) return false;
 
         // Only Super Admins can assign Super Admin
-        if ($role->name === 'Super Admin' && ! $user->isSuperAdmin()) {
+        if ($role->isSuperAdminRole() && ! $user->isSuperAdmin()) {
             return false;
         }
 
         // Platform Admins can assign Platform Admin, but Franchises cannot
-        if ($role->name === 'Platform Admin' && $user->organization_scope !== 'platform' && ! $user->isSuperAdmin()) {
+        if ($role->isPlatformAdminRole() && $user->organization_scope !== 'platform' && ! $user->isSuperAdmin()) {
             return false;
         }
 
         // Note: Actual organization constraints on the *target* user are checked by UserPolicy::update
 
         return true;
+    }
+
+    public function delete(User $user, Role $role): bool
+    {
+        if (! $this->canManageRoles($user)) return false;
+
+        if ($role->isSystemRole()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function canManageRoles(User $user): bool
+    {
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! Permission::query()->where('name', Permission::MANAGE_ROLES)->where('guard_name', 'web')->exists()) {
+            return false;
+        }
+
+        return $user->hasPermissionTo(Permission::MANAGE_ROLES);
     }
 }

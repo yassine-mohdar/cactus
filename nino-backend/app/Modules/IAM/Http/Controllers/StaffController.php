@@ -5,15 +5,27 @@ namespace App\Modules\IAM\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Audit\Services\AuditLogger;
+use App\Modules\IAM\Models\Role;
+use App\Modules\IAM\Services\RoleAccessService;
+use App\Modules\IAM\Services\SessionManagementService;
+use App\Modules\IAM\Services\StaffAccessSetupService;
+use App\Modules\Organizations\Models\Organization;
+use App\Modules\Organizations\Services\OrganizationAssignmentService;
+use App\Modules\Settings\Services\PasswordPolicyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Spatie\Permission\Models\Role;
 
 class StaffController extends Controller
 {
     public function __construct(
         private readonly AuditLogger $audit,
+        private readonly RoleAccessService $roleAccess,
+        private readonly SessionManagementService $sessions,
+        private readonly StaffAccessSetupService $staffAccessSetup,
+        private readonly OrganizationAssignmentService $organizationAssignments,
+        private readonly PasswordPolicyService $passwordPolicy,
     ) {}
 
     /**
@@ -23,8 +35,8 @@ class StaffController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $query = User::staff()->with('roles');
-        $summaryBaseQuery = User::staff();
+        $query = User::staff()->with(['roles', 'organization.parent']);
+        $summaryBaseQuery = User::staff()->with('organization');
 
         if ($request->filled('search')) {
             $search = trim((string) $request->string('search'));
@@ -37,6 +49,18 @@ class StaffController extends Controller
                         $roleQuery->where('name', 'like', "%{$search}%");
                     });
             });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+
+        if ($request->filled('scope')) {
+            $query->where('organization_scope', $request->string('scope'));
+        }
+
+        if ($request->filled('organization_id')) {
+            $query->where('organization_id', (int) $request->integer('organization_id'));
         }
 
         // Apply scoping automatically: if platform/super admin, see all.
@@ -59,9 +83,12 @@ class StaffController extends Controller
         } elseif ($user->organization_scope === 'branch') {
             $query->where('organization_id', $user->organization_id);
             $summaryBaseQuery->where('organization_id', $user->organization_id);
+        } elseif ($user->organization_scope === 'own') {
+            $query->whereKey($user->getKey());
+            $summaryBaseQuery->whereKey($user->getKey());
         }
 
-        $staff = $query->paginate(20)->withQueryString();
+        $staff = $query->latest('id')->paginate(20)->withQueryString();
 
         $summary = [
             'total_staff' => (clone $summaryBaseQuery)->count(),
@@ -70,7 +97,15 @@ class StaffController extends Controller
             'super_admins' => (clone $summaryBaseQuery)->whereHas('roles', fn ($roleQuery) => $roleQuery->where('name', 'Super Admin'))->count(),
         ];
 
-        return view('admin.staff.index', compact('staff', 'summary'));
+        $organizationOptions = ($request->filled('scope')
+            ? $this->organizationAssignments->availableOrganizationsFor($user, (string) $request->string('scope'))
+            : $this->organizationAssignments->assignableOrganizationsFor($user))
+            ->map(fn (Organization $organization) => [
+                'id' => $organization->id,
+                'label' => $this->organizationLabel($organization),
+            ]);
+
+        return view('admin.staff.index', compact('staff', 'summary', 'organizationOptions'));
     }
 
     /**
@@ -80,15 +115,16 @@ class StaffController extends Controller
     {
         $this->authorize('create', User::class);
 
-        // Fetch roles that the current user is allowed to assign.
-        // For now, let's simplify and just exclude Super Admin if not super admin.
-        $rolesQuery = Role::query();
-        if (!auth()->user()->isSuperAdmin()) {
-            $rolesQuery->where('name', '!=', 'Super Admin');
-        }
-        $roles = $rolesQuery->get();
-
-        return view('admin.staff.create', compact('roles'));
+        return view('admin.staff.create', [
+            'roles' => $this->roleAccess->assignableRolesFor(auth()->user()),
+            'permissionGroups' => $this->roleAccess->permissionGroupsFor(auth()->user()),
+            'allowedScopes' => $this->organizationAssignments->allowedScopesFor(auth()->user()),
+            'organizationOptions' => $this->organizationAssignments->assignableOrganizationsFor(auth()->user())
+                ->map(fn (Organization $organization) => [
+                    'id' => $organization->id,
+                    'label' => $this->organizationLabel($organization),
+                ]),
+        ]);
     }
 
     /**
@@ -102,44 +138,58 @@ class StaffController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'phone' => ['nullable', 'string', 'max:20'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => array_merge(
+                ['required_without:send_setup_link'],
+                $this->passwordPolicy->optionalRules(),
+            ),
+            'send_setup_link' => ['nullable', 'boolean'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'roles' => ['array'],
             'roles.*' => ['exists:roles,name'],
-            'organization_scope' => ['nullable', Rule::in(['platform', 'franchise', 'branch'])],
+            'permission_overrides' => ['array'],
+            'permission_overrides.*' => ['exists:permissions,name'],
+            'organization_scope' => ['nullable', Rule::in(['platform', 'franchise', 'branch', 'own'])],
+            'organization_id' => ['nullable', 'integer', 'exists:organizations,id'],
         ]);
 
         $creator = auth()->user();
+        $sendSetupLink = $request->boolean('send_setup_link');
         $user = new User();
         $user->name = $validated['name'];
         $user->email = $validated['email'];
         $user->phone = $validated['phone'] ?? null;
-        $user->password = Hash::make($validated['password']);
+        $user->password = Hash::make($sendSetupLink ? Str::random(40) : (string) $validated['password']);
         $user->type = 'staff';
         $user->status = $validated['status'];
         
-        // Scope constraints based on creator
-        if ($creator->organization_scope !== 'platform' && !$creator->isSuperAdmin()) {
-            // Force inheritance of scope if not a platform admin
-            $user->organization_scope = $creator->organization_scope;
-            $user->organization_id = $creator->organization_id;
-        } else {
-            $user->organization_scope = $validated['organization_scope'] ?? 'platform';
-            // TODO: Organization ID selection UI for platform admins
-        }
+        $assignment = $this->organizationAssignments->resolveAssignment(
+            $creator,
+            $validated['organization_scope'] ?? null,
+            isset($validated['organization_id']) ? (int) $validated['organization_id'] : null,
+        );
+        $user->organization_scope = $assignment['scope'];
 
         $user->save();
+        $this->organizationAssignments->assignPrimaryOrganization($user, $assignment['organization']);
 
         if (!empty($validated['roles'])) {
-            // Check if creator can assign these roles
             $allowedRoles = [];
             foreach ($validated['roles'] as $roleName) {
                 $role = Role::findByName($roleName);
-                if ($creator->can('assign', $role)) {
+                if ($this->roleAccess->canAssignRole($creator, $role)) {
                     $allowedRoles[] = $roleName;
                 }
             }
             $user->assignRole($allowedRoles);
+        }
+
+        $directPermissions = [];
+        if ($this->roleAccess->userCanManageRoles($creator)) {
+            $directPermissions = $this->roleAccess->syncDirectPermissions(
+                $user,
+                $validated['permission_overrides'] ?? [],
+                $creator,
+            );
         }
 
         $createdSnapshot = $this->staffSnapshot($user->fresh(['roles']));
@@ -156,8 +206,32 @@ class StaffController extends Controller
         );
 
         $this->auditRoleChanges($user, [], $createdSnapshot['roles'] ?? []);
+        $this->auditPermissionOverrideChanges($user, [], $directPermissions);
 
-        return redirect()->route('admin.staff.index')->with('success', 'Staff member created successfully.');
+        if ($sendSetupLink) {
+            $this->staffAccessSetup->dispatchSetupLink($user, 'staff_invite');
+
+            $this->audit->log(
+                action: 'staff.access_setup_link.sent',
+                target: $user,
+                newValues: [
+                    'email' => $user->email,
+                    'status' => $user->status,
+                    'source' => 'staff_invite',
+                ],
+                notes: 'Staff access setup link sent on creation',
+                context: [
+                    'module' => 'iam',
+                    'source' => 'staff_controller',
+                ],
+            );
+        }
+
+        return redirect()
+            ->route('admin.staff.index')
+            ->with('success', $sendSetupLink
+                ? 'Staff member created and access setup link sent successfully.'
+                : 'Staff member created successfully.');
     }
 
     /**
@@ -167,13 +241,17 @@ class StaffController extends Controller
     {
         $this->authorize('update', $staff);
 
-        $rolesQuery = Role::query();
-        if (!auth()->user()->isSuperAdmin()) {
-            $rolesQuery->where('name', '!=', 'Super Admin');
-        }
-        $roles = $rolesQuery->get();
-
-        return view('admin.staff.edit', compact('staff', 'roles'));
+        return view('admin.staff.edit', [
+            'staff' => $staff->load('roles', 'permissions'),
+            'roles' => $this->roleAccess->assignableRolesFor(auth()->user()),
+            'permissionGroups' => $this->roleAccess->permissionGroupsFor(auth()->user()),
+            'allowedScopes' => $this->organizationAssignments->allowedScopesFor(auth()->user()),
+            'organizationOptions' => $this->organizationAssignments->assignableOrganizationsFor(auth()->user())
+                ->map(fn (Organization $organization) => [
+                    'id' => $organization->id,
+                    'label' => $this->organizationLabel($organization),
+                ]),
+        ]);
     }
 
     /**
@@ -187,14 +265,18 @@ class StaffController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($staff->id)],
             'phone' => ['nullable', 'string', 'max:20'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'password' => $this->passwordPolicy->optionalRules(),
             'status' => ['required', Rule::in(['active', 'inactive', 'suspended'])],
             'roles' => ['array'],
             'roles.*' => ['exists:roles,name'],
-            'organization_scope' => ['nullable', Rule::in(['platform', 'franchise', 'branch'])],
+            'permission_overrides' => ['array'],
+            'permission_overrides.*' => ['exists:permissions,name'],
+            'organization_scope' => ['nullable', Rule::in(['platform', 'franchise', 'branch', 'own'])],
+            'organization_id' => ['nullable', 'integer', 'exists:organizations,id'],
         ]);
 
         $oldValues = $this->staffSnapshot($staff);
+        $oldDirectPermissions = $this->directPermissionNames($staff);
 
         $staff->name = $validated['name'];
         $staff->email = $validated['email'];
@@ -206,18 +288,23 @@ class StaffController extends Controller
         }
 
         $creator = auth()->user();
-        if ($creator->organization_scope === 'platform' || $creator->isSuperAdmin()) {
-            $staff->organization_scope = $validated['organization_scope'] ?? $staff->organization_scope;
-        }
+        $assignment = $this->organizationAssignments->resolveAssignment(
+            $creator,
+            $validated['organization_scope'] ?? $staff->organization_scope,
+            array_key_exists('organization_id', $validated)
+                ? ($validated['organization_id'] !== null ? (int) $validated['organization_id'] : null)
+                : $staff->organization_id,
+        );
+        $staff->organization_scope = $assignment['scope'];
 
         $staff->save();
+        $this->organizationAssignments->assignPrimaryOrganization($staff, $assignment['organization']);
 
         if (isset($validated['roles'])) {
-            // Check if creator can assign these roles
             $allowedRoles = [];
             foreach ($validated['roles'] as $roleName) {
                 $role = Role::findByName($roleName);
-                if ($creator->can('assign', $role)) {
+                if ($this->roleAccess->canAssignRole($creator, $role)) {
                     $allowedRoles[] = $roleName;
                 }
             }
@@ -226,6 +313,15 @@ class StaffController extends Controller
                 $allowedRoles[] = 'Super Admin';
             }
             $staff->syncRoles($allowedRoles);
+        }
+
+        $newDirectPermissions = $oldDirectPermissions;
+        if ($this->roleAccess->userCanManageRoles($creator)) {
+            $newDirectPermissions = $this->roleAccess->syncDirectPermissions(
+                $staff,
+                $validated['permission_overrides'] ?? [],
+                $creator,
+            );
         }
 
         $updatedStaff = $staff->fresh(['roles']);
@@ -244,7 +340,21 @@ class StaffController extends Controller
         );
 
         $this->auditRoleChanges($updatedStaff, $oldValues['roles'] ?? [], $newValues['roles'] ?? []);
+        $this->auditPermissionOverrideChanges($updatedStaff, $oldDirectPermissions, $newDirectPermissions);
         $this->auditStaffLifecycleChanges($updatedStaff, (string) ($oldValues['status'] ?? ''), (string) ($newValues['status'] ?? ''));
+        $this->auditSensitiveAccountChanges(
+            $updatedStaff,
+            $oldValues,
+            $newValues,
+            ! empty($validated['password']),
+        );
+        $this->revokeSessionsIfNeeded(
+            actor: $creator,
+            staff: $updatedStaff,
+            oldStatus: (string) ($oldValues['status'] ?? ''),
+            passwordChanged: ! empty($validated['password']),
+            source: 'staff_controller',
+        );
 
         return redirect()->route('admin.staff.index')->with('success', 'Staff member updated successfully.');
     }
@@ -255,10 +365,18 @@ class StaffController extends Controller
     public function destroy(User $staff)
     {
         $this->authorize('delete', $staff);
-        
+
         $oldValues = $this->staffSnapshot($staff);
+        $revokedSessions = $this->sessions->revokeUserAccess($staff);
+        $this->auditSessionRevocation(
+            staff: $staff,
+            source: 'staff_controller',
+            revokedSessions: $revokedSessions,
+            reason: 'staff_deleted',
+            keptCurrentSession: false,
+        );
         $staff->delete();
-        
+
         $this->audit->log(
             action: 'staff.deleted',
             target: $staff,
@@ -279,7 +397,7 @@ class StaffController extends Controller
      */
     private function staffSnapshot(User $staff): array
     {
-        $staff->loadMissing('roles');
+        $staff->loadMissing('roles', 'organization.parent');
 
         return [
             'id' => $staff->id,
@@ -290,6 +408,7 @@ class StaffController extends Controller
             'type' => $staff->type,
             'organization_id' => $staff->organization_id,
             'organization_scope' => $staff->organization_scope,
+            'organization_label' => $staff->organization ? $this->organizationLabel($staff->organization) : null,
             'roles' => $staff->roles
                 ->pluck('name')
                 ->sort()
@@ -324,6 +443,109 @@ class StaffController extends Controller
         );
     }
 
+    /**
+     * @param  array<int, string>  $oldPermissions
+     * @param  array<int, string>  $newPermissions
+     */
+    private function auditPermissionOverrideChanges(User $staff, array $oldPermissions, array $newPermissions): void
+    {
+        $oldPermissions = collect($oldPermissions)->filter()->sort()->values()->all();
+        $newPermissions = collect($newPermissions)->filter()->sort()->values()->all();
+
+        if ($oldPermissions === $newPermissions) {
+            return;
+        }
+
+        $this->audit->log(
+            action: 'staff.permission_overrides.changed',
+            target: $staff,
+            oldValues: ['permission_overrides' => $oldPermissions],
+            newValues: ['permission_overrides' => $newPermissions],
+            notes: 'Staff direct permission overrides changed',
+            context: [
+                'module' => 'iam',
+                'source' => 'staff_controller',
+            ],
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function directPermissionNames(User $staff): array
+    {
+        return $staff->getDirectPermissions()
+            ->pluck('name')
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $oldValues
+     * @param  array<string, mixed>  $newValues
+     */
+    private function auditSensitiveAccountChanges(
+        User $staff,
+        array $oldValues,
+        array $newValues,
+        bool $passwordChanged,
+    ): void {
+        $trackedFields = [
+            'email',
+            'status',
+            'organization_scope',
+            'organization_id',
+            'organization_label',
+        ];
+
+        $oldSensitive = [];
+        $newSensitive = [];
+
+        foreach ($trackedFields as $field) {
+            $oldValue = $oldValues[$field] ?? null;
+            $newValue = $newValues[$field] ?? null;
+
+            if ($oldValue === $newValue) {
+                continue;
+            }
+
+            $oldSensitive[$field] = $oldValue;
+            $newSensitive[$field] = $newValue;
+        }
+
+        if ($oldSensitive !== [] || $newSensitive !== []) {
+            $this->audit->log(
+                action: 'staff.account_access.changed',
+                target: $staff,
+                oldValues: $oldSensitive,
+                newValues: $newSensitive,
+                notes: 'Sensitive staff account fields changed',
+                context: [
+                    'module' => 'iam',
+                    'source' => 'staff_controller',
+                ],
+            );
+        }
+
+        if (! $passwordChanged) {
+            return;
+        }
+
+        $this->audit->log(
+            action: 'staff.password.changed',
+            target: $staff,
+            newValues: [
+                'credentials_rotated' => true,
+            ],
+            notes: 'Staff password changed manually',
+            context: [
+                'module' => 'iam',
+                'source' => 'staff_controller',
+            ],
+        );
+    }
+
     private function auditStaffLifecycleChanges(User $staff, string $oldStatus, string $newStatus): void
     {
         if ($oldStatus === $newStatus) {
@@ -343,5 +565,69 @@ class StaffController extends Controller
                 ],
             );
         }
+    }
+
+    private function revokeSessionsIfNeeded(
+        User $actor,
+        User $staff,
+        string $oldStatus,
+        bool $passwordChanged,
+        string $source,
+    ): void {
+        $statusForcedLogout = $oldStatus !== $staff->status
+            && in_array($staff->status, ['inactive', 'suspended'], true);
+
+        if (! $passwordChanged && ! $statusForcedLogout) {
+            return;
+        }
+
+        $keepCurrentSession = $actor->is($staff) && ! $statusForcedLogout;
+        $revokedSessions = $this->sessions->revokeUserAccess(
+            $staff,
+            $keepCurrentSession ? request()->session()?->getId() : null,
+        );
+
+        $this->auditSessionRevocation(
+            staff: $staff,
+            source: $source,
+            revokedSessions: $revokedSessions,
+            reason: $statusForcedLogout ? 'status_changed' : 'password_changed',
+            keptCurrentSession: $keepCurrentSession,
+        );
+    }
+
+    private function auditSessionRevocation(
+        User $staff,
+        string $source,
+        int $revokedSessions,
+        string $reason,
+        bool $keptCurrentSession,
+    ): void {
+        $this->audit->log(
+            action: 'staff.sessions.revoked',
+            target: $staff,
+            newValues: [
+                'revoked_sessions' => $revokedSessions,
+                'reason' => $reason,
+                'kept_current_session' => $keptCurrentSession,
+            ],
+            notes: 'Staff sessions revoked',
+            context: [
+                'module' => 'iam',
+                'source' => $source,
+            ],
+        );
+    }
+
+    private function organizationLabel(Organization $organization): string
+    {
+        $prefix = match ($organization->type) {
+            Organization::TYPE_PLATFORM => 'Platform',
+            Organization::TYPE_FRANCHISE => 'Franchise',
+            Organization::TYPE_BRANCH => 'Branch',
+            default => ucfirst($organization->type),
+        };
+
+        return "{$prefix}: {$organization->name}";
     }
 }

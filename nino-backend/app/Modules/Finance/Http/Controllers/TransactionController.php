@@ -36,6 +36,9 @@ class TransactionController extends Controller
         if ($request->filled('method')) {
             $query->where('payment_method', $request->method);
         }
+        if ($request->filled('gateway')) {
+            $query->where('gateway', $request->gateway);
+        }
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }

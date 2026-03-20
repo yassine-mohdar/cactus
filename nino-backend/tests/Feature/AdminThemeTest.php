@@ -87,10 +87,10 @@ class AdminThemeTest extends TestCase
         BLADE);
 
         $this->assertStringContainsString('id="admin-sidebar"', $layoutHtml);
-        $this->assertStringContainsString('x-bind:aria-hidden="sidebarVisible() ? &#039;false&#039; : &#039;true&#039;"', $layoutHtml);
-        $this->assertStringContainsString('x-bind:inert="sidebarVisible() ? null : &#039;inert&#039;"', $layoutHtml);
+        $this->assertStringContainsString('x-bind:aria-hidden="sidebarVisible() ? \'false\' : \'true\'"', $layoutHtml);
+        $this->assertStringContainsString('x-bind:inert="sidebarVisible() ? null : \'inert\'"', $layoutHtml);
         $this->assertStringContainsString('aria-controls="admin-sidebar"', $layoutHtml);
-        $this->assertStringContainsString('x-bind:aria-expanded="sidebarOpen ? &#039;true&#039; : &#039;false&#039;"', $layoutHtml);
+        $this->assertStringContainsString('x-bind:aria-expanded="sidebarOpen ? \'true\' : \'false\'"', $layoutHtml);
         $this->assertStringContainsString('x-on:keydown.escape.window="closeSidebar()"', $layoutHtml);
     }
 

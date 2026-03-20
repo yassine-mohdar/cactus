@@ -2,14 +2,29 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use App\Modules\Audit\Services\AuditLogger;
+use App\Modules\IAM\Models\Role;
+use App\Modules\Catalog\Models\Category;
+use App\Modules\Catalog\Models\Product;
+use App\Modules\Inventory\Models\StockItem;
+use App\Modules\Orders\Models\Order;
+use App\Modules\Organizations\Models\Organization;
+use App\Modules\Payments\Models\GatewaySetting;
+use App\Policies\CategoryPolicy;
+use App\Policies\GatewaySettingPolicy;
+use App\Policies\OrderPolicy;
+use App\Policies\OrganizationPolicy;
+use App\Policies\ProductPolicy;
+use App\Policies\RolePolicy;
+use App\Policies\StockItemPolicy;
+use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Lab404\Impersonate\Events\LeaveImpersonation;
 use Lab404\Impersonate\Events\TakeImpersonation;
-
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -25,6 +40,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Organization::class, OrganizationPolicy::class);
+        Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(Product::class, ProductPolicy::class);
+        Gate::policy(Category::class, CategoryPolicy::class);
+        Gate::policy(Order::class, OrderPolicy::class);
+        Gate::policy(StockItem::class, StockItemPolicy::class);
+        Gate::policy(GatewaySetting::class, GatewaySettingPolicy::class);
+
         // Implicitly grant "Super Admin" role all permissions
         Gate::before(function ($user, $ability) {
             return $user->isSuperAdmin() ? true : null;

@@ -7,9 +7,6 @@ use Illuminate\Support\Facades\Cache;
 
 class SettingsService
 {
-    /** Cache TTL in seconds (1 hour) */
-    private const CACHE_TTL = 3600;
-
     /** Cache key prefix */
     private const CACHE_PREFIX = 'settings:';
 
@@ -30,7 +27,7 @@ class SettingsService
     {
         return Cache::remember(
             self::CACHE_PREFIX . $group,
-            self::CACHE_TTL,
+            $this->cacheTtlSeconds(),
             fn () => $this->loadGroup($group)
         );
     }
@@ -56,15 +53,36 @@ class SettingsService
      */
     public function setMany(string $group, array $items): void
     {
-        foreach ($items as $item) {
-            $this->set(
-                $group,
-                $item['key'],
-                $item['value'],
-                $item['type'] ?? 'string',
-                $item['encrypt'] ?? false,
-            );
+        if ($items === []) {
+            return;
         }
+
+        $timestamp = now();
+        $payload = [];
+
+        foreach ($items as $item) {
+            $payload[] = [
+                'group' => $group,
+                'key' => $item['key'],
+                'value' => Setting::prepareValue(
+                    $item['value'],
+                    $item['type'] ?? 'string',
+                    $item['encrypt'] ?? false,
+                ),
+                'type' => $item['type'] ?? 'string',
+                'is_encrypted' => $item['encrypt'] ?? false,
+                'updated_at' => $timestamp,
+                'created_at' => $timestamp,
+            ];
+        }
+
+        Setting::query()->upsert(
+            $payload,
+            ['group', 'key'],
+            ['value', 'type', 'is_encrypted', 'updated_at']
+        );
+
+        $this->invalidateGroup($group);
     }
 
     /**
@@ -103,5 +121,10 @@ class SettingsService
     public function allGroups(): array
     {
         return Setting::select('group')->distinct()->pluck('group')->toArray();
+    }
+
+    private function cacheTtlSeconds(): int
+    {
+        return max(0, (int) config('performance.settings_cache_ttl_seconds', 3600));
     }
 }

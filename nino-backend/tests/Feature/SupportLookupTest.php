@@ -47,7 +47,10 @@ class SupportLookupTest extends TestCase
 
     private function createOrderContext(): array
     {
-        $staff = User::factory()->create();
+        $staff = User::factory()->create([
+            'type' => 'staff',
+            'status' => 'active',
+        ]);
 
         $customer = User::factory()->create([
             'name' => 'Yassine Bennani',

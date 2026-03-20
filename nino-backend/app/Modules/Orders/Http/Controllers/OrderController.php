@@ -11,6 +11,8 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Order::class);
+
         $query = Order::with('customer')->orderByDesc('created_at');
         $summaryBaseQuery = Order::query();
 
@@ -41,6 +43,8 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
+        $this->authorize('view', $order);
+
         $order->load(['customer', 'lineItems', 'addresses']);
 
         $shippingAddress = $order->addresses->where('type', 'shipping')->first();

@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -10,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         // Drop legacy tables if they exist — replacing with comprehensive schema
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('payment_transactions');
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        Schema::enableForeignKeyConstraints();
 
         // ───────────────────────────────────────────────────────
         // Payment Transactions — central financial ledger

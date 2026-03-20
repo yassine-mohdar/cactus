@@ -14,6 +14,9 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+            @can('viewAny', \Spatie\Permission\Models\Role::class)
+                <x-nino.button href="{{ route('admin.staff.roles.index') }}" variant="secondary" icon="shield_person">Manage Roles</x-nino.button>
+            @endcan
             <span class="datatable-meta">Operations Access</span>
             <span class="datatable-meta">Role Driven</span>
         </div>

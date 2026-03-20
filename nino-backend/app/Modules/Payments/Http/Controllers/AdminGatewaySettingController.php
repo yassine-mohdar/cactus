@@ -18,6 +18,8 @@ class AdminGatewaySettingController extends Controller
      */
     public function index()
     {
+        $this->authorize('viewAny', GatewaySetting::class);
+
         // Auto-seed required Gateway skeletons on first load so the Admin has something to configure
         $this->ensureBaseGatewaysExist();
 
@@ -32,6 +34,8 @@ class AdminGatewaySettingController extends Controller
      */
     public function update(Request $request, GatewaySetting $gateway)
     {
+        $this->authorize('update', $gateway);
+
         // Validate incoming structure
         $validated = $request->validate([
             'is_enabled' => 'nullable|boolean',

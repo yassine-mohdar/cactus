@@ -3,10 +3,15 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Modules\IAM\Services\ScopeAuthorizationService;
 use App\Modules\Organizations\Models\Organization;
 
 class OrganizationPolicy
 {
+    public function __construct(
+        private readonly ScopeAuthorizationService $scopes = new ScopeAuthorizationService(),
+    ) {}
+
     /**
      * Determine whether the user can view any models.
      */
@@ -58,20 +63,6 @@ class OrganizationPolicy
      */
     protected function isInScope(User $user, Organization $organization): bool
     {
-        if ($user->organization_scope === 'platform' || $user->isSuperAdmin()) {
-            return true;
-        }
-
-        if ($user->organization_scope === 'franchise' && $user->organization_id) {
-            // Franchise can only see/edit itself or its children branches
-            return $organization->id === $user->organization_id || $organization->parent_id === $user->organization_id;
-        }
-
-        if ($user->organization_scope === 'branch' && $user->organization_id) {
-            // Branch can only see/edit itself
-            return $organization->id === $user->organization_id;
-        }
-
-        return false;
+        return $this->scopes->organizationIsInScope($user, $organization);
     }
 }

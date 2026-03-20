@@ -71,6 +71,16 @@ class IntegrationSetting extends Model
         ];
     }
 
+    public static function ensureDefaultsExist(): void
+    {
+        foreach (self::defaultDefinitions() as $definition) {
+            self::firstOrCreate(
+                ['provider' => $definition['provider']],
+                $definition,
+            );
+        }
+    }
+
     public function requiredCredentialKeys(): array
     {
         return match ($this->provider) {

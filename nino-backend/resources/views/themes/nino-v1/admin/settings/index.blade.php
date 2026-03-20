@@ -7,6 +7,22 @@
 @endsection
 
 @section('content')
+    @php
+        $fieldSections = collect($fields)->groupBy(fn ($field) => $field['section'] ?? 'Settings');
+    @endphp
+
+    @if(session('success'))
+        <div class="mb-4 p-3 rounded-lg bg-green-50 text-green-700 text-sm border border-green-200">{{ session('success') }}</div>
+    @endif
+
+    @if(session('warning'))
+        <div class="mb-4 p-3 rounded-lg bg-amber-50 text-amber-700 text-sm border border-amber-200">{{ session('warning') }}</div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm border border-red-200">{{ session('error') }}</div>
+    @endif
+
     {{-- Tab Navigation --}}
     <div class="mb-6 border-b border-gray-200">
         <nav class="flex space-x-1 -mb-px" aria-label="Settings tabs">
@@ -111,7 +127,8 @@
                     @endif
                 </div>
 
-                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                    <a href="{{ route('admin.notifications.integrations.test', $integration) }}" class="px-5 py-2 text-sm font-medium border border-slate-200 text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Safe Test</a>
                     <button type="submit" class="btn-primary">Save {{ $integration->name }}</button>
                 </div>
             </form>
@@ -125,48 +142,59 @@
                 <input type="hidden" name="group" value="{{ $activeTab }}">
 
                 <div class="p-6 space-y-6">
-                    <h2 class="text-lg font-semibold text-ink border-b border-gray-100 pb-3">{{ $groups[$activeTab] ?? 'Settings' }}</h2>
+                    @foreach($fieldSections as $section => $sectionFields)
+                        <div class="rounded-md border border-gray-200 bg-gray-50/40 p-5">
+                            <h2 class="text-lg font-semibold text-ink border-b border-gray-100 pb-3">{{ $section }}</h2>
 
-                    @foreach($fields as $field)
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                            <label for="{{ $field['key'] }}" class="text-sm font-medium text-gray-700 pt-2">
-                                {{ $field['label'] }}
-                                @if($field['encrypt'] ?? false)
-                                    <span class="ml-1 text-xs text-amber-500" title="This value is stored encrypted">🔒</span>
-                                @endif
-                            </label>
-                            <div class="md:col-span-2">
-                                @if($field['type'] === 'boolean')
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="hidden" name="{{ $field['key'] }}" value="0">
-                                        <input type="checkbox" name="{{ $field['key'] }}" value="1"
-                                               class="sr-only peer"
-                                               {{ ($values[$field['key']] ?? false) ? 'checked' : '' }}>
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sage/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sage"></div>
-                                        <span class="ml-3 text-sm text-gray-600">{{ ($values[$field['key']] ?? false) ? 'Enabled' : 'Disabled' }}</span>
-                                    </label>
-                                @elseif($field['type'] === 'secret')
-                                    <input type="password"
-                                           name="{{ $field['key'] }}"
-                                           id="{{ $field['key'] }}"
-                                           class="input-field w-full"
-                                           placeholder="{{ isset($values[$field['key']]) ? '••••••••' : ($field['placeholder'] ?? '') }}"
-                                           autocomplete="off">
-                                    @if(isset($values[$field['key']]))
-                                        <p class="mt-1 text-xs text-gray-400">Leave blank to keep current value</p>
-                                    @endif
-                                @else
-                                    <input type="{{ $field['type'] === 'integer' ? 'number' : 'text' }}"
-                                           name="{{ $field['key'] }}"
-                                           id="{{ $field['key'] }}"
-                                           value="{{ old($field['key'], $values[$field['key']] ?? '') }}"
-                                           class="input-field w-full"
-                                           placeholder="{{ $field['placeholder'] ?? '' }}">
-                                @endif
+                            <div class="mt-5 space-y-5">
+                                @foreach($sectionFields as $field)
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                                        <label for="{{ $field['key'] }}" class="text-sm font-medium text-gray-700 pt-2">
+                                            {{ $field['label'] }}
+                                            @if($field['encrypt'] ?? false)
+                                                <span class="ml-1 text-xs text-amber-500" title="This value is stored encrypted">🔒</span>
+                                            @endif
+                                        </label>
+                                        <div class="md:col-span-2">
+                                            @if($field['type'] === 'boolean')
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input type="hidden" name="{{ $field['key'] }}" value="0">
+                                                    <input type="checkbox" name="{{ $field['key'] }}" value="1"
+                                                           class="sr-only peer"
+                                                           {{ ($values[$field['key']] ?? false) ? 'checked' : '' }}>
+                                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sage/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sage"></div>
+                                                    <span class="ml-3 text-sm text-gray-600">{{ ($values[$field['key']] ?? false) ? 'Enabled' : 'Disabled' }}</span>
+                                                </label>
+                                            @elseif($field['type'] === 'secret')
+                                                <input type="password"
+                                                       name="{{ $field['key'] }}"
+                                                       id="{{ $field['key'] }}"
+                                                       class="input-field w-full"
+                                                       placeholder="{{ isset($values[$field['key']]) ? '••••••••' : ($field['placeholder'] ?? '') }}"
+                                                       autocomplete="off">
+                                                @if(isset($values[$field['key']]))
+                                                    <p class="mt-1 text-xs text-gray-400">Leave blank to keep current value</p>
+                                                @endif
+                                            @elseif($field['type'] === 'textarea')
+                                                <textarea name="{{ $field['key'] }}"
+                                                          id="{{ $field['key'] }}"
+                                                          class="input-field w-full min-h-[7rem]"
+                                                          placeholder="{{ $field['placeholder'] ?? '' }}">{{ old($field['key'], $values[$field['key']] ?? '') }}</textarea>
+                                            @else
+                                                <input type="{{ $field['type'] === 'integer' ? 'number' : $field['type'] }}"
+                                                       name="{{ $field['key'] }}"
+                                                       id="{{ $field['key'] }}"
+                                                       value="{{ old($field['key'], $values[$field['key']] ?? '') }}"
+                                                       class="input-field w-full"
+                                                       placeholder="{{ $field['placeholder'] ?? '' }}">
+                                            @endif
 
-                                @error($field['key'])
-                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
+                                            @error($field['key'])
+                                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                     @endforeach
