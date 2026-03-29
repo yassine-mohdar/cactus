@@ -1,0 +1,348 @@
+You are working on our existing Tic Tac Toe game project in Replit.
+
+Your mission is to implement a full token system, challenge system, character-selection improvements, and bug fixes in a clean, robust, scalable, and production-ready way.
+
+Important:
+- This is an existing project, not a new one.
+- Do not rebuild the whole app.
+- First, inspect the current codebase and understand the existing architecture, models, game flows, admin panel, authentication, and database structure.
+- Then implement the requested updates in a way that matches the current project style and keeps the code organized.
+- Preserve existing working features.
+- Avoid hacks or hardcoded logic.
+- Use clean architecture, reusable services/functions, and clear naming.
+
+==================================================
+PROJECT CONTEXT
+==================================================
+
+We already have a Tic Tac Toe game in our Replit project.
+
+We now want to upgrade it with:
+1. A token reward system
+2. An admin-managed challenge system
+3. Better character selection behavior
+4. Bug fixes in VS Bot mode
+5. Some UX and system improvements
+
+Use the word "tokens" everywhere, not "points".
+
+==================================================
+FEATURE 1 — TOKEN SYSTEM
+==================================================
+
+Add a token system to the game.
+
+Requirements:
+- Each user should have a token balance stored in their account
+- Each time a user wins a match, they should earn tokens
+- Token rewards should be configurable if possible
+- Tokens should be displayed clearly in the user profile / dashboard / wallet area
+- Token transactions should be traceable if possible
+
+Recommended implementation:
+- Add a token_balance field to the user model
+- Add a token_transactions table or equivalent history system
+- Every token movement should be recorded with:
+  - user_id
+  - amount
+  - type
+  - source
+  - description
+  - related match id or challenge id if applicable
+  - created_at
+
+Suggested transaction types:
+- match_win_reward
+- challenge_entry_fee
+- challenge_reward
+- admin_adjustment
+- refund
+
+Recommendations:
+- Prevent negative token balance unless explicitly allowed by admin
+- Validate token updates carefully
+- Make token handling server-side / backend-driven, not only frontend logic
+- Keep token operations atomic to avoid bugs or exploits
+
+==================================================
+FEATURE 2 — CHALLENGE SYSTEM
+==================================================
+
+Add a challenge system that can be created and managed by the admin from the admin panel.
+
+Example:
+The admin can create a challenge like:
+- Name: Winter Challenge
+- Total reward pool: 10,000 tokens
+- Entry fee: 100 tokens
+
+Reward distribution example:
+- Rank 1: 5,000 tokens
+- Rank 2: 3,000 tokens
+- Rank 3: 2,000 tokens
+
+Core requirements:
+- Admin can create, edit, activate, deactivate, and complete challenges
+- Each challenge must have:
+  - title
+  - description
+  - cover image if possible
+  - badge
+  - entry fee in tokens
+  - reward pool
+  - reward distribution for top 3
+  - start date
+  - end date
+  - status
+  - max participants if needed
+- Status options:
+  - upcoming
+  - active
+  - completed
+  - cancelled
+
+Challenge participation:
+- A user must pay the entry fee in tokens to join a challenge
+- Only registered users for that challenge can play in that challenge
+- Only registered users appear in that challenge ranking
+- Challenge matches and rankings must be isolated from normal game mode
+
+Leaderboard and ranking:
+- Each challenge must have its own leaderboard
+- Each challenge must have its own rank system
+- Each challenge must have its own badge/visual identity
+- Rankings should be based on a clear logic such as:
+  - total wins
+  - total score
+  - total tokens earned inside challenge
+  - win rate
+  - or another solid ranking formula
+- Choose the cleanest logic and implement it consistently
+
+Reward distribution:
+- When the challenge ends, the system should distribute rewards automatically to:
+  - Rank 1
+  - Rank 2
+  - Rank 3
+- Reward distribution must be safe and should not run multiple times accidentally
+- Mark reward distribution status after execution
+
+Recommendations:
+- Add a participants table for challenge registrations
+- Add challenge_match_history
+- Add challenge_leaderboard data structure or compute rankings efficiently
+- Add safeguard against duplicate registrations
+- Add safeguard against joining without enough tokens
+- Add refund logic only if admin cancels a challenge, if applicable
+
+==================================================
+FEATURE 3 — CHARACTER SELECTION IMPROVEMENT
+==================================================
+
+We need to improve character selection behavior in Quick Match and VS Bot.
+
+Current problem:
+- The user is being asked every time to select a character
+
+Wanted behavior:
+- If the user already selected a character before, use that saved character automatically
+- If the user has never selected a character, ask the user to select one
+- Once selected, the character should be saved to the user account
+- The selected character remains the default until the user changes it manually
+- Add a clear option in settings/profile/game preferences to change character later
+
+Requirements:
+- Save selected character to user account
+- Reuse it automatically in Quick Match
+- Reuse it automatically in VS Bot
+- Do not ask every time unless no character is saved
+- Handle edge cases if a character becomes unavailable or deleted
+
+==================================================
+FEATURE 4 — VS BOT BUG FIX
+==================================================
+
+There is a bug in VS Bot mode.
+
+Expected behavior:
+- The bot must always choose a different character than the user’s selected character
+
+Current issue:
+- Sometimes the bot uses the same character as the user
+
+Fix needed:
+- Ensure the bot always selects a different available character
+- Add validation to prevent duplicate character selection between user and bot
+- If needed, add a fallback random selection from remaining characters only
+
+Also review:
+- Quick Match flow
+- VS Bot game initialization flow
+- Character assignment logic
+- Match setup state management
+
+==================================================
+FEATURE 5 — RECOMMENDED IMPROVEMENTS
+==================================================
+
+Please also implement or prepare for these improvements if possible:
+
+1. Global token economy improvements
+- Token balance UI
+- Token transaction history
+- Admin manual token adjustment
+
+2. Challenge improvements
+- Challenge badges
+- Challenge match history
+- Challenge details page
+- Challenge participant count
+- Challenge countdown timer
+- Challenge result page after completion
+
+3. Leaderboards
+- Global leaderboard
+- Challenge-specific leaderboards
+- Clean ranking tie-breaker logic
+
+4. Fairness and security
+- Anti-cheat validation where possible
+- Prevent duplicate reward claims
+- Prevent multiple challenge joins for same user
+- Prevent token exploits from repeated requests
+- Server-side validation for all critical actions
+
+5. Bot improvements
+- Optional bot difficulty levels:
+  - easy
+  - medium
+  - hard
+
+==================================================
+ADMIN PANEL REQUIREMENTS
+==================================================
+
+Update the admin panel so the admin can manage challenges properly.
+
+Admin should be able to:
+- Create challenge
+- Edit challenge
+- Delete or cancel challenge
+- Upload or assign badge
+- Set entry fee
+- Set reward pool
+- Set rank rewards
+- Set dates
+- Set status
+- View participants
+- View challenge leaderboard
+- View challenge match history
+- Trigger completion if needed
+- See whether rewards were distributed
+
+If token management exists in admin, also allow:
+- Manual token credit/debit for users
+- View token transaction history
+
+==================================================
+DATABASE / BACKEND REQUIREMENTS
+==================================================
+
+Please design the backend cleanly.
+
+Suggested entities:
+- users
+- characters
+- matches
+- token_transactions
+- challenges
+- challenge_participants
+- challenge_matches
+- challenge_rewards or reward_logs
+- badges
+
+Use proper relationships and indexes.
+
+Requirements:
+- Keep data normalized where possible
+- Add migrations safely
+- Do not break existing data
+- Use transactions for token deductions and reward distributions
+- Prevent duplicate challenge join records
+- Prevent duplicate reward distribution
+
+==================================================
+UX / UI REQUIREMENTS
+==================================================
+
+Please also improve the UX where needed.
+
+Requirements:
+- Show token balance clearly
+- Show challenge entry fee before joining
+- Ask confirmation before spending tokens to join a challenge
+- Show success/failure messages clearly
+- Show challenge rank and badge clearly
+- Make character selection feel smooth and not repetitive
+- If user has no saved character, show a clean selection flow
+- If user already has one, skip unnecessary screens
+
+==================================================
+ACCEPTANCE CRITERIA
+==================================================
+
+The task is complete only if all of the following work correctly:
+
+1. Token system
+- User has token balance
+- User earns tokens after a win
+- Token changes are stored correctly
+- Token balance updates safely
+
+2. Challenge system
+- Admin can create challenges from admin panel
+- User can join a challenge by paying tokens
+- Only joined users can participate in that challenge
+- Each challenge has its own leaderboard and rank
+- Each challenge has its own badge/identity
+- Top 3 rewards are distributed correctly at the end
+- Rewards cannot be distributed twice accidentally
+
+3. Character selection
+- Quick Match no longer asks every time if user already selected a character
+- VS Bot no longer asks every time if user already selected a character
+- Character is saved to account until user changes it
+- New users are asked only when no character is saved
+
+4. VS Bot bug fix
+- Bot always uses a different character than the user
+- No duplicate character conflict happens
+
+5. Code quality
+- Code is organized
+- Existing features are preserved
+- No major regressions
+- Logic is scalable and maintainable
+
+==================================================
+FINAL INSTRUCTIONS
+==================================================
+
+Please do the following in order:
+
+1. Review the current codebase and understand the existing implementation
+2. Identify where to integrate the new token and challenge systems
+3. Implement backend/data changes first
+4. Implement admin panel challenge management
+5. Implement user challenge flows
+6. Improve character selection persistence
+7. Fix the VS Bot character bug
+8. Test all flows carefully
+9. Refactor where necessary for cleanliness
+10. Summarize all changes made
+
+Also provide:
+- a summary of files changed
+- database changes/migrations added
+- any assumptions made
+- any optional future improvements you recommend

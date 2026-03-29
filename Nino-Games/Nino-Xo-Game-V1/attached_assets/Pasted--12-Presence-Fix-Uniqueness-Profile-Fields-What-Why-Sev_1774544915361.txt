@@ -1,0 +1,42 @@
+#12 - Presence Fix, Uniqueness & Profile Fields
+What & Why
+Several profile and identity improvements:
+
+Online presence bug — Players sometimes appear offline even when connected. The socket-based presence check may lose sync on reconnect or when the API reads stale data. This needs to be made reliable.
+Unique username & email — Currently nothing enforces uniqueness. Two players can register with the same name or email.
+Phone number field — Add an international-format phone number input with automatic country detection to registration and edit profile.
+Country field on edit profile — Let players select their country from a picker on the edit profile screen.
+Country flag on public profile — Show the player's country flag (emoji or image) prominently on their public profile page.
+Done looks like
+A player who is connected and active is always shown as "Online" on their public profile without intermittent false-offline states.
+Attempting to register or save a profile with a username or email already in use shows a clear error message.
+The edit profile screen has a phone number field that auto-detects the device's country code and accepts international format input.
+The edit profile screen has a country selector/picker field.
+The public profile shows the player's country flag next to their name or stats.
+Out of scope
+SMS verification or phone number confirmation
+Changing the existing login/registration flow beyond adding the new fields
+Geolocation-based enforcement (country is user-selected)
+Tasks
+Fix presence reliability — Audit the socket connect/disconnect lifecycle and the /api/players/:id endpoint's isOnline logic. Ensure reconnections update the registry correctly and the API reads live socket state rather than potentially stale data. Add a heartbeat or re-registration on reconnect if needed.
+
+Enforce unique username and email on server — Add database-level unique constraints (or unique index) on the name and email columns in the players schema. Update the POST /api/players and profile-update endpoints to return a clear error when a duplicate is detected. Surface those errors in the app's login and edit-profile screens.
+
+Add phone number & country fields to DB schema and API — Extend the players schema with phoneNumber (string) and country (string, ISO 3166-1 alpha-2 code). Update the player sync and update endpoints to accept and store these fields.
+
+Phone number input with auto country detection on edit profile — Integrate a React Native international phone number input library (e.g., react-native-phone-number-input) in the edit profile screen. Auto-detect the device locale to pre-select the country code. Validate the number is in a valid international format before saving.
+
+Country picker on edit profile — Add a country selector (picker/modal list) to the edit profile screen using an ISO country list. Pre-fill from stored value if available, otherwise default to device locale.
+
+Country flag on public profile — Display the country flag emoji (derived from the ISO code) alongside the player's name or stats on the public profile screen.
+
+Relevant files
+artifacts/api-server/src/socket/profileRegistry.ts
+artifacts/api-server/src/socket/socketServer.ts
+artifacts/nino-xo/src/services/realtimeService.ts
+artifacts/nino-xo/app/public-profile.tsx
+artifacts/nino-xo/app/edit-profile.tsx
+artifacts/nino-xo/app/login.tsx
+artifacts/nino-xo/src/stores/authStore.ts
+artifacts/nino-xo/src/services/playerSyncService.ts
+lib/db/src/schema/players.ts

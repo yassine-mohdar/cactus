@@ -1,0 +1,251 @@
+Redesign and polish ONLY these Nino XO screens:
+
+1. Home screen
+2. Win screen
+3. Lose screen
+4. Draw screen if it exists
+
+Do not redesign the rest of the app yet.
+Do not touch unrelated screens.
+Do not refactor unrelated logic unless required for these screens.
+
+==================================================
+GOAL
+==================================================
+
+The current Nino XO UI is much better now, but it still needs a final push to feel like a true premium mobile game.
+
+I want these screens to become:
+- more game-like
+- more premium
+- more alive
+- more emotional
+- more character-driven
+- more memorable
+- more polished
+- still clean and mobile-first
+- clearly part of the NinoWorld universe
+
+The current issue is:
+- the home screen still needs more premium game energy
+- the win / lose states still need to feel more like real game result screens and less like simple app states
+
+==================================================
+SCREENS TO IMPROVE
+==================================================
+
+A. HOME SCREEN
+B. WIN SCREEN
+C. LOSE SCREEN
+D. DRAW SCREEN (if implemented)
+
+==================================================
+PART 1 — HOME SCREEN REDESIGN
+==================================================
+
+The current home screen is good, but it must become closer to a true mobile game lobby.
+
+Fix these remaining issues:
+1. hero still feels a bit flat
+2. character presence is still not strong enough
+3. stats row can be cleaner and more rewarding
+4. Quick Match must feel like the strongest recommended action
+5. the screen needs more emotional energy and premium game polish
+6. some sections still feel slightly like app cards instead of game modules
+
+### Home screen redesign requirements
+
+#### HERO
+Improve the hero section so it feels like:
+- the main entry point into battle
+- premium
+- exciting
+- alive
+- character-first
+
+Requirements:
+- increase Nino’s visual presence
+- give the hero more premium game depth
+- add subtle layered background treatment
+- add subtle glow / halo / sparkle energy around the character
+- keep the layout clean and premium
+- keep the CTA very strong
+
+The CTA should remain action-oriented:
+- Play Now
+or
+- Start Match
+
+“Nino is ready” can stay as a supporting status only.
+
+#### ACTIVE FIGHTER CARD
+Make the Active Fighter card feel more like:
+- your selected champion
+- your current battle identity
+- a collectible game token
+
+Improve:
+- avatar presentation
+- selected state
+- premium detail treatment
+- emotional attachment to the chosen character
+
+#### STATS
+Redesign the stats so they feel like game progression, not dashboard widgets.
+
+Improve:
+- visual consistency
+- progression/reward feeling
+- hierarchy
+- card polish
+
+If needed, remove or redesign the “More Stats” card so the row feels cleaner and stronger.
+
+#### GAME MODES
+Redesign:
+- Quick Match
+- Friend
+- vs Bot
+
+Requirements:
+- more game-like
+- more premium
+- more tappable
+- stronger hierarchy
+- stronger Quick Match emphasis
+- Quick Match should feel like the default/highlighted action
+
+#### EXPLORE / SECONDARY SECTION
+If there is an Explore section, redesign it so it feels relevant and game-related.
+It should not feel vague or like filler.
+
+==================================================
+PART 2 — WIN / LOSE / DRAW SCREEN REDESIGN
+==================================================
+
+The result screens must feel much more like real game result moments.
+
+They should be:
+- emotionally expressive
+- character-driven
+- funny
+- premium
+- polished
+- memorable
+- rewarding
+- highly replayable
+
+They must not feel like plain system states.
+
+### WIN SCREEN
+The win screen should feel:
+- exciting
+- rewarding
+- celebratory
+- energetic
+- lovable
+
+Requirements:
+- strong winning character animation zone
+- premium victory layout
+- result clearly visible
+- rematch button must be strong
+- return home button secondary
+- show progress/reward/streak if available
+- add visual celebration energy
+- use cute premium effects, not chaotic arcade style
+
+Possible visual ideas:
+- sparkle burst
+- subtle glow
+- confetti-like premium particles
+- happy jump / bounce / pose
+- “Victory” / “You Won” treatment with personality
+
+### LOSE SCREEN
+The lose screen should feel:
+- soft
+- funny
+- cute
+- never harsh or punishing
+- emotionally encouraging
+
+Requirements:
+- character reaction for losing
+- supportive tone
+- rematch should still feel very inviting
+- keep premium quality
+- avoid sad ugly generic defeat screen feeling
+
+Possible visual ideas:
+- small pout
+- funny oops face
+- “Almost!” or “Let’s try again”
+- gentle soft colors
+- playful recovery feeling
+
+### DRAW SCREEN
+The draw screen should feel:
+- fun
+- neutral-positive
+- playful
+- encouraging for rematch
+
+Requirements:
+- both characters react
+- visually different from win and lose
+- not boring
+- rematch emphasized
+
+==================================================
+RESULT SCREEN UX RULES
+==================================================
+
+For all result screens:
+- rematch must be the primary CTA
+- home/back should be secondary
+- visual hierarchy must be strong
+- character emotion must be central
+- the result moment should feel like a reward in itself
+- keep it mobile-first and uncluttered
+
+==================================================
+STYLE RULES
+==================================================
+
+Keep the NinoWorld premium game identity:
+- soft cream / warm pastel palette
+- rounded premium cards
+- strong character-first design
+- subtle sparkle / glow where appropriate
+- polished game feel
+- cute but refined
+- premium, not childish
+- playful, not chaotic
+
+==================================================
+TECHNICAL RULES
+==================================================
+
+- redesign only the listed screens
+- keep code modular and clean
+- preserve responsiveness
+- preserve existing navigation flow
+- preserve gameplay logic unless needed for better result state handling
+- if needed, create reusable result-state components
+- do not refactor unrelated screens
+- do not touch backend/service logic unless required for these screens
+
+==================================================
+DELIVERABLE
+==================================================
+
+Return:
+1. a much stronger home screen that feels like a real premium game lobby
+2. a redesigned win screen that feels exciting and celebratory
+3. a redesigned lose screen that feels funny, soft, and replayable
+4. a redesigned draw screen that feels playful and distinct
+5. polished, production-ready UI quality
+6. clear explanation before coding of the redesign direction for these screens
+
+Implement now.

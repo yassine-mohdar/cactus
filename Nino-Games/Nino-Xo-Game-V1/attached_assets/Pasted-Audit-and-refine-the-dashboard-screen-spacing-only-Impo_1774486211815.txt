@@ -1,0 +1,65 @@
+Audit and refine the dashboard screen spacing only.
+
+Important context:
+	•	This screen is scrollable
+	•	Any cropped content visible in screenshots is due to scroll position, not a safe-area issue
+	•	Do not redesign the UI
+	•	Do not change colors, typography, icons, illustrations, card style, or component hierarchy
+	•	Do not change content or reorder sections
+	•	Focus only on layout spacing, section rhythm, and padding consistency
+
+Task
+
+Analyze the current dashboard layout and apply a clean spacing pass so the screen feels more premium, balanced, and intentional.
+
+Main spacing issues to fix
+	1.	The gap between the mode cards row (Friend / vs Bot) and the Daily Challenge section title is too tight
+	2.	The gap between the Daily Challenge title row and the challenge card is slightly tight
+	3.	The gap between the Daily Challenge card and the Character Roster section title needs better separation
+	4.	The Character Roster section should feel visually comfortable above the bottom navigation, even though the page is scrollable
+	5.	Vertical rhythm across sections should feel more consistent instead of slightly uneven
+
+Spacing system to enforce
+
+Use a simple reusable spacing scale and avoid random one-off values.
+
+Recommended spacing tokens:
+	•	xs = 8
+	•	sm = 12
+	•	md = 16
+	•	lg = 24
+	•	xl = 32
+
+Recommended usage:
+	•	24–32 px between major dashboard sections
+	•	12–16 px between a section title and its content
+	•	16–20 px between related cards/items in the same content group
+
+Implementation requirements
+	•	First inspect the current dashboard widget tree and identify where spacing is currently hardcoded or inconsistent
+	•	Replace inconsistent one-off vertical gaps with reusable spacing constants
+	•	Preserve the current structure and visual density
+	•	Improve spacing without making the dashboard feel empty
+	•	Keep layout responsive across common mobile screen sizes
+	•	Respect existing SafeArea and scroll behavior
+	•	Do not introduce regressions in card alignment or horizontal spacing
+
+Code quality requirements
+	•	Keep the patch minimal and clean
+	•	Reuse existing design system tokens if the project already has them
+	•	If no spacing tokens exist yet, create a small centralized spacing constants file or local constants for this screen
+	•	Avoid magic numbers scattered across the layout
+	•	Keep the code easy to maintain
+
+Expected outcome
+
+The dashboard should look the same stylistically, but feel more polished because:
+	•	sections breathe better
+	•	titles are better separated from surrounding content
+	•	the dashboard flow feels smoother and more premium
+	•	bottom area feels less cramped near the tab bar
+
+Deliverable
+	•	Update the dashboard screen code
+	•	Briefly summarize what spacing values were changed and where
+	•	Keep the result production-clean
