@@ -1,0 +1,368 @@
+You are working on our existing Tic Tac Toe game project in Replit.
+
+Your task is to fix the authentication flow and admin access logic in a clean, secure, scalable, and production-ready way.
+
+Important:
+- This is an existing project, not a new one
+- Do not rebuild the whole app
+- First inspect the current codebase, auth flow, database structure, user model, routing, session handling, and admin panel implementation
+- Then implement the requested fixes in a way that matches the current architecture and coding style
+- Preserve all existing working features
+- Avoid hacks or temporary fixes
+- Use clean, maintainable code and proper access control
+
+==================================================
+PROJECT ISSUES TO FIX
+==================================================
+
+We currently have 2 major issues:
+
+1. If the user logs out, there is no proper way to log back into the same account.
+   Right now, the user is forced to create a new account every time after logout.
+
+2. Admin panel access is not properly managed.
+   We need a default admin account, and only admin users should see and access the admin panel.
+
+In addition, the authentication system must be upgraded to support modern sign-in and sign-up methods:
+- Google Sign-In
+- Apple Sign-In
+- Email OTP / Magic Link
+
+==================================================
+FEATURE 1 — PROPER LOGIN / AUTHENTICATION FLOW
+==================================================
+
+Current problem:
+- After logout, users cannot log back into their existing account
+- Each time they return, they must create a new account
+- This breaks account continuity and user progress
+
+What we need:
+- A proper authentication system with:
+  - Sign up for new users
+  - Login for existing users
+  - Logout
+  - Session persistence
+  - Google Sign-In
+  - Apple Sign-In
+  - Email OTP / Magic Link
+
+Users must be able to return to the same account after logout, regardless of the authentication method used.
+
+Data that must stay connected to the user account:
+- selected character
+- tokens
+- game progress
+- match history
+- challenge participation
+- rankings
+- any future profile-related data
+
+Requirements:
+- Add a clear authentication screen for existing and new users
+- Support:
+  - Login for existing users
+  - Sign up / create account for new users
+  - Continue with Google
+  - Continue with Apple
+  - Continue with Email
+- After logout, the user must be redirected to an auth screen where they can log in or create a new account
+- If the user enters valid credentials or successfully authenticates with a supported provider, they should access their existing account and recover all saved data
+- If credentials are invalid or authentication fails, show proper error messages
+- Session/auth state must work correctly after app refresh or app reopen if persistence is supported in the current stack
+
+Recommendations:
+- Use secure password hashing when password-based authentication exists
+- Validate user inputs properly
+- Avoid duplicate accounts caused by bad auth flow
+- Keep the auth UX clean and simple
+- Add session persistence / remember session behavior if supported by the current stack
+- Prepare the codebase for future password reset support if password auth remains part of the system
+
+==================================================
+FEATURE 2 — MODERN SIGN-IN AND SIGN-UP OPTIONS
+==================================================
+
+Please upgrade the authentication system to support multiple modern sign-in and sign-up methods.
+
+We need these options:
+1. Google Sign-In
+2. Apple Sign-In
+3. Email OTP / Magic Link
+
+These methods should work for both:
+- new user registration
+- existing user login
+
+A. Google Sign-In
+- Users can sign up or log in using their Google account
+- If the user already has an account linked to that Google account, log them into the existing account
+- If no account exists yet, create a new account and link it automatically
+
+B. Apple Sign-In
+- Users can sign up or log in using Apple Sign-In
+- If the user already has an account linked to Apple, log them into the existing account
+- If no account exists yet, create a new account and link it automatically
+
+C. Email OTP / Magic Link
+- Users can enter their email address
+- The system sends a one-time code or secure magic login link
+- The user can use that code or link to sign in without needing a password
+- If the email belongs to an existing user, log them into the same account
+- If the email is new, create a new account automatically or guide them through a lightweight signup flow depending on the architecture
+
+Account continuity requirements:
+- A user must always be able to return to the same account
+- Do not create duplicate accounts for the same user when account matching/linking is possible
+- Preserve all user data when signing in through any supported method:
+  - selected character
+  - tokens
+  - progress
+  - match history
+  - challenge participation
+  - rankings
+  - profile data
+
+Recommended behavior:
+- If a user previously registered with email and later uses Google or Apple with the same verified email, link the account safely if the current architecture allows it
+- Avoid duplicate users caused by different auth providers
+- Store auth provider information cleanly in the database
+
+==================================================
+FEATURE 3 — DEFAULT ADMIN ACCOUNT
+==================================================
+
+We need a default admin account in the system.
+
+Requirements:
+- Create a default seeded admin account
+- This account must have a role or flag such as:
+  - is_admin = true
+  or
+  - role = admin
+- Seed it safely in a way that fits the current project structure
+- If the admin account already exists, do not duplicate it
+
+Recommended seeded admin structure:
+- email or username
+- secure password
+- admin role flag
+
+Also:
+- Document clearly where the default admin credentials are defined
+- Make it easy to change them later
+- Do not hardcode insecure credentials in random places
+
+==================================================
+FEATURE 4 — ADMIN PANEL VISIBILITY
+==================================================
+
+Admin panel visibility must depend on the logged-in user role.
+
+Required behavior:
+- If the logged-in user is an admin, show the “Admin Panel” option in the UI
+- If the logged-in user is not an admin, hide the “Admin Panel” option completely
+
+Requirements:
+- Show admin navigation/menu/button only for admin users
+- Hide it for all non-admin users
+- Keep the UI clean and role-aware
+
+Important:
+- Hiding the button is not enough
+- Admin access must also be protected at route and backend level
+
+==================================================
+FEATURE 5 — ADMIN PANEL ACCESS PROTECTION
+==================================================
+
+Only admin users must be allowed to access admin routes and admin actions.
+
+Requirements:
+- Protect all admin routes/pages
+- Protect all admin APIs/actions on the backend
+- If a non-admin user tries to access admin pages manually, they must be blocked
+- Return the correct unauthorized behavior:
+  - redirect
+  - forbidden message
+  - or appropriate response based on current architecture
+
+Recommendations:
+- Use middleware / guards / route protection based on the existing stack
+- Centralize admin authorization checks instead of repeating them everywhere
+- Make access control scalable for future roles if possible
+
+==================================================
+UX REQUIREMENTS
+==================================================
+
+Please improve the authentication experience as well.
+
+Requirements:
+- Clear separation between:
+  - Login
+  - Create account
+  - Continue with Google
+  - Continue with Apple
+  - Continue with Email
+- After logout, redirect users properly
+- Show useful validation and error messages
+- Do not confuse existing users by forcing them into sign up again
+- Keep the flow simple and smooth
+- Clearly explain the Email OTP / Magic Link flow to the user
+
+Recommended UX behavior:
+- Auth landing screen with:
+  - Login button/tab
+  - Sign up button/tab if still needed
+  - Continue with Google
+  - Continue with Apple
+  - Continue with Email
+- For email authentication:
+  - user enters email
+  - system sends OTP or magic link
+  - user verifies and signs in
+- On successful login:
+  - redirect user to the correct home/dashboard screen
+- On logout:
+  - clear session properly
+  - redirect to auth screen
+
+==================================================
+DATABASE / BACKEND REQUIREMENTS
+==================================================
+
+Please review whether the current schema already supports auth and admin roles.
+
+If needed:
+- add missing fields safely
+- add migrations without breaking existing data
+- add or improve:
+  - password storage
+  - role / is_admin field
+  - auth/session persistence logic
+  - provider-based authentication support
+  - external auth provider IDs
+  - email verification status
+  - OTP / magic link token storage and expiration
+
+Recommended auth-related structure:
+- support provider-based authentication
+- store provider type such as:
+  - email
+  - google
+  - apple
+- store provider user ID / external auth ID if needed
+- support email verification state
+- support secure OTP or magic-link token handling
+- ensure OTP codes and magic links expire properly
+- ensure OTP codes and magic links cannot be reused after successful login
+
+Requirements:
+- Keep existing user data if possible
+- Avoid creating duplicate accounts
+- Do not break current game data relationships
+- Make sure all user-owned data remains attached to the correct user account
+
+==================================================
+SECURITY REQUIREMENTS
+==================================================
+
+Please implement this securely.
+
+Requirements:
+- Hash passwords properly when passwords are used
+- Never expose admin routes without backend checks
+- Never trust frontend-only visibility
+- Validate login input carefully
+- Prevent insecure default auth behavior
+- Avoid storing sensitive data unsafely
+- Verify Google and Apple authentication properly
+- Verify Email OTP / Magic Link securely
+- OTP codes must expire
+- Magic links must expire
+- OTP codes or magic links must not be reusable after successful login
+- Add basic rate limiting / abuse protection if possible
+- Prevent duplicate account creation where possible
+- Protect admin and user sessions correctly
+
+==================================================
+ADMIN COMPATIBILITY
+==================================================
+
+The new authentication system must still support admin logic.
+
+Requirements:
+- Admin users must still be recognized correctly
+- If an admin signs in through a supported method, the system must preserve admin privileges
+- Admin Panel visibility rules must still work exactly as defined
+- Non-admin users must still never access admin routes
+
+==================================================
+ACCEPTANCE CRITERIA
+==================================================
+
+The task is complete only if all of the following work correctly:
+
+1. Existing user login
+- A user can create an account
+- A user can log out
+- The same user can log back into the same account
+- Their existing data remains attached to the account
+
+2. Modern authentication options
+- Google Sign-In works for both new and existing users
+- Apple Sign-In works for both new and existing users
+- Email OTP / Magic Link works for both new and existing users
+- Users can log out and later log back into the same account
+- Duplicate account creation is minimized or prevented
+
+3. Logout flow
+- Logout works correctly
+- After logout, the app redirects to auth screen
+- The user is no longer treated as authenticated
+
+4. Admin account
+- A default admin account exists
+- It has proper admin privileges
+- It is not duplicated unnecessarily
+
+5. Admin UI visibility
+- Admin users can see the Admin Panel option
+- Non-admin users cannot see the Admin Panel option
+
+6. Admin access protection
+- Admin pages/routes are protected
+- Non-admin users cannot access admin pages even by direct URL or manual request
+
+7. Code quality
+- Changes are integrated cleanly into the existing codebase
+- Existing working features are preserved
+- Auth flow is maintainable and scalable
+
+==================================================
+FINAL INSTRUCTIONS
+==================================================
+
+Please do the following in order:
+
+1. Inspect the current codebase and understand the existing auth and routing flow
+2. Identify why users cannot log back in after logout
+3. Implement proper login and logout behavior
+4. Add or improve signup/login separation
+5. Add Google Sign-In, Apple Sign-In, and Email OTP / Magic Link
+6. Implement safe account linking and duplicate-account prevention where possible
+7. Create a default admin account safely
+8. Add admin role-based UI visibility
+9. Protect all admin routes and backend actions
+10. Test all auth and admin scenarios
+11. Refactor where necessary for clarity and maintainability
+12. Summarize all changes made
+
+Also provide:
+- a summary of files changed
+- database changes or migrations added
+- seeded default admin account details location
+- auth providers and flows implemented
+- assumptions made
+- any security or UX improvements you recommend for next steps

@@ -1,0 +1,224 @@
+Redesign ONLY the Nino XO home screen.
+
+Do not change the rest of the app yet.
+Do not work on other screens.
+Focus only on making the home screen feel like a premium mobile game home, not a utility dashboard.
+
+==================================================
+GOAL
+==================================================
+
+The current home screen is clean and soft, but it still feels too much like a utility app.
+
+I want the Nino XO home screen to become:
+- 10/10 quality
+- more game-like
+- more premium
+- more exciting
+- more alive
+- more character-driven
+- more memorable
+- more fun
+- still clean and polished
+- still mobile-first
+- still part of the NinoWorld universe
+
+It must feel like:
+“this is a real game I want to tap immediately”
+not:
+“this is a settings/dashboard app”
+
+==================================================
+KEEP
+==================================================
+
+Keep these ideas:
+- greeting with user name
+- NinoWorld premium identity
+- hero area for Nino XO
+- stats
+- daily mission
+- play mode actions
+- current selected character card
+- soft premium palette
+- rounded surfaces
+- NinoWorld character style
+
+==================================================
+MAIN PROBLEMS TO FIX
+==================================================
+
+Fix these issues in the current home screen:
+1. the hero feels too static
+2. the main CTA is too weak
+3. the screen feels more like an app dashboard than a game lobby
+4. the play mode cards feel like utility shortcuts instead of game modes
+5. character presence is too small
+6. there is not enough excitement, movement, or game energy
+7. the top area has too much empty space
+8. stats feel flat and not rewarding enough
+9. the whole screen needs stronger “play now” energy
+
+==================================================
+REDESIGN DIRECTION
+==================================================
+
+Transform the home screen into a real mobile game lobby.
+
+The home screen should communicate:
+- play instantly
+- character identity
+- progression
+- energy
+- fun
+- rewards
+- quick action
+
+It should feel closer to:
+- a premium casual game lobby
+- a polished character battle game
+- a live playful game universe
+
+But it must NOT become:
+- noisy
+- childish
+- cluttered
+- overdesigned
+- cheap arcade style
+
+==================================================
+VISUAL / UX REQUIREMENTS
+==================================================
+
+1. HERO SECTION
+Redesign the hero as the strongest section on the page.
+
+Requirements:
+- bigger Nino character presence
+- stronger game branding
+- stronger visual hierarchy
+- action-oriented CTA
+- more playful and premium layout
+- subtle game energy
+- use the character as the emotional center
+
+Important:
+The main CTA must be much stronger than “Nino is ready”.
+
+Use a real game CTA such as:
+- Play Now
+- Start Match
+- Quick Match
+
+You may keep “Nino is ready” as a small supporting status, but not as the main action.
+
+The hero should feel like:
+- the entry point into battle
+- exciting
+- premium
+- alive
+
+2. GAME ENERGY
+Add more game feeling through:
+- stronger hero composition
+- more dynamic card hierarchy
+- better icon treatment
+- subtle visual motion-ready layout
+- more playful reward/progression presentation
+
+Do NOT add chaotic effects.
+Keep it refined.
+
+3. PLAY MODE CARDS
+Redesign:
+- Quick Match
+- Friend
+- Bot
+
+These should feel like:
+- real game mode cards
+- highly tappable
+- premium
+- exciting
+- clear and differentiated
+
+Improve:
+- card structure
+- icon scale
+- title hierarchy
+- description hierarchy
+- button/tap feel
+- visual balance
+
+Quick Match should feel like the strongest recommended action.
+
+4. STATS + MISSION
+Redesign the stats and daily mission area so they feel more rewarding and game-oriented.
+
+Improve:
+- progression feeling
+- reward energy
+- better hierarchy
+- better color usage
+- better card polish
+
+Keep them clean, but make them feel like part of a game loop, not analytics widgets.
+
+5. CURRENT CHARACTER CARD
+Redesign “Playing as Nino” so it feels more like:
+- your active fighter / token
+- your chosen game identity
+- a collectible character card
+
+Make it more premium, more character-focused, and more game-like.
+
+6. TOP AREA
+Reduce the feeling of dead space in the header.
+Make the top section feel more intentional and polished.
+
+==================================================
+STYLE RULES
+==================================================
+
+- keep the NinoWorld soft premium color language
+- keep the rounded layout system
+- keep the cute premium brand identity
+- make it more game-lobby oriented
+- stronger CTA hierarchy
+- stronger character presence
+- stronger emotional fun
+- stronger play-now energy
+- do not over-clutter the screen
+- do not lose clarity
+- do not make it look like a finance/productivity dashboard
+
+==================================================
+TECHNICAL RULES
+==================================================
+
+- edit only the home screen UI
+- keep code clean and modular
+- preserve responsiveness
+- preserve theme consistency
+- improve spacing, hierarchy, and component styling
+- if needed, create or refine reusable home-screen-specific components
+- do not refactor unrelated screens
+- do not touch game logic
+- do not change navigation flow outside the home screen
+
+==================================================
+DELIVERABLE
+==================================================
+
+Return an improved home screen that feels:
+- 10/10
+- premium
+- game-first
+- character-first
+- fun
+- polished
+- highly tappable
+- exciting enough to make users want to start a match immediately
+
+Before coding, briefly explain the redesign direction for the home screen.
+Then implement it.

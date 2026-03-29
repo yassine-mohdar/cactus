@@ -1,32 +1,27 @@
 @import 'tailwindcss';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@source '../views/welcome.blade.php';
+@source '../js/**/*.js';
 
 @theme {
-    --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
 
-    /* NinoWorld Professional Palette */
-    --color-cream: #FFF8F0;
-    --color-cream-dark: #F5EDE3;
-    --color-sage: #7C9A6E;
-    --color-sage-light: #A4C096;
-    --color-sage-dark: #5E7A52;
-    --color-ink: #2D2D2D;
-    --color-ink-light: #6B6B6B;
-    --color-ink-muted: #9B9B9B;
-    --color-border: #E8E0D6;
-    --color-border-dark: #D4CBC0;
-    --color-surface: #FFFFFF;
-    --color-surface-hover: #FAFAF7;
-    --color-danger: #D94F4F;
-    --color-danger-light: #FEF2F2;
-    --color-warning: #E5A100;
-    --color-warning-light: #FFFBEB;
-    --color-info: #3B82F6;
-    --color-info-light: #EFF6FF;
-    --color-success: #16A34A;
-    --color-success-light: #F0FDF4;
+@layer base {
+    html {
+        color-scheme: light;
+    }
+
+    body {
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 24rem),
+            radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.08), transparent 20rem),
+            white;
+        color: rgb(15 23 42);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
 }

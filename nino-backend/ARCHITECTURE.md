@@ -339,6 +339,31 @@ Phase 3 responsibilities:
 - reporting
 - moderation
 
+Customer onboarding foundation:
+- active customers may be auto-invited to the default community group
+- onboarding must not block checkout or account creation
+- invitation state should be persisted independently from future community UI
+- default-group membership should start as an invitation, not as a forced interactive flow
+
+Media handling rules:
+- community media must use Laravel's storage abstraction so local and S3-compatible disks stay swappable
+- original uploads are stored once; derived thumbnails/transcodes should be async and replaceable
+- images should be constrained by validation and optimized outside the request cycle
+- attachments must remain polymorphic so posts/comments can share the same upload pipeline
+- large media processing should never run synchronously inside checkout, auth, or admin CRUD requests
+
+Video scalability considerations:
+- video support must assume object storage and queued processing from day one
+- the app should only store metadata, moderation state, and processing references, not perform inline heavy transcoding
+- if usage grows, video encoding should move to dedicated workers or an external media pipeline without changing community models
+- moderation/reporting must work before a video is fully processed so suspicious uploads can be held early
+
+Quota and moderation notes:
+- enforce per-user and per-group upload ceilings at the service layer before expensive processing starts
+- keep file-size, mime-type, and duration limits configurable rather than hardcoded into controllers
+- flagged or reported media should be holdable independently from deleting the parent post/comment
+- retention and cleanup jobs should be planned for orphaned uploads, rejected media, and stale moderation queue items
+
 ---
 
 ## 6. Cross-Cutting Concerns
@@ -366,11 +391,33 @@ Use queues for:
 - heavy media tasks
 - long-running imports/exports later
 
+Queue policy for the current app:
+- keep notification delivery on a dedicated `notifications` queue rather than the default queue
+- dispatch notification jobs after database commit so queued workers never race uncommitted `notification_logs`, orders, or payment rows
+- the database queue driver is acceptable for local/dev and low-throughput production, but Redis remains the preferred upgrade path once queue volume becomes sustained
+- queue health reporting must focus on `jobs`, `failed_jobs`, and `job_batches`, with indexes on reservation/availability and failure timestamps
+
+Current queue review decisions:
+- `SendNotificationJob` should always target the `notifications` queue
+- queue jobs that depend on freshly written records must opt into after-commit dispatch
+- failed job lookups and recent failure reporting should be indexed by `failed_at`
+
 ### 6.4 Caching
 Cache where safe:
 - settings
 - frequently read reference data
 - some catalog data if appropriate
+
+Current cache policy:
+- settings remain cache-first because they are reference data and are invalidated explicitly on write
+- dashboard summary payloads are safe to cache briefly because they are read-heavy aggregates, not write-critical source-of-truth records
+- operational reports should only be cached when their payloads are fully serializable and the TTL is intentionally short; default to live reads if the cache would hide high-churn incident data
+- tests should be able to bypass time-based caches when deterministic assertions are more important than runtime parity
+
+Current cache review decisions:
+- settings bulk writes should invalidate once per group, not once per key
+- dashboard cache TTL should be configurable instead of hardcoded in service logic
+- avoid caching mutable queue / incident detail payloads unless they are normalized to plain arrays and explicitly tolerated as slightly stale
 
 ### 6.5 Validation
 All writes must be validated with:
@@ -483,3 +530,26 @@ Community must not block revenue-critical delivery.
 15. Implement CMS / SEO
 16. Implement finance/reporting basics
 17. Refine tests, performance, and audit coverage
+
+---
+
+## 12. Phase 18 Performance Notes
+
+### 12.1 Hot tables requiring targeted indexes
+- `orders`: date-range reporting and dashboard queries require `created_at` coverage plus a `status + created_at` path
+- `shipments`: fulfillment queues and aging checks require `status + updated_at` and issue-aware status/age coverage
+- `notification_logs`: failure and retry dashboards require `status + created_at` in addition to existing retry indexes
+- `payment_logs`: callback/webhook incident review requires an `event_type + created_at` path because gateway-prefixed indexes are not enough for event-wide incident slices
+- `observability_events`: slow-request reporting requires `event_type + occurred_at`
+- queue tables: database-queue workers and observability views need `jobs(queue, reserved_at, available_at)`, `job_batches(finished_at)`, and `failed_jobs(failed_at)`
+
+### 12.2 Cache boundaries
+- cache summary aggregates and reference data, not transactional truth
+- prefer payloads that serialize to plain arrays/scalars cleanly
+- invalidate eagerly on writes for settings/config domains
+- keep short TTLs for admin summary surfaces so operational visibility stays credible
+
+### 12.3 Queue boundaries
+- use dedicated queue names for noisy async domains, starting with notifications
+- anything dispatched inside a transaction and depending on committed rows must be after-commit
+- long-running imports/exports and media processing should eventually move to their own queues rather than sharing the notification lane

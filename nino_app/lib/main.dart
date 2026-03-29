@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:nino_app/theme/nino_theme.dart';
-import 'package:nino_app/views/splash_view.dart';
+import 'core/theme.dart';
+import 'core/router.dart';
+import 'core/create_draft_store.dart';
+
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/community_content_provider.dart';
+import 'providers/reel_playback_preferences.dart';
 
 void main() {
-  runApp(const NinoApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CommunityContentProvider()),
+        ChangeNotifierProvider(create: (_) => ReelPlaybackPreferences()),
+        Provider<CreateDraftStore>(create: (_) => CreateDraftStore()),
+      ],
+      child: const NinoApp(),
+    ),
+  );
 }
 
 class NinoApp extends StatelessWidget {
@@ -11,11 +28,11 @@ class NinoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'NinoWorld',
-      debugShowCheckedModeBanner: false,
       theme: NinoTheme.lightTheme,
-      home: const SplashView(),
+      routerConfig: NinoRouter.router,
+      debugShowCheckedModeBanner: false,
     );
   }
 }

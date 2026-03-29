@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "5645500787",
+    "project_id": "nino-xo",
+    "storage_bucket": "nino-xo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:5645500787:android:2eddaded0cdb1318dc0506",
+        "android_client_info": {
+          "package_name": "com.nino.xo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBa_AvN6MxxmElIEgz0pt44F4t35DLKVVk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

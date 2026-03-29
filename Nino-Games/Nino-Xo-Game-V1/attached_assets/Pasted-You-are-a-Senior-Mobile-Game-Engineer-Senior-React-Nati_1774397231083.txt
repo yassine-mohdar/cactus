@@ -1,0 +1,542 @@
+You are a Senior Mobile Game Engineer, Senior React Native Architect, Senior Product Engineer, Senior UI/UX Designer, and Senior Multiplayer Systems Designer.
+
+Build a full robust and advanced mobile game app called:
+
+NINO XO
+
+This must be a real mobile game app for:
+- iOS
+- Android
+
+Use:
+- React Native
+- Expo
+- TypeScript
+
+The code must be clean, scalable, production-minded, and organized.
+
+==================================================
+PROJECT CONTEXT
+==================================================
+
+Nino XO is part of the NinoWorld universe.
+
+NinoWorld is a character-based cactus adoption ecosystem where users adopt real cactus friends and interact with them through a mobile app and community.
+
+Nino XO is a separate game app connected to the same NinoWorld account system.
+
+This game is:
+- subscriber-only
+- no ads
+- premium
+- cute
+- funny
+- polished
+- social
+- fast and addictive in short sessions
+
+The game should feel like part of the NinoWorld world, not a generic tic-tac-toe clone.
+
+==================================================
+CORE GAME IDEA
+==================================================
+
+Nino XO is a 1v1 XO / Tic-Tac-Toe game, but not with plain X and O.
+
+Instead:
+- each player chooses a NinoWorld cactus character
+- that character becomes the token used on the board
+- each move feels alive with cute placement animation and personality
+- the board feels premium and playful
+- the game is funny, social, and replayable
+
+This should feel like:
+“a NinoWorld character battle on a premium cute board”
+not:
+“a generic XO game with a skin”
+
+==================================================
+TARGET QUALITY
+==================================================
+
+Build this as a robust and advanced mobile app, not a rough prototype.
+
+Requirements:
+- strong architecture
+- production-minded code
+- reusable components
+- clear folder structure
+- scalable service layer
+- stable game state
+- reliable navigation
+- good loading/error handling
+- smooth animations
+- future-ready extension points
+
+==================================================
+TECH STACK
+==================================================
+
+Use:
+- React Native
+- Expo
+- TypeScript
+- React Navigation
+- Zustand or similarly clean state management
+- TanStack Query / React Query for API and server state
+- React Native Reanimated or clean animation library if needed
+- secure API client layer
+- websocket-ready realtime layer for multiplayer
+- clean theming system
+- reusable component library
+
+Use the existing NinoWorld backend as the source of truth for:
+- authentication
+- subscription entitlement
+- profile
+- rewards sync
+- future friend/account linkage
+
+If backend endpoints are not yet available, mock them cleanly behind service abstractions.
+
+==================================================
+MAIN GAME MODES
+==================================================
+
+Implement these modes:
+
+1. QUICK MATCH
+- user taps Quick Match
+- system auto-finds a live player
+- if no live player is found quickly, fallback to bot
+- queue UX must feel alive and polished
+- cancel matchmaking supported
+
+2. PLAY WITH FRIEND
+- create room
+- join by code
+- invite flow
+- waiting room state
+- rematch support
+
+3. PLAY WITH BOT
+- Easy difficulty
+- Medium difficulty
+- architecture ready for Hard later
+
+==================================================
+SUBSCRIPTION / ACCESS CONTROL
+==================================================
+
+This is a premium subscriber-only game.
+
+Requirements:
+- login with NinoWorld account
+- validate active subscription through backend
+- do not trust local entitlement only
+- restore session on app launch
+- if no active subscription:
+  - show premium locked screen
+  - explain that Nino XO is available with an active NinoWorld subscription
+- keep entitlement checks secure and clean
+
+==================================================
+CHARACTERS
+==================================================
+
+Use the NinoWorld character universe.
+
+V1 playable characters:
+- Nino
+- blue detective cactus
+- pink elegant cactus
+- blue succulent detective
+- green scientist cactus
+- yellow energetic cactus
+
+Each character should have:
+- avatar art slot
+- token appearance on board
+- idle mood
+- placement animation
+- win animation
+- lose animation
+- queue/searching animation
+- personality flavor
+
+Characters should be personality-rich but not create unfair gameplay imbalance in V1.
+V1 is mostly visual/personality-based, not power-based.
+
+==================================================
+GAMEPLAY RULES
+==================================================
+
+Implement classic 3x3 XO rules:
+
+- 2 players
+- alternate turns
+- no illegal moves
+- no writing over occupied cells
+- win detection
+- draw detection
+- rematch
+- restart flow
+- robust turn handling
+- safe multiplayer validation
+
+The rules engine must be isolated from UI and testable.
+
+==================================================
+MULTIPLAYER ARCHITECTURE
+==================================================
+
+Build the multiplayer layer cleanly.
+
+Requirements:
+- server-validated or server-authoritative architecture ready
+- turn validation
+- duplicate move prevention
+- reconnect-safe design if possible
+- game session abstraction
+- room abstraction
+- matchmaking abstraction
+- clean separation between UI and networking logic
+
+If realtime backend is not fully available yet:
+- implement a strong mock realtime layer with the same interface
+- keep services replaceable later
+
+==================================================
+BOT MODE
+==================================================
+
+Bot mode must be properly implemented.
+
+Requirements:
+- Easy mode
+- Medium mode
+- legal moves only
+- stable decision logic
+- no broken turn flow
+- architecture ready for future difficulty expansion
+
+==================================================
+VISUAL / UX DIRECTION
+==================================================
+
+Use a NinoWorld premium game style:
+- soft cream background
+- pastel accents
+- rounded premium cards
+- soft shadows
+- sticker-like surfaces where appropriate
+- warm playful mood
+- polished modern mobile layout
+- clean hierarchy
+- centered board focus
+
+The game must feel:
+- cute
+- premium
+- funny
+- warm
+- globally appealing
+- mobile-first
+- highly polished
+
+==================================================
+MAIN SCREENS TO BUILD
+==================================================
+
+Build all essential V1 screens:
+
+1. Splash screen
+2. Session restore / entitlement check screen
+3. Premium locked screen
+4. Login / connect account screen
+5. Home screen
+6. Character selection screen
+7. Quick Match queue screen
+8. Play with Friend room / invite code screen
+9. Bot difficulty selection screen
+10. Main match screen
+11. Match screen: your turn state
+12. Match screen: opponent turn state
+13. Match screen: winning move state
+14. Match screen: draw state
+15. Match screen: reconnecting/network issue state
+16. Win result screen
+17. Lose result screen
+18. Draw result screen
+19. Rewards / summary screen
+20. Profile / stats screen
+21. Settings screen
+22. Offline / error screen
+23. Loading state components
+24. Empty state components
+
+==================================================
+HOME SCREEN REQUIREMENTS
+==================================================
+
+The home screen should include:
+- Nino XO logo/title
+- premium hero area
+- Quick Match button
+- Play with Friend button
+- Play with Bot button
+- selected character preview
+- daily mission section
+- streak section
+- rewards teaser
+- premium/subscriber feel
+- soft playful presentation
+
+==================================================
+CHARACTER SELECTION SCREEN
+==================================================
+
+This screen must:
+- show character cards
+- highlight selected character
+- show mini personality
+- preview how the token looks on board
+- support future locked characters visually
+- feel collectible and premium
+
+==================================================
+QUICK MATCH SCREEN
+==================================================
+
+Include:
+- selected character visible
+- searching animation/state
+- funny status text like:
+  - “Finding a friend to play with…”
+  - “Nino is looking for an opponent…”
+- cancel action
+- smooth transition into match found state
+
+==================================================
+PLAY WITH FRIEND SCREEN
+==================================================
+
+Include:
+- create room
+- join room with code
+- waiting for friend
+- invite code display
+- clean social flow
+- rematch readiness
+
+==================================================
+MATCH SCREEN
+==================================================
+
+This is the most important screen.
+
+It must include:
+- top player header cards
+- player names
+- chosen characters
+- turn state
+- large central 3x3 board
+- premium rounded cells
+- touch feedback
+- board animation
+- win-line highlight
+- reaction/emote area if suitable
+- stable layout across phone sizes
+
+The board must feel:
+- premium
+- alive
+- readable
+- fun
+- polished
+
+==================================================
+FUNNY CHARACTER REACTIONS
+==================================================
+
+This is critical.
+
+Add expressive reactions for:
+- match found
+- placing a move
+- blocking opponent
+- winning
+- losing
+- draw
+- rematch
+- searching queue
+
+Examples:
+- bounce
+- wave
+- blush
+- happy jump
+- pout
+- magnifying glass inspect
+- sparkle burst
+- goofy face
+
+Keep them:
+- short
+- funny
+- premium
+- cute
+- not annoying
+
+==================================================
+RESULT / REWARD LOOP
+==================================================
+
+After each match, show:
+- result
+- character reaction
+- streak progress
+- mission progress
+- reward earned if any
+- rematch button
+- return home
+- share result placeholder
+
+==================================================
+PROFILE / STATS
+==================================================
+
+Build a light but polished profile area with:
+- selected character
+- total matches
+- total wins
+- streak
+- mission progress
+- premium active indicator
+- future rewards placeholder
+
+==================================================
+SETTINGS
+==================================================
+
+Build settings with:
+- sound on/off
+- music on/off
+- account status
+- subscription status
+- help/support
+- logout
+
+Keep it clean and production-friendly.
+
+==================================================
+STATE MANAGEMENT / ARCHITECTURE
+==================================================
+
+Use clean module separation, for example:
+
+- src/app
+- src/navigation
+- src/screens
+- src/components
+- src/features/auth
+- src/features/entitlement
+- src/features/characters
+- src/features/matchmaking
+- src/features/game
+- src/features/friendMatch
+- src/features/bot
+- src/features/profile
+- src/features/settings
+- src/services/api
+- src/services/realtime
+- src/services/storage
+- src/theme
+- src/utils
+- src/types
+- src/tests
+
+The XO rules engine must be isolated and testable.
+
+==================================================
+TESTING REQUIREMENTS
+==================================================
+
+Add tests for:
+- win detection
+- draw detection
+- illegal move prevention
+- turn order correctness
+- bot legality
+- session/entitlement flow
+- match state transitions
+- rematch logic
+- queue/mock matchmaking logic where practical
+
+==================================================
+PERFORMANCE / RELIABILITY
+==================================================
+
+Requirements:
+- smooth animations
+- stable navigation
+- safe async flows
+- no giant monolithic components
+- no duplicated game logic
+- robust loading and error handling
+- reusable components
+- future backend integration ready
+- future multiplayer scaling ready
+
+==================================================
+WHAT TO AVOID
+==================================================
+
+Do NOT:
+- build a generic XO clone
+- make UI cheap or noisy
+- put all logic in screen files
+- tightly couple UI and networking
+- overload V1 with too many features
+- add ads
+- add pay-to-win mechanics
+- build fragile hardcoded flows
+
+==================================================
+V1 DELIVERABLES
+==================================================
+
+Deliver:
+1. full Expo React Native game app structure
+2. subscriber entitlement flow
+3. home screen
+4. character selection
+5. playable XO core
+6. bot mode
+7. quick match simulated or backend-ready
+8. friend room flow
+9. polished match screen
+10. result/reward loop
+11. profile/settings
+12. tests for core gameplay
+13. clean code ready to extend
+
+==================================================
+IMPLEMENTATION ORDER
+==================================================
+
+Proceed in this order:
+1. app architecture and theme system
+2. auth + entitlement flow
+3. home screen + character selection
+4. core XO rules engine
+5. bot mode
+6. match screen
+7. quick match flow
+8. friend room flow
+9. result/reward flow
+10. profile/settings
+11. tests and stabilization
+12. final polish
+
+Build the full Nino XO mobile game app robustly and professionally.

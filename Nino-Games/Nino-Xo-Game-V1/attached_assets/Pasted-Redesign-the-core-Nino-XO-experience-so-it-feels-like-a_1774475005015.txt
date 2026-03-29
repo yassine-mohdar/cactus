@@ -1,0 +1,316 @@
+Redesign the core Nino XO experience so it feels like a REAL MOBILE GAME, not a normal app with game screens.
+
+This is a focused redesign + implementation pass.
+
+Do NOT work on unrelated product areas.
+Do NOT redesign the whole NinoWorld ecosystem.
+Focus on fixing the game feel, especially:
+- home screen
+- match screen
+- win / lose / draw screens
+- motion / microinteractions
+- overall visual language of the game
+
+==================================================
+MAIN PROBLEM TO SOLVE
+==================================================
+
+Right now Nino XO looks too much like a beautiful premium app.
+It does NOT yet feel like a true game.
+
+Problems to fix:
+1. too much dashboard / utility-app feeling
+2. too many card-like app sections
+3. playing screen animations feel too heavy / too decorative
+4. board is not dominant enough
+5. character tokens feel too small
+6. turn feedback is too weak
+7. match screen lacks duel tension and battle energy
+8. result screens feel more like app pages than game result moments
+9. too much empty space in key screens
+10. game flow needs to feel snappier, more competitive, more satisfying
+
+==================================================
+NEW DESIGN PHILOSOPHY
+==================================================
+
+Transform Nino XO into:
+
+NinoWorld Battle Mode
+
+It must still feel like part of NinoWorld:
+- cute
+- premium
+- warm
+- character-driven
+
+But it must now also feel:
+- game-first
+- fast
+- competitive
+- responsive
+- exciting
+- replayable
+- duel-oriented
+- satisfying to tap
+
+This is NOT the same design language as the main companion app.
+This is the GAME version of the brand.
+
+==================================================
+GLOBAL VISUAL CHANGES
+==================================================
+
+Apply these principles across the game flow:
+
+1. Reduce dashboard feeling
+- fewer utility-style cards
+- less “app settings/productivity” composition
+- less visual feeling of stacked app modules
+
+2. Increase game feeling
+- stronger central gameplay focus
+- bigger board
+- bigger tokens
+- duel framing
+- stronger turn clarity
+- more immediate CTA hierarchy
+- clearer play/replay loop
+
+3. Keep brand identity
+- soft premium palette
+- rounded premium surfaces
+- cute characters
+- NinoWorld charm
+- refined polish
+
+4. But reduce excessive softness
+- less decorative whitespace
+- less “floating lifestyle app” feeling
+- less over-calm composition on gameplay screens
+
+==================================================
+ANIMATION / MOTION RULES
+==================================================
+
+This is critical.
+
+The current play-screen animation feels too much.
+Fix it.
+
+Keep only game-useful motion:
+- quick token pop-in
+- subtle tile press feedback
+- active turn pulse
+- fast win-line reveal
+- short character reaction
+- quick result transition
+
+Reduce or remove:
+- slow floating motion on match screen
+- long decorative animations
+- heavy bounce on everything
+- delayed interaction feedback
+- anything that slows the feeling of play
+
+Target:
+- snappy
+- immediate
+- satisfying
+- premium
+- not noisy
+
+Game motion must support gameplay, not distract from it.
+
+==================================================
+SCREENS TO REDESIGN / IMPROVE
+==================================================
+
+1. Home screen
+2. Match screen
+3. Win screen
+4. Lose screen
+5. Draw screen
+6. Matchmaking / queue screen if needed
+7. Character selection if needed for consistency
+
+==================================================
+PART 1 — HOME SCREEN
+==================================================
+
+Redesign the home screen so it feels like a game lobby, not a utility dashboard.
+
+Requirements:
+- stronger “play now” energy
+- less app-like card stacking
+- stronger hero that feels like game entry
+- stronger Quick Match emphasis
+- cleaner progression surfaces
+- active fighter should feel like chosen champion, not profile card
+- game modes should feel like actual game modes, not shortcuts
+- reduce any unnecessary dashboard-style sections
+
+Desired feel:
+- premium casual game lobby
+- character battle entry point
+- immediate desire to tap and play
+
+==================================================
+PART 2 — MATCH SCREEN
+==================================================
+
+This is the highest priority.
+
+The match screen must become the heart of the game.
+
+Fix these issues:
+- board too small
+- too much empty space
+- tokens too small
+- duel headers too flat
+- turn state too weak
+- not enough tension
+- not enough “battle arena” feeling
+
+Requirements:
+1. Make the board significantly larger and more central.
+2. Reduce dead space around the board.
+3. Increase token size so characters actually matter.
+4. Make the player-vs-player framing feel like a duel.
+5. Make active turn state instantly obvious.
+6. Make the board feel like a premium game arena.
+7. Keep the layout clean and mobile-first.
+8. Make every move feel satisfying.
+
+Board should feel:
+- premium
+- central
+- expressive
+- snappy
+- battle-ready
+
+==================================================
+PART 3 — RESULT SCREENS
+==================================================
+
+Win / Lose / Draw screens must feel like GAME RESULT MOMENTS, not app pages.
+
+### WIN SCREEN
+Should feel:
+- exciting
+- rewarding
+- celebratory
+- premium
+- replayable
+
+Requirements:
+- stronger victory character moment
+- quick result clarity
+- rematch as strong primary CTA
+- home as secondary
+- light progression feedback
+- tighter composition
+- less empty space
+
+### LOSE SCREEN
+Should feel:
+- soft
+- funny
+- encouraging
+- premium
+- emotionally character-driven
+
+Requirements:
+- fix character expression so it matches a losing state
+- use cute comeback energy, not sad harsh defeat
+- rematch must feel irresistible
+- result panel must feel like a game result module
+- reduce empty space
+- make the tone feel more NinoWorld and less generic
+
+### DRAW SCREEN
+Should feel:
+- playful
+- neutral-positive
+- quick to rematch
+- visually distinct from win/lose
+
+==================================================
+PART 4 — TOKENS / CHARACTERS
+==================================================
+
+Characters are one of the strongest assets of the project.
+Make them matter more in the game.
+
+Requirements:
+- larger board token size
+- more readable token identity
+- stronger placement feel
+- short expressive reactions
+- different emotional states for win / lose / draw
+- character presence must feel central to the experience
+
+Do NOT make them tiny decorative icons.
+They should feel like mini battle pieces.
+
+==================================================
+PART 5 — GAME FEEDBACK
+==================================================
+
+Improve feedback quality:
+- stronger selected tile feedback
+- stronger placed token feedback
+- stronger turn indicator
+- stronger win-line feedback
+- more satisfying rematch flow
+- more immediate interaction response
+
+The game should feel tactile and responsive.
+
+==================================================
+PART 6 — LAYOUT / HIERARCHY
+==================================================
+
+Across all core game screens:
+- tighten compositions
+- reduce wasted vertical space
+- create stronger central focus
+- remove excessive utility-app spacing
+- improve action hierarchy
+- make game actions feel more direct and immediate
+
+==================================================
+TECHNICAL RULES
+==================================================
+
+- keep code clean and modular
+- do not touch unrelated business logic
+- do not redesign the whole app
+- focus only on the core Nino XO game experience
+- preserve responsiveness
+- preserve navigation unless needed for these screens
+- preserve working game rules
+- if needed, create reusable game-focused UI components
+- separate presentation polish from core game logic
+
+==================================================
+DELIVERABLE
+==================================================
+
+Implement a full polish pass that transforms Nino XO from:
+“premium app with game screens”
+into:
+“true premium mobile game inside the NinoWorld universe”
+
+Success means:
+- home feels like a game lobby
+- match feels like a battle screen
+- result screens feel like real game moments
+- animations feel faster and more useful
+- tokens feel more important
+- the whole experience feels more fun, replayable, and game-first
+
+Before coding:
+briefly explain the redesign strategy screen by screen.
+
+Then implement it.

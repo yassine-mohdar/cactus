@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Gb0ikTrIB26kRwxQqI8Cg"
+uri = "file://xo-game-info.md"
+type = "text"
+title = "Nino XO — Game Reference"

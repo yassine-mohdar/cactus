@@ -3,6 +3,8 @@
 namespace App\Modules\Audit\Models;
 
 use App\Models\User;
+use App\Modules\Audit\Services\AuditLogger;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -13,11 +15,16 @@ class AuditLog extends Model
 
     protected $fillable = [
         'user_id',
+        'actor_type',
+        'actor_name',
+        'actor_email',
         'action',
         'auditable_type',
         'auditable_id',
+        'target_label',
         'old_values',
         'new_values',
+        'context',
         'ip_address',
         'user_agent',
         'notes',
@@ -26,14 +33,20 @@ class AuditLog extends Model
     protected $casts = [
         'old_values' => 'array',
         'new_values' => 'array',
+        'context' => 'array',
         'created_at' => 'datetime',
     ];
 
     // --- Relationships ---
 
-    public function user(): BelongsTo
+    public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->actor();
     }
 
     public function auditable(): MorphTo
@@ -49,17 +62,19 @@ class AuditLog extends Model
         ?array $oldValues = null,
         ?array $newValues = null,
         ?string $notes = null,
+        array $context = [],
+        ?Authenticatable $actor = null,
+        ?string $targetLabel = null,
     ): self {
-        return self::create([
-            'user_id' => auth()->id(),
-            'action' => $action,
-            'auditable_type' => $model ? get_class($model) : null,
-            'auditable_id' => $model?->getKey(),
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'notes' => $notes,
-        ]);
+        return app(AuditLogger::class)->log(
+            action: $action,
+            target: $model,
+            oldValues: $oldValues,
+            newValues: $newValues,
+            notes: $notes,
+            context: $context,
+            actor: $actor,
+            targetLabel: $targetLabel,
+        );
     }
 }

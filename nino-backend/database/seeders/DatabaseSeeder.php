@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Modules\IAM\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,26 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create role presets
-        $roles = [
-            'Super Admin',
-            'Platform Admin',
-            'Franchise Manager',
-            'Branch Manager',
-            'Customer Support Agent',
-            'Shipping Agent',
-            'Employee',
-            'Finance Manager',
-            'SEO / Content Manager',
-            'Media Buying / Marketing Manager',
-            'Sales Manager',
-            'Stock Manager',
-            'Community Moderator',
-        ];
-
-        foreach ($roles as $roleName) {
-            Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
-        }
+        $this->call([
+            PermissionsSeeder::class,
+            OrganizationFoundationSeeder::class,
+        ]);
 
         // Create Super Admin user
         $superAdmin = User::firstOrCreate(
@@ -43,6 +27,19 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('password'),
             ]
         );
-        $superAdmin->assignRole('Super Admin');
+        $superAdmin->assignRole(Role::SUPER_ADMIN);
+
+        $this->call([
+            SettingsSeeder::class,
+            IntegrationSettingsSeeder::class,
+            GatewaySettingsSeeder::class,
+            CommunitySeeder::class,
+        ]);
+
+        if (app()->environment('local')) {
+            $this->call([
+                LocalDemoDataSeeder::class,
+            ]);
+        }
     }
 }
