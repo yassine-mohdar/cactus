@@ -5,6 +5,7 @@ namespace App\Modules\Notifications\Channels;
 use App\Modules\Notifications\Contracts\NotificationChannelDriver;
 use App\Modules\Notifications\Models\IntegrationSetting;
 use App\Modules\Notifications\Models\NotificationLog;
+use App\Modules\Notifications\Services\NotificationSettingsService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -18,12 +19,17 @@ class EmailChannel implements NotificationChannelDriver
     public function send(NotificationLog $log): ?string
     {
         $settings = IntegrationSetting::forProvider('smtp');
+        $notificationSettings = app(NotificationSettingsService::class);
 
         $this->applySmtpRuntimeConfig($settings);
 
         // Determine sender
         $fromAddress = $settings?->getCredential('from_address', config('mail.from.address'));
-        $fromName = $settings?->getCredential('from_name', config('mail.from.name'));
+        $fromName = $notificationSettings->senderName();
+
+        if (! filled($fromName)) {
+            $fromName = $settings?->getCredential('from_name', config('mail.from.name'));
+        }
 
         Mail::html($log->body, function ($message) use ($log, $fromAddress, $fromName) {
             $message->to($log->recipient)

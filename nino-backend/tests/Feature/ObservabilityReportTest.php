@@ -11,6 +11,8 @@ use App\Modules\Payments\DTOs\PaymentResponse;
 use App\Modules\Payments\Gateways\CmiPaymentGateway;
 use App\Modules\Payments\Models\PaymentLog;
 use App\Modules\Reports\Models\ObservabilityEvent;
+use App\Modules\Reports\Services\ObservabilityLogger;
+use App\Modules\Settings\Services\SettingsService;
 use App\Providers\AdminThemeServiceProvider;
 use App\Support\AdminThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -146,6 +148,34 @@ class ObservabilityReportTest extends TestCase
         $this->assertSame('slow_request', $event->event_type);
         $this->assertSame('test.observability.slow', $event->route_name);
         $this->assertGreaterThanOrEqual(1, $event->duration_ms);
+    }
+
+    public function test_critical_slow_request_includes_security_alert_recipients_when_configured(): void
+    {
+        app(SettingsService::class)->setMany('security', [
+            ['key' => 'security_alert_email', 'value' => 'security@ninoworld.ma', 'type' => 'string'],
+            ['key' => 'security_alert_recipients', 'value' => 'ops@ninoworld.ma, cto@ninoworld.ma', 'type' => 'string'],
+        ]);
+
+        Route::middleware('web')->get('/__test/observability/critical', fn () => response('critical slow route'))
+            ->name('test.observability.critical');
+
+        $request = Request::create('/__test/observability/critical', 'GET');
+        $route = app('router')->getRoutes()->match($request);
+        $request->setRouteResolver(fn () => $route);
+
+        app(ObservabilityLogger::class)->logSlowRequest($request, 3200, 500);
+
+        $event = ObservabilityEvent::query()->latest('id')->first();
+
+        $this->assertNotNull($event);
+        $this->assertSame('critical', $event->severity);
+        $this->assertSame('email', $event->context['alert_channel'] ?? null);
+        $this->assertSame([
+            'security@ninoworld.ma',
+            'ops@ninoworld.ma',
+            'cto@ninoworld.ma',
+        ], $event->context['alert_recipients'] ?? null);
     }
 
     public function test_payment_callback_exceptions_are_logged_to_payment_logs(): void

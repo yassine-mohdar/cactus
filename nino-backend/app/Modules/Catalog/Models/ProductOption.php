@@ -12,6 +12,10 @@ class ProductOption extends Model
         'position',
     ];
 
+    protected $casts = [
+        'position' => 'integer',
+    ];
+
     public function product()
     {
         return $this->belongsTo(Product::class);

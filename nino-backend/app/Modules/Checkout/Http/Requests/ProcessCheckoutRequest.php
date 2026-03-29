@@ -2,7 +2,9 @@
 
 namespace App\Modules\Checkout\Http\Requests;
 
+use App\Modules\Customers\Models\Address;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProcessCheckoutRequest extends FormRequest
 {
@@ -13,12 +15,14 @@ class ProcessCheckoutRequest extends FormRequest
 
     public function rules(): array
     {
+        $user = $this->user();
+
         // Core differences based on authentication state
         $rules = [
             'payment_method' => 'required|string',
         ];
 
-        if (!auth('sanctum')->check()) {
+        if (!$user) {
             $rules['cart_session_id'] = 'required|string';
             $rules['customer_email'] = 'required|email|unique:users,email'; 
             // Unique email means the guest hasn't created an account yet. 
@@ -42,6 +46,43 @@ class ProcessCheckoutRequest extends FormRequest
             'country' => 'required|string|size:2',
         ];
 
+        if ($user) {
+            $userId = $user->id;
+            $requiresShippingPayload = ! $this->filled('shipping_address_id');
+            $requiresBillingPayload = ! $this->filled('billing_address_id');
+
+            $rules['shipping_address'] = 'nullable|array|required_without:shipping_address_id';
+            $rules['billing_address'] = 'nullable|array|required_without:billing_address_id';
+            $rules['shipping_address_id'] = [
+                'nullable',
+                'integer',
+                'required_without:shipping_address',
+                Rule::exists('addresses', 'id')->where(fn ($query) => $query
+                    ->where('user_id', $userId)
+                    ->where('type', Address::TYPE_SHIPPING)),
+            ];
+            $rules['billing_address_id'] = [
+                'nullable',
+                'integer',
+                'required_without:billing_address',
+                Rule::exists('addresses', 'id')->where(fn ($query) => $query
+                    ->where('user_id', $userId)
+                    ->where('type', Address::TYPE_BILLING)),
+            ];
+
+            foreach ($addressRules as $key => $rule) {
+                if ($requiresShippingPayload) {
+                    $rules["shipping_address.{$key}"] = $rule;
+                }
+
+                if ($requiresBillingPayload) {
+                    $rules["billing_address.{$key}"] = $rule;
+                }
+            }
+
+            return $rules;
+        }
+
         // Flat array map for shipping
         foreach ($addressRules as $key => $rule) {
             $rules["shipping_address.{$key}"] = $rule;
@@ -55,6 +96,8 @@ class ProcessCheckoutRequest extends FormRequest
     {
         return [
             'customer_email.unique' => 'An account already exists with this email address. Please log in to continue checkout.',
+            'shipping_address_id.exists' => 'The selected shipping address is not available for this customer.',
+            'billing_address_id.exists' => 'The selected billing address is not available for this customer.',
         ];
     }
 }

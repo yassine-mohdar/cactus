@@ -8,6 +8,7 @@ use App\Modules\Finance\Enums\PaymentMethod;
 use App\Modules\Finance\Enums\TransactionStatus;
 use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\PaymentTransaction;
+use App\Modules\Orders\Enums\OrderStatus;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
@@ -63,5 +64,79 @@ class TransactionController extends Controller
     {
         $transaction->load(['order', 'customer', 'processor', 'refundRequests']);
         return view('admin.finance.transactions.show', compact('transaction'));
+    }
+
+    public function verifyOffline(Request $request, PaymentTransaction $transaction)
+    {
+        $payload = $request->validate([
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        abort_unless($this->isVerifiableOfflineTransaction($transaction), 404);
+
+        $notes = trim((string) ($payload['notes'] ?? ''));
+
+        $transaction->update([
+            'status' => TransactionStatus::COMPLETED,
+            'processed_by' => $request->user()?->id,
+            'failure_reason' => null,
+            'metadata' => array_merge($transaction->metadata ?? [], [
+                'offline_review' => [
+                    'decision' => 'verified',
+                    'notes' => $notes !== '' ? $notes : null,
+                        'reviewed_at' => now()->toIso8601String(),
+                    'reviewed_by' => $request->user()?->id,
+                ],
+            ]),
+        ]);
+
+        if ($transaction->order && $transaction->order->status === OrderStatus::AWAITING_PAYMENT) {
+            $transaction->order->update(['status' => OrderStatus::PAID]);
+        }
+
+        return redirect()
+            ->route('admin.finance.transactions.show', $transaction)
+            ->with('success', 'Offline payment verified and marked as completed.');
+    }
+
+    public function failOffline(Request $request, PaymentTransaction $transaction)
+    {
+        $payload = $request->validate([
+            'notes' => ['required', 'string', 'max:1000'],
+        ]);
+
+        abort_unless($this->isVerifiableOfflineTransaction($transaction), 404);
+
+        $notes = trim((string) $payload['notes']);
+
+        $transaction->update([
+            'status' => TransactionStatus::FAILED,
+            'processed_by' => $request->user()?->id,
+            'failure_reason' => $notes,
+            'metadata' => array_merge($transaction->metadata ?? [], [
+                'offline_review' => [
+                    'decision' => 'failed',
+                    'notes' => $notes,
+                    'reviewed_at' => now()->toIso8601String(),
+                    'reviewed_by' => $request->user()?->id,
+                ],
+            ]),
+        ]);
+
+        if ($transaction->order && $transaction->order->status === OrderStatus::AWAITING_PAYMENT) {
+            $transaction->order->update(['status' => OrderStatus::FAILED]);
+        }
+
+        return redirect()
+            ->route('admin.finance.transactions.show', $transaction)
+            ->with('success', 'Offline payment marked as failed.');
+    }
+
+    private function isVerifiableOfflineTransaction(PaymentTransaction $transaction): bool
+    {
+        return $transaction->gateway === 'offline_transfer'
+            && $transaction->payment_method === PaymentMethod::BANK_TRANSFER
+            && $transaction->type === TransactionType::PAYMENT
+            && $transaction->status === TransactionStatus::PENDING;
     }
 }

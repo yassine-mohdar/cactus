@@ -165,21 +165,25 @@ class AuditLogTest extends TestCase
             'is_enabled' => false,
             'mode' => 'test',
             'credentials' => [
-                'merchant_id' => '',
                 'secret_key' => '',
+                'webhook_secret' => '',
             ],
-            'metadata' => [],
+            'metadata' => [
+                'publishable_key' => '',
+                'currency' => 'MAD',
+            ],
         ]);
 
         $response = $this->actingAs($staffUser)->put(route('admin.gateways.update', $gateway), [
             'is_enabled' => '1',
             'mode' => 'live',
             'credentials' => [
-                'merchant_id' => 'merchant-001',
                 'secret_key' => 'sk_live_123',
+                'webhook_secret' => 'whsec_live_123',
             ],
             'metadata' => [
-                'webhook_url' => 'https://example.test/stripe/webhook',
+                'publishable_key' => 'pk_live_123',
+                'currency' => 'USD',
             ],
         ]);
 
@@ -191,7 +195,9 @@ class AuditLogTest extends TestCase
         $this->assertSame('stripe', $auditLog->context['gateway_id'] ?? null);
         $this->assertSame('live', $auditLog->new_values['mode'] ?? null);
         $this->assertSame('[REDACTED]', $auditLog->new_values['credentials']['secret_key'] ?? null);
-        $this->assertSame('merchant-001', $auditLog->new_values['credentials']['merchant_id'] ?? null);
+        $this->assertSame('[REDACTED]', $auditLog->new_values['credentials']['webhook_secret'] ?? null);
+        $this->assertSame('[REDACTED]', $auditLog->new_values['metadata']['publishable_key'] ?? null);
+        $this->assertSame('USD', $auditLog->new_values['metadata']['currency'] ?? null);
     }
 
     public function test_impersonation_events_are_audited(): void

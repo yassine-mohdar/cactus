@@ -79,6 +79,76 @@
                 </div>
             </div>
         </x-nino.detail-section>
+
+        <x-nino.detail-section title="Operational Timeline" subtitle="Key order, payment, shipment, and note events in one chronological stream.">
+            <x-nino.activity-timeline emptyTitle="No timeline events yet" emptyDescription="Timeline entries will appear here once this order moves through payment, shipping, or staff actions.">
+                @foreach($timeline as $event)
+                    @php
+                        $markerClass = match ($event['tone']) {
+                            'success' => 'bg-[#1F7A4E]',
+                            'danger' => 'bg-[#C45143]',
+                            'info' => 'bg-[#245848]',
+                            default => 'bg-[#7A8681]',
+                        };
+                    @endphp
+                    <div class="timeline-item">
+                        <span class="timeline-marker {{ $markerClass }}"></span>
+                        <div class="timeline-panel">
+                            <p class="timeline-title">{{ $event['title'] }}</p>
+                            @if($event['copy'])
+                                <p class="timeline-copy">{{ $event['copy'] }}</p>
+                            @endif
+                            <p class="timeline-meta">{{ $event['meta'] }}</p>
+                        </div>
+                    </div>
+                @endforeach
+            </x-nino.activity-timeline>
+        </x-nino.detail-section>
+
+        <x-nino.detail-section title="Internal Notes" subtitle="{{ $notes->count() }} operational notes attached to this order.">
+            <form action="{{ route('admin.support.notes.store') }}" method="POST" class="space-y-3 border-b border-[rgba(120,112,95,0.14)] pb-5">
+                @csrf
+                <input type="hidden" name="notable_type" value="{{ get_class($order) }}">
+                <input type="hidden" name="notable_id" value="{{ $order->id }}">
+                <textarea name="content" rows="4" class="input-field" placeholder="Add internal note for support, operations, or finance..."></textarea>
+                <x-nino.button type="submit" variant="primary">Add Internal Note</x-nino.button>
+            </form>
+
+            @if($notes->count())
+                <div class="mt-5 space-y-4">
+                    @foreach($notes as $note)
+                        <div class="{{ $note->is_pinned ? 'surface-panel-active' : 'surface-panel' }}">
+                            <p class="whitespace-pre-line text-sm leading-6 text-[#1E2B27]">{{ $note->content }}</p>
+                            <div class="mt-3 flex items-center justify-between gap-3 text-[11px] text-[#7A8681]">
+                                <span>{{ $note->author?->first_name ?? $note->author?->name ?? 'Unknown' }} · {{ $note->created_at->diffForHumans() }}</span>
+                                <div class="flex items-center gap-2">
+                                    <form action="{{ route('admin.support.notes.pin', $note) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="inline-flex rounded-md p-1 text-[#61706B] transition-colors hover:bg-[#FCFBF8] hover:text-[#1E2B27]" aria-label="Pin note">
+                                            <span class="material-symbols-outlined text-base">{{ $note->is_pinned ? 'keep' : 'push_pin' }}</span>
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('admin.support.notes.destroy', $note) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex rounded-md p-1 text-[#C45143] transition-colors hover:bg-[#FCFBF8] hover:text-[#A73D30]" aria-label="Delete note">
+                                            <span class="material-symbols-outlined text-base">delete</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="pt-5">
+                    <x-nino.empty-state
+                        title="No internal notes yet"
+                        description="Use internal notes to preserve support and operations context for future staff hand-offs."
+                        icon="sticky_note_2" />
+                </div>
+            @endif
+        </x-nino.detail-section>
     </div>
 
     <div class="detail-sidebar">
@@ -148,11 +218,42 @@
             </x-nino.detail-section>
         @endif
 
-        @if($order->customer_notes)
-            <x-nino.detail-section title="Order Notes" subtitle="Captured from the customer at checkout.">
+        <x-nino.detail-section title="Customer Notes" subtitle="Notes captured from the customer during checkout or follow-up.">
+            @if($order->customer_notes)
                 <p class="detail-note">"{{ $order->customer_notes }}"</p>
-            </x-nino.detail-section>
-        @endif
+            @else
+                <x-nino.empty-state
+                    title="No customer notes"
+                    description="This order does not currently include customer-authored notes."
+                    icon="sms" />
+            @endif
+        </x-nino.detail-section>
+
+        <x-nino.detail-section title="Recent Audit Activity" subtitle="Latest tracked administrative events recorded against this order.">
+            @if($auditTrail->count())
+                <div class="space-y-4">
+                    @foreach($auditTrail as $audit)
+                        <div class="surface-panel">
+                            <p class="text-sm font-semibold text-[#1E2B27]">{{ \Illuminate\Support\Str::of($audit->action)->replace('.', ' ')->title() }}</p>
+                            @if($audit->notes)
+                                <p class="mt-1 text-sm text-[#61706B]">{{ $audit->notes }}</p>
+                            @endif
+                            @if(!empty($audit->new_values))
+                                <p class="mt-2 text-[11px] text-[#7A8681]">
+                                    Updated: {{ collect(array_keys($audit->new_values))->map(fn ($key) => \Illuminate\Support\Str::of($key)->replace('_', ' ')->title()->value())->join(', ') }}
+                                </p>
+                            @endif
+                            <p class="mt-2 text-[11px] text-[#7A8681]">{{ $audit->actor_name ?? 'System' }} · {{ $audit->created_at?->format('M d, Y H:i') ?? 'Unknown time' }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <x-nino.empty-state
+                    title="No order audit history yet"
+                    description="Audit entries will appear here when staff actions explicitly target this order record."
+                    icon="history" />
+            @endif
+        </x-nino.detail-section>
     </div>
 </div>
 @endsection

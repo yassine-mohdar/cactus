@@ -14,18 +14,74 @@
                 <p class="form-copy">Define how this taxonomy node should appear in the storefront, internal catalog tooling, and search-facing metadata.</p>
 
                 <x-admin.input name="name" label="Category name" :value="old('name', $isEditing ? $category->name : null)" :error="$errors->first('name')" required />
+                <x-admin.input name="slug" label="Slug" :value="old('slug', $isEditing ? $category->slug : null)" :error="$errors->first('slug')" placeholder="auto-generated-from-name" />
 
                 <x-admin.textarea name="description" label="Description" rows="5" :error="$errors->first('description')">{{ old('description', $isEditing ? $category->description : null) }}</x-admin.textarea>
+
+                <div class="rounded-2xl border border-[rgba(145,133,109,0.14)] bg-[#FBFAF7] px-4 py-3 text-sm leading-6 text-[#617169]">
+                    Use the description for storefront taxonomy context, merchandising guidance, and better internal catalog scanning. Short, clear copy performs better than keyword stuffing.
+                </div>
             </div>
         </x-admin.card>
 
         <x-admin.card title="Search visibility">
             <div class="space-y-5">
-                <p class="form-copy">Use custom SEO fields only when the category needs a search message different from its shopper-facing copy.</p>
+                <p class="form-copy">Use custom SEO fields only when the category needs a search or social message different from its shopper-facing copy.</p>
 
                 <x-admin.input name="meta_title" label="Meta title" :value="old('meta_title', $isEditing ? $category->meta_title : null)" :error="$errors->first('meta_title')" />
 
                 <x-admin.textarea name="meta_description" label="Meta description" rows="3" :error="$errors->first('meta_description')">{{ old('meta_description', $isEditing ? $category->meta_description : null) }}</x-admin.textarea>
+
+                <div class="form-divider"></div>
+
+                <x-admin.input
+                    name="canonical_url"
+                    label="Canonical URL"
+                    :value="old('canonical_url', $isEditing ? $category->canonical_url : null)"
+                    :error="$errors->first('canonical_url')"
+                    placeholder="https://www.ninoworld.com/categories/editorial-picks" />
+
+                <div class="form-field-grid-2">
+                    <x-admin.input
+                        name="og_title"
+                        label="OG title"
+                        :value="old('og_title', $isEditing ? $category->og_title : null)"
+                        :error="$errors->first('og_title')"
+                        placeholder="Social card title" />
+
+                    <x-admin.input
+                        name="og_image"
+                        label="OG image URL"
+                        :value="old('og_image', $isEditing ? $category->og_image : null)"
+                        :error="$errors->first('og_image')"
+                        placeholder="https://cdn.ninoworld.com/catalog/categories/editorial-picks.jpg" />
+                </div>
+
+                <x-admin.textarea name="og_description" label="OG description" rows="3" :error="$errors->first('og_description')">{{ old('og_description', $isEditing ? $category->og_description : null) }}</x-admin.textarea>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="rounded-2xl border border-[rgba(145,133,109,0.14)] bg-[#FBFAF7] px-4 py-3">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#617169]">Meta title</p>
+                        <p class="mt-2 text-sm font-medium text-[#17302A]">
+                            {{ old('meta_title', $isEditing ? $category->meta_title : null) ? 'Custom title provided' : 'Uses category name by default' }}
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-[rgba(145,133,109,0.14)] bg-[#FBFAF7] px-4 py-3">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#617169]">Meta description</p>
+                        <p class="mt-2 text-sm font-medium text-[#17302A]">
+                            {{ old('meta_description', $isEditing ? $category->meta_description : null) ? 'Custom search snippet ready' : 'Will fall back to page content context' }}
+                        </p>
+                    </div>
+                </div>
+
+                <label class="surface-selection flex items-start gap-3">
+                    <input type="hidden" name="noindex" value="0">
+                    <input type="checkbox" name="noindex" value="1" @checked(old('noindex', $isEditing ? $category->noindex : false)) class="mt-1 size-4 rounded border-[rgba(145,133,109,0.34)] text-[#245848] focus:ring-[#245848]">
+                    <span class="block">
+                        <span class="block text-sm font-semibold text-[#17302A]">Noindex this category</span>
+                        <span class="mt-1 block text-sm leading-6 text-[#617169]">Prevent this taxonomy page from being indexed when it is campaign-only, temporary, or purely internal.</span>
+                    </span>
+                </label>
             </div>
         </x-admin.card>
     </div>
@@ -37,8 +93,8 @@
 
                 <x-admin.select name="parent_id" label="Parent category" :error="$errors->first('parent_id')">
                     <option value="">None (top level)</option>
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}" @selected((string) $currentParent === (string) $cat->id)>{{ $cat->name }}</option>
+                    @foreach($parentOptions as $option)
+                        <option value="{{ $option['id'] }}" @selected((string) $currentParent === (string) $option['id'])>{{ $option['label'] }}</option>
                     @endforeach
                 </x-admin.select>
 
@@ -61,6 +117,13 @@
 
                 @if($isEditing && $category->image_path)
                     <img src="{{ Storage::url($category->image_path) }}" alt="{{ $category->name }}" class="h-48 w-full rounded-[1.25rem] border border-[rgba(145,133,109,0.18)] object-cover shadow-[0_18px_38px_-28px_rgba(23,48,42,0.45)]">
+                    <div class="rounded-2xl border border-[rgba(36,88,72,0.12)] bg-[#EAF3EE] px-4 py-3 text-sm text-[#245848]">
+                        Current image is live and will be replaced only if you upload a new file.
+                    </div>
+                @else
+                    <div class="flex h-40 items-center justify-center rounded-[1.25rem] border border-dashed border-[rgba(145,133,109,0.24)] bg-[#FBFAF7] px-6 text-center text-sm leading-6 text-[#617169]">
+                        No category image uploaded yet. Add one to improve internal previews and future storefront taxonomy cards.
+                    </div>
                 @endif
 
                 <input type="file" name="image" accept="image/*" class="form-upload">
@@ -84,6 +147,16 @@
                 <div class="meta-row">
                     <span class="meta-label">Visibility</span>
                     <span class="meta-value">{{ old('is_active', $isEditing ? $category->is_active : true) ? 'Active' : 'Hidden' }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Image</span>
+                    <span class="meta-value">{{ ($isEditing && $category->image_path) ? 'Uploaded' : 'Not uploaded yet' }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">SEO</span>
+                    <span class="meta-value">
+                        {{ (old('meta_title', $isEditing ? $category->meta_title : null) || old('meta_description', $isEditing ? $category->meta_description : null) || old('canonical_url', $isEditing ? $category->canonical_url : null) || old('og_title', $isEditing ? $category->og_title : null) || old('og_description', $isEditing ? $category->og_description : null) || old('og_image', $isEditing ? $category->og_image : null) || old('noindex', $isEditing ? $category->noindex : false)) ? 'Advanced metadata set' : 'Defaults will be used' }}
+                    </span>
                 </div>
             </div>
 

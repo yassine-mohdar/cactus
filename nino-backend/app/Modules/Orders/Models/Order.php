@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Order extends Model
 {
@@ -41,6 +42,24 @@ class Order extends Model
         'grand_total' => 'decimal:2',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Order $order): void {
+            if (! $order->reference_number) {
+                $order->reference_number = static::generateReferenceNumber();
+            }
+        });
+    }
+
+    public static function generateReferenceNumber(): string
+    {
+        do {
+            $reference = 'ORD-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
+        } while (static::query()->where('reference_number', $reference)->exists());
+
+        return $reference;
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'customer_id');
@@ -61,9 +80,19 @@ class Order extends Model
         return $this->hasOne(OrderAddress::class)->where('type', 'billing');
     }
 
+    public function shippingAddress(): HasOne
+    {
+        return $this->hasOne(OrderAddress::class)->where('type', 'shipping');
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function paymentTransactions(): HasMany
+    {
+        return $this->transactions();
     }
 
     public function shipments(): HasMany

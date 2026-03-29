@@ -1672,7 +1672,7 @@
 
             <x-nino.detail-section title="Damaged Stock Widget" subtitle="Recent damaged-item deductions recorded in inventory movements.">
                 <x-slot:header>
-                    <x-nino.button href="{{ $dashboard['stock_workspace']['damaged_stock']['href'] }}" size="sm" variant="secondary">Open adjustments</x-nino.button>
+                    <x-nino.button href="{{ $dashboard['stock_workspace']['damaged_stock']['href'] }}" size="sm" variant="secondary">Open damage queue</x-nino.button>
                 </x-slot:header>
 
                 <div class="grid grid-cols-2 gap-3">

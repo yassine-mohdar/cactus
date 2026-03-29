@@ -12,6 +12,10 @@ class ProductOptionValue extends Model
         'position',
     ];
 
+    protected $casts = [
+        'position' => 'integer',
+    ];
+
     public function option()
     {
         return $this->belongsTo(ProductOption::class, 'product_option_id');
@@ -19,6 +23,11 @@ class ProductOptionValue extends Model
 
     public function variants()
     {
-        return $this->belongsToMany(ProductVariant::class);
+        return $this->belongsToMany(
+            ProductVariant::class,
+            'product_variant_option_value',
+            'option_value_id',
+            'product_variant_id',
+        );
     }
 }

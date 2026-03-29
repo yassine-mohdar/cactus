@@ -8,28 +8,56 @@
 @endsection
 
 @section('content')
+    <div class="mb-6 grid gap-4 md:grid-cols-4">
+        <x-nino.detail-section title="Movement Rows" subtitle="All inventory movements in your visible scope.">
+            <p class="font-mono text-2xl font-bold text-[#1E2B27]">{{ number_format($summary['rows']) }}</p>
+        </x-nino.detail-section>
+        <x-nino.detail-section title="Additions" subtitle="Inbound stock, returns, and received transfers.">
+            <p class="font-mono text-2xl font-bold text-[#1E2B27]">{{ number_format($summary['additions']) }}</p>
+        </x-nino.detail-section>
+        <x-nino.detail-section title="Deductions" subtitle="Adjustments, damage, and shipped transfers.">
+            <p class="font-mono text-2xl font-bold text-[#1E2B27]">{{ number_format($summary['deductions']) }}</p>
+        </x-nino.detail-section>
+        <x-nino.detail-section title="Damage Events" subtitle="Dedicated damage-reason movement entries.">
+            <p class="font-mono text-2xl font-bold text-[#1E2B27]">{{ number_format($summary['damage_events']) }}</p>
+        </x-nino.detail-section>
+    </div>
+
     <div class="filter-toolbar mb-6">
         <form method="GET" class="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-            <div class="grid gap-3 sm:grid-cols-2 xl:w-full xl:max-w-5xl xl:grid-cols-4">
+            <div class="grid gap-3 sm:grid-cols-2 xl:w-full xl:max-w-6xl xl:grid-cols-5">
                 <div class="filter-field xl:col-span-2">
                     <label class="filter-label" for="adjustments-search">Search</label>
                     <input id="adjustments-search" type="text" name="search" value="{{ request('search') }}" placeholder="Product, SKU, notes, or user" class="input-field">
                 </div>
                 <div class="filter-field">
+                    <label class="filter-label" for="adjustments-branch">Branch</label>
+                    <select id="adjustments-branch" name="branch_id" class="input-field">
+                        <option value="">All visible branches</option>
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}" @selected((string) request('branch_id') === (string) $branch->id)>{{ $branch->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="filter-field">
                     <label class="filter-label" for="adjustments-reason">Reason</label>
                     <select id="adjustments-reason" name="reason" class="input-field">
                         <option value="">All reasons</option>
+                        <option value="manual_adjustment" @selected(request('reason') === 'manual_adjustment')>Manual inventory count</option>
                         <option value="damage" @selected(request('reason') === 'damage')>Damaged Stock</option>
                         <option value="shrinkage" @selected(request('reason') === 'shrinkage')>Shrinkage / Loss</option>
                         <option value="restock" @selected(request('reason') === 'restock')>Restocks</option>
+                        <option value="return" @selected(request('reason') === 'return')>Customer returns</option>
+                        <option value="transfer_in" @selected(request('reason') === 'transfer_in')>Transfer in</option>
+                        <option value="transfer_out" @selected(request('reason') === 'transfer_out')>Transfer out</option>
                     </select>
                 </div>
                 <div class="filter-field">
                     <label class="filter-label" for="adjustments-type">Movement Type</label>
                     <select id="adjustments-type" name="type" class="input-field">
                         <option value="">All types</option>
-                        <option value="increase" @selected(request('type') === 'increase')>Increase</option>
-                        <option value="decrease" @selected(request('type') === 'decrease')>Decrease</option>
+                        <option value="addition" @selected(request('type') === 'addition')>Increase</option>
+                        <option value="deduction" @selected(request('type') === 'deduction')>Decrease</option>
                         <option value="set" @selected(request('type') === 'set')>Set Quantity</option>
                     </select>
                 </div>
@@ -37,7 +65,7 @@
 
             <div class="flex items-center gap-3">
                 <x-admin.button type="submit" variant="primary">Apply Filters</x-admin.button>
-                @if(request()->filled('search') || request()->filled('reason') || request()->filled('type'))
+                @if(request()->filled('search') || request()->filled('reason') || request()->filled('type') || request()->filled('branch_id'))
                     <a href="{{ route('admin.inventory.reports.adjustments') }}" class="btn-secondary">Clear</a>
                 @endif
             </div>
@@ -75,6 +103,7 @@
                                     {{ $mov->stockItem->product->name ?? 'Unknown' }}
                                 @endif
                             </div>
+                            <p class="mt-1 text-[11px] text-[#7A8681]">{{ $mov->stockItem->branch?->name ?? 'Global stock' }}</p>
                             @if($mov->notes)
                                 <p class="mt-1 text-[11px] text-[#7A8681]">{{ $mov->notes }}</p>
                             @endif

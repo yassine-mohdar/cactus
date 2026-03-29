@@ -10,6 +10,7 @@ use App\Support\AdminThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use InvalidArgumentException;
 use Tests\TestCase;
 
 class CustomerAuthFlowTest extends TestCase
@@ -128,6 +129,24 @@ class CustomerAuthFlowTest extends TestCase
 
         $this->assertAuthenticatedAs($customer->fresh());
         $this->assertTrue(Hash::check('NewSecurePass123!', $customer->fresh()->password));
+    }
+
+    public function test_checkout_auto_account_generation_rejects_existing_non_customer_identity(): void
+    {
+        User::factory()->create([
+            'email' => 'staff.identity@example.test',
+            'type' => 'staff',
+            'status' => 'active',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Checkout auto-account generation can only reuse existing customer identities.');
+
+        app(CustomerAccountService::class)->createFromCheckout([
+            'email' => 'staff.identity@example.test',
+            'first_name' => 'Staff',
+            'last_name' => 'Identity',
+        ]);
     }
 
     private function activateAdminTheme(string $theme): void

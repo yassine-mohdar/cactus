@@ -5,6 +5,7 @@ namespace App\Modules\Shipping\Models;
 use App\Models\User;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Shipping\Enums\ShipmentStatus;
+use App\Modules\Shipping\Services\ShippingSettingsService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -140,7 +141,7 @@ class Shipment extends Model
             'chronopost' => "https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT={$this->tracking_number}",
             'fedex' => "https://www.fedex.com/fedextrack/?trknbr={$this->tracking_number}",
             'ups' => "https://www.ups.com/track?tracknum={$this->tracking_number}",
-            default => null,
+            default => app(ShippingSettingsService::class)->buildTrackingUrl($this->tracking_number),
         };
     }
 }

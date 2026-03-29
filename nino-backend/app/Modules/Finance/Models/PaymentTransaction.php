@@ -2,10 +2,12 @@
 
 namespace App\Modules\Finance\Models;
 
+use App\Models\User;
 use App\Modules\Finance\Enums\CodStatus;
 use App\Modules\Finance\Enums\PaymentMethod;
 use App\Modules\Finance\Enums\TransactionStatus;
 use App\Modules\Finance\Enums\TransactionType;
+use App\Modules\Payments\Enums\PaymentStatus as GatewayPaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
@@ -56,6 +58,16 @@ class PaymentTransaction extends Model
         });
     }
 
+    public function setStatusAttribute(mixed $value): void
+    {
+        $this->attributes['status'] = match (true) {
+            $value instanceof TransactionStatus => $value->value,
+            $value instanceof GatewayPaymentStatus => $this->normalizeGatewayStatus($value)->value,
+            is_string($value) => $this->normalizeStatusString($value),
+            default => $value,
+        };
+    }
+
     // ── Relationships ──────────────────────────────────────
     public function order(): BelongsTo
     {
@@ -64,12 +76,12 @@ class PaymentTransaction extends Model
 
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(\App\Modules\Customers\Models\Customer::class);
+        return $this->belongsTo(User::class, 'customer_id');
     }
 
     public function processor(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'processed_by');
+        return $this->belongsTo(User::class, 'processed_by');
     }
 
     public function refundRequests()
@@ -152,5 +164,101 @@ class PaymentTransaction extends Model
     public function formattedAmount(): string
     {
         return number_format($this->amount, 2) . ' ' . $this->currency;
+    }
+
+    public function gatewayStatusValue(): string
+    {
+        return match ($this->status) {
+            TransactionStatus::PENDING => GatewayPaymentStatus::PENDING->value,
+            TransactionStatus::COMPLETED => GatewayPaymentStatus::CAPTURED->value,
+            TransactionStatus::FAILED => GatewayPaymentStatus::FAILED->value,
+            TransactionStatus::CANCELLED => GatewayPaymentStatus::FAILED->value,
+            TransactionStatus::REFUNDED => GatewayPaymentStatus::REFUNDED->value,
+        };
+    }
+
+    public function getGatewayReferenceAttribute(): ?string
+    {
+        return $this->gateway_transaction_id
+            ?? data_get($this->metadata, 'gateway_reference');
+    }
+
+    public function setGatewayReferenceAttribute(?string $value): void
+    {
+        $this->attributes['gateway_transaction_id'] = $value;
+        $this->mergeMetadata(['gateway_reference' => $value]);
+    }
+
+    public function getPayloadAttribute(): ?array
+    {
+        return $this->metadata;
+    }
+
+    public function setPayloadAttribute(null|array $value): void
+    {
+        $this->attributes['metadata'] = $value === null ? null : json_encode($value, JSON_THROW_ON_ERROR);
+    }
+
+    public function getErrorCodeAttribute(): ?string
+    {
+        return data_get($this->metadata, 'error_code');
+    }
+
+    public function setErrorCodeAttribute(?string $value): void
+    {
+        $this->mergeMetadata(['error_code' => $value]);
+    }
+
+    public function getErrorMessageAttribute(): ?string
+    {
+        return $this->failure_reason;
+    }
+
+    public function setErrorMessageAttribute(?string $value): void
+    {
+        $this->attributes['failure_reason'] = $value;
+    }
+
+    protected function normalizeGatewayStatus(GatewayPaymentStatus $status): TransactionStatus
+    {
+        return match ($status) {
+            GatewayPaymentStatus::PENDING,
+            GatewayPaymentStatus::AUTHORIZED => TransactionStatus::PENDING,
+            GatewayPaymentStatus::CAPTURED => TransactionStatus::COMPLETED,
+            GatewayPaymentStatus::FAILED => TransactionStatus::FAILED,
+            GatewayPaymentStatus::REFUNDED,
+            GatewayPaymentStatus::PARTIALLY_REFUNDED => TransactionStatus::REFUNDED,
+        };
+    }
+
+    protected function normalizeStatusString(string $value): string
+    {
+        return match ($value) {
+            GatewayPaymentStatus::PENDING->value,
+            GatewayPaymentStatus::AUTHORIZED->value => TransactionStatus::PENDING->value,
+            GatewayPaymentStatus::CAPTURED->value => TransactionStatus::COMPLETED->value,
+            GatewayPaymentStatus::FAILED->value => TransactionStatus::FAILED->value,
+            GatewayPaymentStatus::REFUNDED->value,
+            GatewayPaymentStatus::PARTIALLY_REFUNDED->value => TransactionStatus::REFUNDED->value,
+            default => $value,
+        };
+    }
+
+    protected function mergeMetadata(array $values): void
+    {
+        $metadata = $this->metadata ?? [];
+
+        foreach ($values as $key => $value) {
+            if ($value === null || $value === '') {
+                unset($metadata[$key]);
+                continue;
+            }
+
+            $metadata[$key] = $value;
+        }
+
+        $this->attributes['metadata'] = $metadata === []
+            ? null
+            : json_encode($metadata, JSON_THROW_ON_ERROR);
     }
 }

@@ -6,6 +6,7 @@ use App\Modules\Catalog\Models\Product;
 use App\Modules\Organizations\Models\Organization;
 use App\Modules\Inventory\Models\StockItem;
 use App\Modules\Inventory\Services\InventoryService;
+use App\Modules\Organizations\Services\OperationalScopeResolver;
 use Livewire\Component;
 use Exception;
 
@@ -29,6 +30,13 @@ class PurchaseOrderModal extends Component
     {
         $this->reset(['supplier_id', 'branch_id', 'items', 'reference_number', 'notes']);
         $this->addItem();
+
+        $visibleBranches = $this->visibleBranches();
+
+        if ($visibleBranches->count() === 1) {
+            $this->branch_id = (string) $visibleBranches->first()->id;
+        }
+
         $this->show = true;
     }
 
@@ -53,6 +61,11 @@ class PurchaseOrderModal extends Component
             'reference_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string'
         ]);
+
+        abort_unless(
+            $this->visibleBranches()->pluck('id')->contains((int) $this->branch_id),
+            403
+        );
 
         try {
             foreach ($this->items as $item) {
@@ -89,8 +102,22 @@ class PurchaseOrderModal extends Component
     {
         return view('livewire.admin.inventory.purchase-order-modal', [
             'suppliers' => Organization::supplier()->active()->get(),
-            'branches' => Organization::branch()->active()->get(),
+            'branches' => $this->visibleBranches(),
             'products' => Product::active()->get(),
         ]);
+    }
+
+    private function visibleBranches()
+    {
+        $actor = auth()->user();
+        $query = Organization::branch()->active()->orderBy('name');
+
+        if (! $actor || $actor->isSuperAdmin() || $actor->hasOrganizationScope('platform')) {
+            return $query->get();
+        }
+
+        $branchIds = app(OperationalScopeResolver::class)->branchIdsFor($actor);
+
+        return $query->whereIn('id', $branchIds === [] ? [-1] : $branchIds)->get();
     }
 }

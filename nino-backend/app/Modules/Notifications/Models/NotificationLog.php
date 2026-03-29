@@ -83,12 +83,14 @@ class NotificationLog extends Model
         ]);
     }
 
-    public function markFailed(string $error): void
+    public function markFailed(string $error, ?int $retryDelayMinutes = null): void
     {
         $this->update([
             'status' => $this->canRetry() ? NotificationStatus::RETRYING : NotificationStatus::FAILED,
             'error_message' => $error,
-            'next_retry_at' => $this->canRetry() ? now()->addMinutes(pow(2, $this->attempts)) : null,
+            'next_retry_at' => $this->canRetry()
+                ? now()->addMinutes($retryDelayMinutes ?? pow(2, $this->attempts))
+                : null,
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Promotions\Services;
 
+use App\Modules\Finance\Services\FinanceSettingsService;
 use App\Modules\Notifications\Enums\NotificationEvent;
 use App\Modules\Notifications\Services\NotificationTriggerService;
 use App\Modules\Promotions\Models\AbandonedCart;
@@ -15,6 +16,10 @@ use Illuminate\Support\Facades\Log;
  */
 class AbandonedCartService
 {
+    public function __construct(
+        private readonly FinanceSettingsService $financeSettings,
+    ) {}
+
     /**
      * Capture a cart as abandoned.
      */
@@ -48,7 +53,7 @@ class AbandonedCartService
             'cart_items' => $data['cart_items'],
             'cart_total' => $data['cart_total'],
             'items_count' => $data['items_count'],
-            'currency' => $data['currency'] ?? 'MAD',
+            'currency' => $data['currency'] ?? $this->financeSettings->baseCurrency(),
             'status' => 'abandoned',
             'abandoned_at' => now(),
         ]);

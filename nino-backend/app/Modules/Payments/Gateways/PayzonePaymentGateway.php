@@ -10,6 +10,7 @@ use App\Modules\Payments\Models\GatewaySetting;
 use App\Modules\Payments\Models\PaymentTransaction;
 use App\Modules\Payments\Services\PaymentLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
@@ -46,6 +47,11 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
     public function __construct()
     {
         $this->logger = new PaymentLogger();
+    }
+
+    public function gatewayId(): string
+    {
+        return self::GATEWAY_ID;
     }
 
     /**
@@ -211,18 +217,15 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
         $ref = $request->query('ref');
         $status = $responseData['status'] ?? $responseData['payment_status'] ?? null;
 
-        $transaction = PaymentTransaction::where('gateway_reference', $ref)
-            ->orWhere(function ($q) use ($ref) {
-                $q->where('gateway', self::GATEWAY_ID)
-                  ->whereJsonContains('payload->payzone_ref', $ref);
-            })->first();
+        $transaction = $this->findTransactionByReference($ref);
 
         $statusBefore = $transaction?->status?->value;
+        $signedResponseData = $this->filterSignedResponseData($responseData);
 
         // Verify signature if provided
-        $receivedSig = $responseData['signature'] ?? null;
+        $receivedSig = $signedResponseData['signature'] ?? null;
         if ($receivedSig && $secretKey) {
-            $dataToVerify = collect($responseData)->except('signature')->toArray();
+            $dataToVerify = collect($signedResponseData)->except('signature')->toArray();
             $computedSig = $this->generateSignature($dataToVerify, $secretKey);
 
             if (!hash_equals($computedSig, $receivedSig)) {
@@ -242,7 +245,7 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
                     $transaction->update(['status' => PaymentStatus::FAILED, 'error_message' => 'Signature mismatch']);
                 }
 
-                return PaymentResponse::failure('Payment verification failed.', $responseData);
+                return PaymentResponse::failure('Payment verification failed.', $signedResponseData);
             }
         }
 
@@ -250,7 +253,15 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
 
         if ($isSuccess && $transaction) {
             if ($transaction->status !== PaymentStatus::CAPTURED) {
-                $transaction->update(['status' => PaymentStatus::CAPTURED, 'payload' => array_merge($transaction->payload ?? [], $responseData)]);
+                $updates = [
+                    'status' => PaymentStatus::CAPTURED,
+                ];
+
+                if (Schema::hasColumn('payment_transactions', 'payload')) {
+                    $updates['payload'] = array_merge($transaction->payload ?? [], $signedResponseData);
+                }
+
+                $transaction->update($updates);
             }
 
             $this->logger->logCallback(
@@ -263,7 +274,7 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
                 statusAfter: PaymentStatus::CAPTURED->value,
             );
 
-            return PaymentResponse::success($ref, $responseData);
+            return PaymentResponse::success($ref, $signedResponseData);
         }
 
         $errorMsg = $responseData['error_message'] ?? 'Payment was not completed.';
@@ -278,7 +289,7 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
             errorMessage: $errorMsg, statusBefore: $statusBefore, statusAfter: PaymentStatus::FAILED->value,
         );
 
-        return PaymentResponse::failure($errorMsg, $responseData);
+        return PaymentResponse::failure($errorMsg, $signedResponseData);
     }
 
     /**
@@ -296,12 +307,9 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
         $secretKey = $setting->getCredential('secret_key');
         $paymentId = $responseData['payment_id'] ?? $responseData['order_id'] ?? null;
         $status = $responseData['status'] ?? $responseData['payment_status'] ?? null;
+        $signedResponseData = $this->filterSignedResponseData($responseData);
 
-        $transaction = PaymentTransaction::where('gateway', self::GATEWAY_ID)
-            ->where(function($q) use ($paymentId) {
-                $q->where('gateway_reference', $paymentId)
-                  ->orWhereJsonContains('payload->payzone_payment_id', $paymentId);
-            })->first();
+        $transaction = $this->findTransactionByReference($paymentId);
 
         if (!$transaction) {
             $this->logger->logWebhook(
@@ -313,13 +321,42 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
         }
 
         $statusBefore = $transaction->status->value;
+
+        $receivedSig = $signedResponseData['signature'] ?? null;
+        if ($receivedSig && $secretKey) {
+            $dataToVerify = collect($signedResponseData)->except('signature')->toArray();
+            $computedSig = $this->generateSignature($dataToVerify, $secretKey);
+
+            if (!hash_equals($computedSig, $receivedSig)) {
+                $this->logger->logWebhook(
+                    self::GATEWAY_ID,
+                    $request,
+                    $signedResponseData,
+                    isSuccessful: false,
+                    gatewayReference: $paymentId,
+                    orderId: $transaction->order_id,
+                    transactionId: $transaction->id,
+                    errorMessage: 'Webhook signature verification failed.',
+                    statusBefore: $statusBefore,
+                    statusAfter: $statusBefore,
+                );
+
+                return PaymentResponse::failure('Webhook signature verification failed.', $signedResponseData);
+            }
+        }
+
         $isSuccess = in_array($status, ['completed', 'approved', 'captured', 'success']);
 
         if ($isSuccess && $transaction->status !== PaymentStatus::CAPTURED) {
-            $transaction->update([
+            $updates = [
                 'status' => PaymentStatus::CAPTURED,
-                'payload' => array_merge($transaction->payload ?? [], $responseData),
-            ]);
+            ];
+
+            if (Schema::hasColumn('payment_transactions', 'payload')) {
+                $updates['payload'] = array_merge($transaction->payload ?? [], $signedResponseData);
+            }
+
+            $transaction->update($updates);
 
             $this->logger->logStatusChange(
                 self::GATEWAY_ID, $transaction->id, $statusBefore,
@@ -337,8 +374,8 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
         );
 
         return $isSuccess
-            ? PaymentResponse::success($paymentId, $responseData)
-            : PaymentResponse::failure($responseData['error_message'] ?? 'Payment failed.', $responseData);
+            ? PaymentResponse::success($paymentId, $signedResponseData)
+            : PaymentResponse::failure($responseData['error_message'] ?? 'Payment failed.', $signedResponseData);
     }
 
     /**
@@ -425,5 +462,57 @@ class PayzonePaymentGateway implements PaymentGatewayInterface
         ksort($data);
         $serialized = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         return hash_hmac('sha256', $serialized, $secret);
+    }
+
+    /**
+     * @param array<string, mixed> $responseData
+     * @return array<string, mixed>
+     */
+    private function filterSignedResponseData(array $responseData): array
+    {
+        return collect($responseData)
+            ->except([
+                'ref',
+                'status',
+                '_token',
+                '_method',
+            ])
+            ->toArray();
+    }
+
+    private function findTransactionByReference(?string $reference): ?PaymentTransaction
+    {
+        if (! $reference) {
+            return null;
+        }
+
+        return PaymentTransaction::query()
+            ->where('gateway', self::GATEWAY_ID)
+            ->where(function ($query) use ($reference) {
+                if (Schema::hasColumn('payment_transactions', 'gateway_reference')) {
+                    $query->orWhere('gateway_reference', $reference);
+                }
+
+                if (Schema::hasColumn('payment_transactions', 'gateway_transaction_id')) {
+                    $query->orWhere('gateway_transaction_id', $reference);
+                }
+
+                if (Schema::hasColumn('payment_transactions', 'reference')) {
+                    $query->orWhere('reference', $reference);
+                }
+
+                if (Schema::hasColumn('payment_transactions', 'payload')) {
+                    $query->orWhereJsonContains('payload->payzone_payment_id', $reference)
+                        ->orWhereJsonContains('payload->payzone_ref', $reference);
+                }
+
+                if (Schema::hasColumn('payment_transactions', 'metadata')) {
+                    $query->orWhereJsonContains('metadata->payzone_payment_id', $reference)
+                        ->orWhereJsonContains('metadata->payzone_ref', $reference)
+                        ->orWhereJsonContains('metadata->gateway_reference', $reference);
+                }
+            })
+            ->latest('id')
+            ->first();
     }
 }

@@ -110,17 +110,47 @@
                     </div>
 
                     @if($gateway->gateway_id === 'offline_transfer')
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <x-admin.input type="text" name="metadata[method_label]" label="Method Label" :value="$gateway->metadata['method_label'] ?? 'Bank Transfer'" placeholder="Bank Transfer" />
+                            <x-admin.input type="text" name="metadata[checkout_title]" label="Checkout Title" :value="$gateway->metadata['checkout_title'] ?? 'Bank transfer instructions'" placeholder="Bank transfer instructions" />
+                            <x-admin.input type="text" name="metadata[checkout_description]" label="Checkout Description" :value="$gateway->metadata['checkout_description'] ?? ''" placeholder="Show the account details after checkout so customers can complete the transfer manually." />
+                            <x-admin.input type="number" min="1" max="168" name="metadata[payment_window_hours]" label="Payment Window (Hours)" :value="$gateway->metadata['payment_window_hours'] ?? 48" placeholder="48" />
+                            <x-admin.input type="text" name="metadata[bank_name]" label="Bank Name" :value="$gateway->metadata['bank_name'] ?? ''" placeholder="Attijariwafa Bank" />
+                            <x-admin.input type="text" name="metadata[account_holder]" label="Account Holder" :value="$gateway->metadata['account_holder'] ?? ''" placeholder="NinoWorld SARL AU" />
+                            <x-admin.input type="text" name="metadata[account_number]" label="Account Number" :value="$gateway->metadata['account_number'] ?? ''" placeholder="12345678901234567890" />
+                            <x-admin.input type="text" name="metadata[iban]" label="IBAN" :value="$gateway->metadata['iban'] ?? ''" placeholder="MA64001122334455667788990011" />
+                            <x-admin.input type="text" name="metadata[swift_code]" label="SWIFT Code" :value="$gateway->metadata['swift_code'] ?? ''" placeholder="BCMAMAMC" />
+                            <x-admin.input type="text" name="metadata[reference_prefix]" label="Reference Prefix" :value="$gateway->metadata['reference_prefix'] ?? 'NINO'" placeholder="NINO" />
+                            <x-admin.select name="metadata[require_receipt]" label="Require Receipt Confirmation">
+                                <option value="1" {{ (bool) ($gateway->metadata['require_receipt'] ?? true) ? 'selected' : '' }}>Yes</option>
+                                <option value="0" {{ ! (bool) ($gateway->metadata['require_receipt'] ?? true) ? 'selected' : '' }}>No</option>
+                            </x-admin.select>
+                        </div>
                         <x-admin.textarea name="metadata[instructions]" label="Bank instructions" rows="5" placeholder="Please wire funds to the listed company account and send the receipt to the finance team.">{{ $gateway->metadata['instructions'] ?? '' }}</x-admin.textarea>
+                        <x-admin.textarea name="metadata[admin_instructions]" label="Admin verification notes" rows="4" placeholder="Finance should validate the transfer reference, receipt, and settled amount before marking the transaction as completed.">{{ $gateway->metadata['admin_instructions'] ?? '' }}</x-admin.textarea>
+                        <div class="rounded-[1.15rem] border border-[rgba(145,133,109,0.18)] bg-[#FCFBF8] px-4 py-4 text-sm text-[#5D6F66]">
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#6E7D75]">Customer checkout rendering</p>
+                            <p class="mt-2 font-semibold text-[#17302A]">{{ $gateway->metadata['checkout_title'] ?? 'Bank transfer instructions' }}</p>
+                            @if(filled($gateway->metadata['checkout_description'] ?? null))
+                                <p class="mt-2">{{ $gateway->metadata['checkout_description'] }}</p>
+                            @endif
+                            @if(filled($gateway->metadata['admin_instructions'] ?? null))
+                                <p class="mt-3"><span class="font-semibold text-[#17302A]">Internal note:</span> {{ $gateway->metadata['admin_instructions'] }}</p>
+                            @endif
+                        </div>
                     @elseif($gateway->gateway_id === 'stripe')
                         <div class="grid gap-4 md:grid-cols-2">
                             <x-admin.input type="text" name="metadata[publishable_key]" label="Publishable Key" :value="$gateway->metadata['publishable_key'] ?? ''" placeholder="pk_test_..." />
                             <x-admin.input type="password" name="credentials[secret_key]" label="Secret Key" :value="$gateway->getCredential('secret_key') ? '*******' : ''" placeholder="sk_test_..." />
+                            <x-admin.input type="password" name="credentials[webhook_secret]" label="Webhook Secret" :value="$gateway->getCredential('webhook_secret') ? '*******' : ''" placeholder="whsec_..." />
+                            <x-admin.input type="text" name="metadata[currency]" label="Currency" :value="$gateway->metadata['currency'] ?? 'MAD'" placeholder="MAD" />
                         </div>
                     @elseif($gateway->gateway_id === 'cmi')
                         <div class="grid gap-4 md:grid-cols-2">
                             <x-admin.input type="text" name="credentials[store_id]" label="Store ID" :value="$gateway->getCredential('store_id')" placeholder="CMI Store ID" />
                             <x-admin.input type="text" name="credentials[client_id]" label="Client ID" :value="$gateway->getCredential('client_id')" placeholder="CMI Client ID" />
                             <x-admin.input type="password" name="credentials[hash_key]" label="Hash Key" :value="$gateway->getCredential('hash_key') ? '*******' : ''" placeholder="HMAC-SHA512 secret" />
+                            <x-admin.input type="text" name="credentials[terminal_id]" label="Terminal ID" :value="$gateway->getCredential('terminal_id')" placeholder="Optional terminal identifier" />
                             <x-admin.input type="text" name="metadata[currency_code]" label="Currency Code" :value="$gateway->metadata['currency_code'] ?? '504'" placeholder="504" />
                             <x-admin.select name="metadata[language]" label="Language">
                                 <option value="fr" {{ ($gateway->metadata['language'] ?? 'fr') === 'fr' ? 'selected' : '' }}>Français</option>

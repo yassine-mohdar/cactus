@@ -5,9 +5,11 @@ namespace App\Modules\Customers\Services;
 use App\Models\User;
 use App\Modules\Community\Services\CommunityOnboardingService;
 use App\Modules\IAM\Services\CustomerPasswordSetupService;
+use App\Modules\Notifications\Services\NotificationTriggerService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Throwable;
 
 class CustomerAccountService
@@ -15,6 +17,7 @@ class CustomerAccountService
     public function __construct(
         protected CommunityOnboardingService $communityOnboardingService,
         protected CustomerPasswordSetupService $passwordSetupService,
+        protected NotificationTriggerService $notificationTriggerService,
     ) {}
 
     /**
@@ -30,12 +33,13 @@ class CustomerAccountService
     {
         [$email, $firstName, $lastName] = $this->normalizeCheckoutIdentity($email, $firstName, $lastName);
 
-        // If a user already exists with this email, return them (or throw an exception based on business rules)
         $existing = User::where('email', $email)->first();
         if ($existing) {
-            if ($existing->isCustomer()) {
-                $this->communityOnboardingService->inviteNewCustomerToDefaultGroup($existing, 'checkout_existing_customer');
+            if (! $existing->isCustomer()) {
+                throw new InvalidArgumentException('Checkout auto-account generation can only reuse existing customer identities.');
             }
+
+            $this->communityOnboardingService->inviteNewCustomerToDefaultGroup($existing, 'checkout_existing_customer');
 
             return $existing;
         }
@@ -55,6 +59,20 @@ class CustomerAccountService
         ]);
 
         $this->communityOnboardingService->inviteNewCustomerToDefaultGroup($customer, 'checkout_auto_create');
+
+        try {
+            $this->notificationTriggerService->welcome(
+                $customer->email,
+                $customer->full_name !== '' ? $customer->full_name : ($customer->name ?? 'Customer'),
+                $customer->id,
+            );
+        } catch (Throwable $exception) {
+            Log::warning('Customer welcome notification dispatch failed after checkout auto-creation.', [
+                'customer_id' => $customer->id,
+                'email' => $customer->email,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         try {
             $this->passwordSetupService->dispatchSetupLink($customer, 'checkout_auto_create');
@@ -79,16 +97,16 @@ class CustomerAccountService
     {
         if (is_array($email)) {
             return [
-                (string) ($email['email'] ?? ''),
-                (string) ($email['first_name'] ?? ''),
-                (string) ($email['last_name'] ?? ''),
+                Str::lower(trim((string) ($email['email'] ?? ''))),
+                trim((string) ($email['first_name'] ?? '')),
+                trim((string) ($email['last_name'] ?? '')),
             ];
         }
 
         return [
-            $email,
-            (string) $firstName,
-            (string) $lastName,
+            Str::lower(trim($email)),
+            trim((string) $firstName),
+            trim((string) $lastName),
         ];
     }
 }

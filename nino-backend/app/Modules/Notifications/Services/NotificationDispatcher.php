@@ -61,11 +61,13 @@ class NotificationDispatcher
         ?int $customerId = null,
         ?array $onlyChannels = null,
     ): array {
+        $notificationSettings = app(NotificationSettingsService::class);
+
         // Enrich variables with store defaults
         $variables = array_merge([
             'store_name' => config('app.name', 'NinoWorld'),
             'store_url' => config('app.url', 'https://ninoworld.com'),
-        ], $variables);
+        ], $notificationSettings->templateVariables(), $variables);
 
         $templates = NotificationTemplate::enabled()
             ->forEvent($event)
@@ -81,6 +83,10 @@ class NotificationDispatcher
         foreach ($templates as $template) {
             // Skip if channel filter is active and this channel isn't included
             if ($onlyChannels && !in_array($template->channel, $onlyChannels)) {
+                continue;
+            }
+
+            if (! $notificationSettings->isChannelEnabled($template->channel)) {
                 continue;
             }
 
@@ -100,11 +106,11 @@ class NotificationDispatcher
                 'recipient' => $channelRecipient,
                 'customer_id' => $customerId,
                 'subject' => $template->renderSubject($variables),
-                'body' => $template->render($variables),
+                'body' => $notificationSettings->appendTemplateGlobals($template->render($variables)),
                 'order_reference' => $variables['order_reference'] ?? null,
                 'variables' => $variables,
                 'attempts' => 0,
-                'max_attempts' => 3,
+                'max_attempts' => $notificationSettings->maxAttempts(),
             ]);
 
             // Dispatch to queue

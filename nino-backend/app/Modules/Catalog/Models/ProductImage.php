@@ -16,10 +16,16 @@ class ProductImage extends Model
 
     protected $casts = [
         'is_featured' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function altTextLabel(): string
+    {
+        return trim((string) $this->alt_text) !== '' ? (string) $this->alt_text : 'No alt text';
     }
 }

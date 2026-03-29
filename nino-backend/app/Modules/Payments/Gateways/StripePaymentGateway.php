@@ -10,6 +10,7 @@ use App\Modules\Payments\Models\GatewaySetting;
 use App\Modules\Payments\Models\PaymentTransaction;
 use App\Modules\Payments\Services\PaymentLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
@@ -43,6 +44,11 @@ class StripePaymentGateway implements PaymentGatewayInterface
     public function __construct()
     {
         $this->logger = new PaymentLogger();
+    }
+
+    public function gatewayId(): string
+    {
+        return self::GATEWAY_ID;
     }
 
     /**
@@ -238,11 +244,11 @@ class StripePaymentGateway implements PaymentGatewayInterface
         $sessionId = $request->query('session_id');
         $ref = $request->query('ref');
 
-        $transaction = PaymentTransaction::where('gateway', self::GATEWAY_ID)
-            ->where(function($q) use ($ref, $sessionId) {
-                $q->where('gateway_reference', $ref)
-                  ->orWhereJsonContains('payload->stripe_session_id', $sessionId);
-            })->first();
+        $transaction = $this->findTransaction(
+            clientReference: $ref,
+            paymentIntentId: null,
+            sessionId: $sessionId,
+        );
 
         $statusBefore = $transaction?->status?->value;
 
@@ -256,7 +262,7 @@ class StripePaymentGateway implements PaymentGatewayInterface
             );
 
             if ($transaction && $transaction->status === PaymentStatus::PENDING) {
-                $transaction->update(['status' => PaymentStatus::FAILED, 'error_message' => 'Cancelled by customer']);
+                $transaction->update(['status' => PaymentStatus::FAILED]);
             }
 
             return PaymentResponse::failure('Payment was cancelled.');
@@ -370,15 +376,12 @@ class StripePaymentGateway implements PaymentGatewayInterface
         $clientRef = $eventData['client_reference_id'] ?? null;
         $paymentIntentId = $eventData['payment_intent'] ?? $eventData['id'] ?? null;
 
-        $transaction = PaymentTransaction::where('gateway', self::GATEWAY_ID)
-            ->where(function ($q) use ($clientRef, $paymentIntentId, $ninoOrderId) {
-                $q->where('gateway_reference', $clientRef)
-                  ->orWhere('gateway_reference', $paymentIntentId)
-                  ->orWhereJsonContains('payload->stripe_session_id', $clientRef);
-                if ($ninoOrderId) {
-                    $q->orWhere('order_id', $ninoOrderId);
-                }
-            })->first();
+        $transaction = $this->findTransaction(
+            clientReference: $clientRef,
+            paymentIntentId: $paymentIntentId,
+            sessionId: $clientRef,
+            orderId: $ninoOrderId ? (int) $ninoOrderId : null,
+        );
 
         if (!$transaction) {
             $this->logger->logWebhook(
@@ -452,7 +455,11 @@ class StripePaymentGateway implements PaymentGatewayInterface
         }
 
         $secretKey = $setting->getCredential('secret_key');
-        $transaction = PaymentTransaction::where('gateway_reference', $gatewayReference)->first();
+        $transaction = $this->findTransaction(
+            clientReference: $gatewayReference,
+            paymentIntentId: $gatewayReference,
+            sessionId: null,
+        );
 
         $refundParams = [
             'payment_intent' => $gatewayReference,
@@ -558,5 +565,43 @@ class StripePaymentGateway implements PaymentGatewayInterface
         $expectedSignature = hash_hmac('sha256', $signedPayload, $secret);
 
         return hash_equals($expectedSignature, $signature);
+    }
+
+    private function findTransaction(
+        ?string $clientReference,
+        ?string $paymentIntentId,
+        ?string $sessionId,
+        ?int $orderId = null,
+    ): ?PaymentTransaction {
+        return PaymentTransaction::query()
+            ->where('gateway', self::GATEWAY_ID)
+            ->where(function ($q) use ($clientReference, $paymentIntentId, $sessionId, $orderId) {
+                foreach (array_filter([$clientReference, $paymentIntentId]) as $reference) {
+                    if (Schema::hasColumn('payment_transactions', 'gateway_reference')) {
+                        $q->orWhere('gateway_reference', $reference);
+                    }
+
+                    if (Schema::hasColumn('payment_transactions', 'gateway_transaction_id')) {
+                        $q->orWhere('gateway_transaction_id', $reference);
+                    }
+
+                    if (Schema::hasColumn('payment_transactions', 'reference')) {
+                        $q->orWhere('reference', $reference);
+                    }
+                }
+
+                if ($sessionId && Schema::hasColumn('payment_transactions', 'payload')) {
+                    $q->orWhereJsonContains('payload->stripe_session_id', $sessionId);
+                }
+
+                if ($sessionId && Schema::hasColumn('payment_transactions', 'metadata')) {
+                    $q->orWhereJsonContains('metadata->stripe_session_id', $sessionId);
+                }
+
+                if ($orderId) {
+                    $q->orWhere('order_id', $orderId);
+                }
+            })
+            ->first();
     }
 }

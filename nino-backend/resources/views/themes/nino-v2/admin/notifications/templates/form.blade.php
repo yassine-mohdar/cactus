@@ -72,11 +72,11 @@
                 <div class="space-y-4">
                     <div>
                         <label class="filter-label" for="template-subject">Subject</label>
-                        <input id="template-subject" type="text" name="subject" value="{{ old('subject', $template?->subject ?? '') }}" class="input-field" placeholder="Your order {{order_reference}} has been confirmed">
+                        <input id="template-subject" type="text" name="subject" value="{{ old('subject', $template?->subject ?? '') }}" class="input-field" placeholder="Your order @{{order_reference}} has been confirmed">
                     </div>
                     <div>
                         <label class="filter-label" for="template-body">Message Body</label>
-                        <textarea id="template-body" name="body" rows="14" required class="input-field font-mono text-xs" placeholder="Hi {{customer_name}},&#10;&#10;Your order {{order_reference}} has been placed...">{{ old('body', $template?->body ?? '') }}</textarea>
+                        <textarea id="template-body" name="body" rows="14" required class="input-field font-mono text-xs" placeholder="Hi @{{customer_name}},&#10;&#10;Your order @{{order_reference}} has been placed...">{{ old('body', $template?->body ?? '') }}</textarea>
                         <p class="mt-2 text-xs text-[#61706B]">Use <code class="rounded bg-[#F6F2EC] px-1 py-0.5 font-mono">{{ '{' }}{{ '{' }}variable{{ '}' }}{{ '}' }}</code> syntax for placeholders.</p>
                     </div>
                 </div>
@@ -141,7 +141,7 @@
         }
 
         list.innerHTML = vars.split(', ').map((variable) => {
-            const placeholder = `{{${variable}}}`;
+            const placeholder = '@{{' + variable + '}}';
             return `<button type="button" onclick="navigator.clipboard.writeText('${placeholder}'); this.querySelector('[data-copy-label]').innerText='Copied'; setTimeout(() => this.querySelector('[data-copy-label]').innerText='Copy', 1000);" class="flex w-full items-center justify-between rounded-md border border-[rgba(120,112,95,0.14)] bg-[#FBFAF7] px-3 py-2 text-left font-mono text-xs text-[#1E2B27] transition hover:bg-[#FCFBF8]"><span>${placeholder}</span><span data-copy-label class="text-[10px] uppercase tracking-[0.18em] text-[#61706B]">Copy</span></button>`;
         }).join('');
     });

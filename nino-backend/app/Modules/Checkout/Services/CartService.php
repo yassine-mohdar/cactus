@@ -3,26 +3,42 @@
 namespace App\Modules\Checkout\Services;
 
 use App\Models\User;
+use App\Modules\Catalog\Models\Product;
 use App\Modules\Checkout\Models\Cart;
 use App\Modules\Checkout\Models\CartItem;
+use App\Modules\Finance\Services\FinanceSettingsService;
+use App\Modules\Promotions\Services\CouponService;
+use App\Modules\Shipping\Services\ShippingSettingsService;
 use Illuminate\Support\Str;
 
 class CartService
 {
+    public function __construct(
+        private readonly FinanceSettingsService $financeSettings,
+        private readonly ShippingSettingsService $shippingSettings,
+        private readonly CouponService $couponService,
+    ) {}
+
     /**
      * Resolve the cart for the current guest or authenticated user.
      */
     public function getCart(?User $user, ?string $sessionId): Cart
     {
         if ($user) {
-            return Cart::firstOrCreate(['user_id' => $user->id]);
+            return Cart::firstOrCreate(
+                ['user_id' => $user->id],
+                ['currency' => $this->financeSettings->baseCurrency()],
+            );
         }
 
         if (!$sessionId) {
             $sessionId = Str::uuid()->toString();
         }
 
-        return Cart::firstOrCreate(['session_id' => $sessionId]);
+        return Cart::firstOrCreate(
+            ['session_id' => $sessionId],
+            ['currency' => $this->financeSettings->baseCurrency()],
+        );
     }
 
     /**
@@ -60,10 +76,22 @@ class CartService
         $cart->items()->where('id', $itemId)->delete();
     }
 
-    public function applyCoupon(Cart $cart, string $code): void
+    /**
+     * @return array{valid: bool, coupon?: \App\Modules\Promotions\Models\Coupon, discount?: float, formatted_discount?: string, new_total?: float, error?: string, error_code?: string}
+     */
+    public function applyCoupon(Cart $cart, string $code, ?User $user = null): array
     {
-        // Validation of coupon would happen here
-        $cart->update(['coupon_code' => $code]);
+        $validation = $this->couponService->validate($code, $this->buildCouponContext($cart, $user));
+
+        if (! ($validation['valid'] ?? false)) {
+            return $validation;
+        }
+
+        $cart->update([
+            'coupon_code' => strtoupper(trim($code)),
+        ]);
+
+        return $validation;
     }
 
     public function removeCoupon(Cart $cart): void
@@ -93,16 +121,27 @@ class CartService
      */
     public function getSummary(Cart $cart): array
     {
-        $cart->loadMissing('items.product'); // Load products dynamically
+        $cart->loadMissing([
+            'items.product.categories',
+            'items.product.featuredImage',
+            'items.product.upsellProducts.featuredImage',
+            'items.product.crossSellProducts.featuredImage',
+        ]);
         
         $subtotal = $cart->subtotal;
-        $discount = 0; // P7-CART-03 placeholder logic
+        $appliedCoupon = $this->resolveAppliedCoupon($cart);
+        $discount = (float) ($appliedCoupon['discount'] ?? 0);
+        $lineItemsCount = (int) $cart->items->count();
+        $unitsCount = (int) $cart->items->sum('quantity');
+        $taxTotal = 0.0;
         
         // P7-CART-05 & P7-CART-06 Shipping logic
-        $shippingThreshold = 500; // Free shipping > MAD 500
-        $shippingEstimate = $subtotal > $shippingThreshold ? 0 : 45.00;
+        $shippingThreshold = $this->shippingSettings->freeShippingThreshold();
+        $shippingEstimate = $subtotal >= $shippingThreshold ? 0 : $this->shippingSettings->defaultShippingCost();
+        $remainingForFreeShipping = max(0, $shippingThreshold - $subtotal);
         
-        $grandTotal = ($subtotal - $discount) + $shippingEstimate;
+        $grandTotal = ($subtotal - $discount) + $shippingEstimate + $taxTotal;
+        $suggestions = $this->buildSuggestions($cart);
 
         return [
             'id' => $cart->id,
@@ -119,18 +158,137 @@ class CartService
                 ];
             }),
             'totals' => [
+                'line_items_count' => $lineItemsCount,
+                'units_count' => $unitsCount,
                 'subtotal' => round($subtotal, 2),
+                'tax' => round($taxTotal, 2),
                 'discount' => round($discount, 2),
                 'shipping_estimate' => round($shippingEstimate, 2),
                 'grand_total' => max(0, round($grandTotal, 2)),
             ],
-            'coupon' => $cart->coupon_code,
+            'shipping' => [
+                'method_code' => $this->shippingSettings->defaultMethodCode(),
+                'estimated_cost' => round($shippingEstimate, 2),
+                'free_shipping_threshold' => round($shippingThreshold, 2),
+                'remaining_for_free_shipping' => round($remainingForFreeShipping, 2),
+                'is_free' => $shippingEstimate <= 0,
+            ],
+            'coupon' => [
+                'code' => $cart->coupon_code,
+                'applied' => (bool) ($appliedCoupon['valid'] ?? false),
+                'discount' => round($discount, 2),
+                'formatted_discount' => $appliedCoupon['formatted_discount'] ?? null,
+                'error' => $appliedCoupon['error'] ?? null,
+            ],
             // P7-CART-06
             'free_shipping_progress' => [
                 'threshold' => $shippingThreshold,
-                'remaining' => max(0, $shippingThreshold - $subtotal),
+                'remaining' => $remainingForFreeShipping,
                 'achieved' => ($subtotal >= $shippingThreshold),
-            ]
+            ],
+            'suggestions' => $suggestions,
+        ];
+    }
+
+    /**
+     * @return array{cart_total: float, items_count: int, customer_id: int|null, product_ids: array<int, int>, category_ids: array<int, int>}
+     */
+    private function buildCouponContext(Cart $cart, ?User $user = null): array
+    {
+        $cart->loadMissing('items.product.categories');
+
+        $productIds = $cart->items
+            ->pluck('product_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
+        $categoryIds = $cart->items
+            ->flatMap(function (CartItem $item) {
+                /** @var Product|null $product */
+                $product = $item->product;
+
+                return $product?->categories?->pluck('id') ?? collect();
+            })
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        return [
+            'cart_total' => (float) $cart->subtotal,
+            'items_count' => (int) $cart->items->sum('quantity'),
+            'customer_id' => $user?->id ?? $cart->user_id,
+            'product_ids' => $productIds,
+            'category_ids' => $categoryIds,
+        ];
+    }
+
+    /**
+     * @return array{valid?: bool, discount?: float, formatted_discount?: string, error?: string}|array{}
+     */
+    private function resolveAppliedCoupon(Cart $cart): array
+    {
+        $couponCode = trim((string) $cart->coupon_code);
+
+        if ($couponCode === '') {
+            return [];
+        }
+
+        $validation = $this->couponService->validate($couponCode, $this->buildCouponContext($cart, $cart->user));
+
+        if (! ($validation['valid'] ?? false)) {
+            return [
+                'error' => $validation['error'] ?? 'Coupon is no longer valid.',
+            ];
+        }
+
+        return $validation;
+    }
+
+    /**
+     * @return array{upsells: array<int, array<string, mixed>>, cross_sells: array<int, array<string, mixed>>}
+     */
+    private function buildSuggestions(Cart $cart): array
+    {
+        $cartProductIds = $cart->items
+            ->pluck('product_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $buildPayload = function ($products, string $type) use ($cartProductIds) {
+            return $products
+                ->filter(fn ($product) => ! $cartProductIds->contains((int) $product->id))
+                ->filter(fn ($product) => $product->isPublished())
+                ->unique('id')
+                ->take(4)
+                ->map(function ($product) use ($type) {
+                    return [
+                        'id' => $product->id,
+                        'type' => $type,
+                        'name' => $product->name,
+                        'slug' => $product->slug,
+                        'price' => $product->effectivePrice() ?? $product->price,
+                        'image' => $product->primary_image,
+                        'badges' => $product->badges(),
+                    ];
+                })
+                ->values()
+                ->all();
+        };
+
+        $upsells = $cart->items
+            ->flatMap(fn (CartItem $item) => $item->product?->upsellProducts ?? collect());
+
+        $crossSells = $cart->items
+            ->flatMap(fn (CartItem $item) => $item->product?->crossSellProducts ?? collect());
+
+        return [
+            'upsells' => $buildPayload($upsells, 'upsell'),
+            'cross_sells' => $buildPayload($crossSells, 'cross_sell'),
         ];
     }
 }

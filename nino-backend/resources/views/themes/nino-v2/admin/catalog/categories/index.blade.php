@@ -52,6 +52,7 @@
                     <th>Name</th>
                     <th>Slug</th>
                     <th>Parent</th>
+                    <th class="text-center">Order</th>
                     <th class="text-center">Status</th>
                     <th class="text-right">Actions</th>
                 </x-slot>
@@ -65,7 +66,12 @@
                                     @else
                                         <div class="flex h-8 w-8 items-center justify-center rounded-md border border-[rgba(120,112,95,0.16)] bg-[#FBFAF7] text-[10px] font-bold tracking-[0.18em] text-[#6A7671]">IMG</div>
                                     @endif
-                                    <a href="{{ route('admin.catalog.categories.edit', $category) }}" class="table-link text-sm">{{ $category->name }}</a>
+                                    <div class="min-w-0">
+                                        <a href="{{ route('admin.catalog.categories.edit', $category) }}" class="table-link text-sm">{{ $category->name }}</a>
+                                        @if($category->description)
+                                            <p class="mt-1 line-clamp-1 text-xs text-[#61706B]">{{ $category->description }}</p>
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
                             <td class="font-mono text-xs text-[#61706B]">{{ $category->slug }}</td>
@@ -78,8 +84,21 @@
                                     <span class="text-xs italic text-[#7A8681]">None</span>
                                 @endif
                             </td>
+                            <td class="text-center font-mono text-xs text-[#61706B]">{{ $category->sort_order }}</td>
                             <td class="text-center">
                                 <x-nino.status-badge :tone="$category->is_active ? 'success' : 'neutral'" size="sm">{{ $category->is_active ? 'Active' : 'Inactive' }}</x-nino.status-badge>
+                                @if($category->meta_title || $category->meta_description || $category->canonical_url || $category->og_title || $category->og_description || $category->og_image || $category->noindex)
+                                    <div class="mt-2">
+                                        <span class="inline-flex items-center rounded-md border border-[rgba(36,88,72,0.12)] bg-[#EAF3EE] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#245848]">
+                                            SEO Ready
+                                        </span>
+                                        @if($category->noindex)
+                                            <span class="ml-1 inline-flex items-center rounded-md border border-[rgba(196,81,67,0.14)] bg-[#FCF0ED] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#C45143]">
+                                                Noindex
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
                             </td>
                             <td class="text-right">
                                 <div class="table-actions">
@@ -99,7 +118,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="datatable-empty">
+                            <td colspan="6" class="datatable-empty">
                                 <x-nino.empty-state
                                     title="No categories found"
                                     description="Create categories to structure product discovery and merchandising."

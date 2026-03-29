@@ -5,6 +5,7 @@ namespace App\Modules\Notifications\Jobs;
 use App\Modules\Notifications\Enums\NotificationStatus;
 use App\Modules\Notifications\Models\NotificationLog;
 use App\Modules\Notifications\Services\NotificationDispatcher;
+use App\Modules\Notifications\Services\NotificationSettingsService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,11 +32,12 @@ class SendNotificationJob implements ShouldQueue
         private int $logId
     ) {
         $this->afterCommit();
-        $this->onQueue(config('performance.queues.notifications', 'notifications'));
+        $this->onQueue(app(NotificationSettingsService::class)->queueName());
     }
 
     public function handle(): void
     {
+        $notificationSettings = app(NotificationSettingsService::class);
         $log = NotificationLog::find($this->logId);
 
         if (!$log) {
@@ -53,7 +55,10 @@ class SendNotificationJob implements ShouldQueue
 
         // Check channel config
         if (!$driver->isConfigured()) {
-            $log->markFailed("Channel {$log->channel->value} is not configured.");
+            $log->markFailed(
+                "Channel {$log->channel->value} is not configured.",
+                $notificationSettings->retryDelayMinutesForAttempt($log->attempts),
+            );
             Log::warning("[Notifications] Channel not configured", [
                 'channel' => $log->channel->value,
                 'log_id' => $log->id,
@@ -75,11 +80,12 @@ class SendNotificationJob implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
-            $log->markFailed($e->getMessage());
+            $retryDelayMinutes = $notificationSettings->retryDelayMinutesForAttempt($log->attempts);
+            $log->markFailed($e->getMessage(), $retryDelayMinutes);
 
             // If retryable, schedule re-dispatch
             if ($log->canRetry()) {
-                $delay = now()->addMinutes(pow(2, $log->attempts)); // 2, 4, 8 min
+                $delay = now()->addMinutes($retryDelayMinutes);
                 self::dispatch($log->id)->delay($delay);
             }
         }

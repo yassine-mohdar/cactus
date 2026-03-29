@@ -60,6 +60,52 @@
             </div>
         </x-nino.detail-section>
 
+        <x-nino.detail-section title="Customer Order Summary" subtitle="Recent order context for this customer across the support journey.">
+            <div class="detail-meta-grid">
+                <div>
+                    <p class="detail-kicker">Total Orders</p>
+                    <p class="detail-value-mono">{{ $customerOrderSummary['total_orders'] }}</p>
+                </div>
+                <div>
+                    <p class="detail-kicker">Last Order</p>
+                    <p class="detail-value">{{ $customerOrderSummary['last_order_at']?->format('M d, Y H:i') ?? 'First order' }}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="detail-kicker">Recent Statuses</p>
+                    @if(collect($customerOrderSummary['recent_status_counts'])->isNotEmpty())
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @foreach($customerOrderSummary['recent_status_counts'] as $statusSummary)
+                                <x-nino.status-badge tone="neutral">
+                                    {{ $statusSummary['label'] }} · {{ $statusSummary['count'] }}
+                                </x-nino.status-badge>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="detail-value text-sm">No prior customer order history yet.</p>
+                    @endif
+                </div>
+            </div>
+
+            @if($recentCustomerOrders->isNotEmpty())
+                <div class="mt-5 space-y-3 border-t border-[#E3DDD2] pt-5">
+                    @foreach($recentCustomerOrders as $recentOrder)
+                        <div class="flex items-center justify-between gap-3 rounded-2xl border border-[#E3DDD2] bg-[#FCFBF8] px-4 py-3">
+                            <div class="min-w-0 flex-1">
+                                <p class="detail-value-mono">{{ $recentOrder->reference_number }}</p>
+                                <p class="mt-1 text-xs text-[#7A8681]">{{ $recentOrder->created_at->format('M d, Y H:i') }}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <x-nino.status-badge tone="neutral">{{ $recentOrder->status?->label() ?? 'Unknown' }}</x-nino.status-badge>
+                                <span class="font-mono text-sm font-semibold text-[#1E2B27]">
+                                    {{ number_format((float) $recentOrder->grand_total, 2) }} {{ $recentOrder->currency ?? 'MAD' }}
+                                </span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </x-nino.detail-section>
+
         <x-nino.detail-section title="Payment History" subtitle="Transactions related to this order." noPadding>
             @if($transactions->count())
                 <div class="queue-list">

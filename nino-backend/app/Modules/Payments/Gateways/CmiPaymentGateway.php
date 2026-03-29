@@ -10,6 +10,7 @@ use App\Modules\Payments\Models\GatewaySetting;
 use App\Modules\Payments\Models\PaymentTransaction;
 use App\Modules\Payments\Services\PaymentLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
@@ -47,6 +48,11 @@ class CmiPaymentGateway implements PaymentGatewayInterface
         $this->logger = new PaymentLogger();
     }
 
+    public function gatewayId(): string
+    {
+        return self::GATEWAY_ID;
+    }
+
     /**
      * Build the signed form data and return the redirect URL to CMI's hosted page.
      */
@@ -62,6 +68,7 @@ class CmiPaymentGateway implements PaymentGatewayInterface
         $storeId = $setting->getCredential('store_id');
         $clientId = $setting->getCredential('client_id');
         $hashKey = $setting->getCredential('hash_key');
+        $terminalId = $setting->getCredential('terminal_id');
 
         if (!$storeId || !$clientId || !$hashKey) {
             $this->logger->logFailure(self::GATEWAY_ID, 'Missing required CMI credentials (store_id, client_id, or hash_key).', 'MISSING_CREDENTIALS', $order->id);
@@ -93,6 +100,10 @@ class CmiPaymentGateway implements PaymentGatewayInterface
             'BillToName' => $order->customer ? $order->customer->full_name : 'Guest',
             'email' => $order->customer?->email ?? '',
         ];
+
+        if ($terminalId) {
+            $params['terminalid'] = $terminalId;
+        }
 
         // Generate HMAC hash (CMI uses pipe-delimited concatenation of sorted values)
         $params['hash'] = $this->generateHash($params, $hashKey, $storeId);
@@ -147,14 +158,14 @@ class CmiPaymentGateway implements PaymentGatewayInterface
         $mdStatus = $responseData['mdStatus'] ?? null;
 
         // Find the transaction
-        $transaction = PaymentTransaction::where('gateway_reference', $oid)
-            ->where('gateway', self::GATEWAY_ID)
-            ->first();
+        $transaction = $this->findTransactionByReference($oid);
 
         $statusBefore = $transaction?->status?->value;
 
         // Verify the response hash to prevent tampering
-        if (!$this->verifyResponseHash($responseData, $hashKey, $storeId, $responseHash)) {
+        $signedResponseData = $this->filterSignedResponseData($responseData);
+
+        if (!$this->verifyResponseHash($signedResponseData, $hashKey, $storeId, $responseHash)) {
             $this->logger->logCallback(
                 self::GATEWAY_ID, $request, $responseData,
                 isSuccessful: false,
@@ -175,7 +186,7 @@ class CmiPaymentGateway implements PaymentGatewayInterface
                 ]);
             }
 
-            return PaymentResponse::failure('Payment verification failed. The response signature is invalid.', $responseData);
+            return PaymentResponse::failure('Payment verification failed. The response signature is invalid.', $signedResponseData);
         }
 
         // Check if 3D Secure and transaction were successful
@@ -204,7 +215,7 @@ class CmiPaymentGateway implements PaymentGatewayInterface
                 statusAfter: PaymentStatus::CAPTURED->value,
             );
 
-            return PaymentResponse::success($oid, $responseData);
+            return PaymentResponse::success($oid, $signedResponseData);
         }
 
         // Payment was declined or 3D auth failed
@@ -230,7 +241,7 @@ class CmiPaymentGateway implements PaymentGatewayInterface
             statusAfter: PaymentStatus::FAILED->value,
         );
 
-        return PaymentResponse::failure($errorMsg, $responseData);
+        return PaymentResponse::failure($errorMsg, $signedResponseData);
     }
 
     /**
@@ -250,12 +261,12 @@ class CmiPaymentGateway implements PaymentGatewayInterface
         $oid = $responseData['oid'] ?? null;
         $responseHash = $responseData['HASH'] ?? $responseData['hash'] ?? null;
 
-        $transaction = PaymentTransaction::where('gateway_reference', $oid)
-            ->where('gateway', self::GATEWAY_ID)
-            ->first();
+        $transaction = $this->findTransactionByReference($oid);
 
         // Verify hash
-        if (!$this->verifyResponseHash($responseData, $hashKey, $storeId, $responseHash)) {
+        $signedResponseData = $this->filterSignedResponseData($responseData);
+
+        if (!$this->verifyResponseHash($signedResponseData, $hashKey, $storeId, $responseHash)) {
             $this->logger->logWebhook(
                 self::GATEWAY_ID, $request, $responseData,
                 isSuccessful: false,
@@ -266,7 +277,7 @@ class CmiPaymentGateway implements PaymentGatewayInterface
                 statusBefore: $transaction?->status?->value,
                 statusAfter: $transaction?->status?->value,
             );
-            return PaymentResponse::failure('Webhook hash verification failed.');
+            return PaymentResponse::failure('Webhook hash verification failed.', $signedResponseData);
         }
 
         $procReturnCode = $responseData['ProcReturnCode'] ?? null;
@@ -279,7 +290,7 @@ class CmiPaymentGateway implements PaymentGatewayInterface
             if ($transaction->status !== PaymentStatus::CAPTURED) {
                 $transaction->update([
                     'status' => PaymentStatus::CAPTURED,
-                    'payload' => array_merge($transaction->payload ?? [], $responseData),
+                    'payload' => array_merge($transaction->payload ?? [], $signedResponseData),
                 ]);
 
                 $this->logger->logStatusChange(
@@ -303,7 +314,7 @@ class CmiPaymentGateway implements PaymentGatewayInterface
                 statusAfter: PaymentStatus::CAPTURED->value,
             );
 
-            return PaymentResponse::success($oid, $responseData);
+            return PaymentResponse::success($oid, $signedResponseData);
         }
 
         $this->logger->logWebhook(
@@ -315,7 +326,7 @@ class CmiPaymentGateway implements PaymentGatewayInterface
             errorMessage: $responseData['ErrMsg'] ?? 'Webhook reported failure.',
         );
 
-        return PaymentResponse::failure($responseData['ErrMsg'] ?? 'Webhook reported payment failure.');
+        return PaymentResponse::failure($responseData['ErrMsg'] ?? 'Webhook reported payment failure.', $signedResponseData);
     }
 
     /**
@@ -373,5 +384,57 @@ class CmiPaymentGateway implements PaymentGatewayInterface
         );
 
         return hash_equals($computed, $receivedHash);
+    }
+
+    /**
+     * Strip local routing/query keys that are not part of CMI's signed payload.
+     *
+     * @param array<string, mixed> $responseData
+     * @return array<string, mixed>
+     */
+    private function filterSignedResponseData(array $responseData): array
+    {
+        return collect($responseData)
+            ->except([
+                'status',
+                '_token',
+                '_method',
+                'ref',
+            ])
+            ->toArray();
+    }
+
+    private function findTransactionByReference(?string $reference): ?PaymentTransaction
+    {
+        if (! $reference) {
+            return null;
+        }
+
+        return PaymentTransaction::query()
+            ->where('gateway', self::GATEWAY_ID)
+            ->where(function ($query) use ($reference) {
+                if (Schema::hasColumn('payment_transactions', 'gateway_reference')) {
+                    $query->orWhere('gateway_reference', $reference);
+                }
+
+                if (Schema::hasColumn('payment_transactions', 'gateway_transaction_id')) {
+                    $query->orWhere('gateway_transaction_id', $reference);
+                }
+
+                if (Schema::hasColumn('payment_transactions', 'reference')) {
+                    $query->orWhere('reference', $reference);
+                }
+
+                if (Schema::hasColumn('payment_transactions', 'payload')) {
+                    $query->orWhereJsonContains('payload->cmi_oid', $reference);
+                }
+
+                if (Schema::hasColumn('payment_transactions', 'metadata')) {
+                    $query->orWhereJsonContains('metadata->cmi_oid', $reference)
+                        ->orWhereJsonContains('metadata->gateway_reference', $reference);
+                }
+            })
+            ->latest('id')
+            ->first();
     }
 }

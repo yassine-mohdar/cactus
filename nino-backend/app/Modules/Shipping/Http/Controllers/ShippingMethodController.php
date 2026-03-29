@@ -6,11 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Modules\Shipping\Enums\ShipmentStatus;
 use App\Modules\Shipping\Models\Shipment;
 use App\Modules\Shipping\Models\ShippingMethod;
+use App\Modules\Shipping\Services\ShippingSettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ShippingMethodController extends Controller
 {
+    public function __construct(
+        private readonly ShippingSettingsService $shippingSettings,
+    ) {}
+
     public function index()
     {
         $methods = ShippingMethod::withCount('shipments')->orderBy('sort_order')->get();
@@ -57,6 +62,8 @@ class ShippingMethodController extends Controller
         $validated['slug'] = Str::slug($validated['name']);
         $validated['is_enabled'] = $request->has('is_enabled');
         $validated['sort_order'] = $validated['sort_order'] ?? 0;
+        $validated['carrier'] = trim((string) ($validated['carrier'] ?? '')) ?: $this->shippingSettings->defaultCarrierName();
+        $validated['estimated_days'] = trim((string) ($validated['estimated_days'] ?? '')) ?: $this->shippingSettings->defaultEstimatedDays();
 
         // Ensure slug uniqueness
         $baseSlug = $validated['slug'];
@@ -91,6 +98,8 @@ class ShippingMethodController extends Controller
         ]);
 
         $validated['is_enabled'] = $request->has('is_enabled');
+        $validated['carrier'] = trim((string) ($validated['carrier'] ?? '')) ?: $this->shippingSettings->defaultCarrierName();
+        $validated['estimated_days'] = trim((string) ($validated['estimated_days'] ?? '')) ?: $this->shippingSettings->defaultEstimatedDays();
         $method->update($validated);
 
         return redirect()->route('admin.shipping.methods.index')

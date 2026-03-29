@@ -562,39 +562,39 @@ Build a robust settings center that controls platform behavior, branding, integr
 ### 3.5 Security settings
 - [x] `P3-SECURITY-01` Add force staff/admin 2FA toggle
 - [x] `P3-SECURITY-02` Add password policy settings foundation
-- [ ] `P3-SECURITY-03` Add session timeout foundation
-- [ ] `P3-SECURITY-04` Add security alert settings foundation
+- [x] `P3-SECURITY-03` Add session timeout foundation
+- [x] `P3-SECURITY-04` Add security alert settings foundation
 
 ### 3.6 Finance settings
-- [ ] `P3-FINANCE-01` Add base currency settings
-- [ ] `P3-FINANCE-02` Add multi-currency foundation settings
-- [ ] `P3-FINANCE-03` Add conversion adjustment rules
-- [ ] `P3-FINANCE-04` Add financial defaults settings
+- [x] `P3-FINANCE-01` Add base currency settings
+- [x] `P3-FINANCE-02` Add multi-currency foundation settings
+- [x] `P3-FINANCE-03` Add conversion adjustment rules
+- [x] `P3-FINANCE-04` Add financial defaults settings
 
 ### 3.7 Payment method settings
-- [ ] `P3-PAYSET-01` Add CMI config settings
-- [ ] `P3-PAYSET-02` Add Payzone config settings
-- [ ] `P3-PAYSET-03` Add Stripe config settings
-- [ ] `P3-PAYSET-04` Add offline payment methods CRUD settings
-- [ ] `P3-PAYSET-05` Add bank transfer default setup
-- [ ] `P3-PAYSET-06` Add test/live modes
-- [ ] `P3-PAYSET-07` Add gateway enable/disable controls
+- [x] `P3-PAYSET-01` Add CMI config settings
+- [x] `P3-PAYSET-02` Add Payzone config settings
+- [x] `P3-PAYSET-03` Add Stripe config settings
+- [x] `P3-PAYSET-04` Add offline payment methods CRUD settings
+- [x] `P3-PAYSET-05` Add bank transfer default setup
+- [x] `P3-PAYSET-06` Add test/live modes
+- [x] `P3-PAYSET-07` Add gateway enable/disable controls
 
 ### 3.8 Notifications settings
-- [ ] `P3-NOTIFY-01` Add channel enable/disable settings
-- [ ] `P3-NOTIFY-02` Add sender name settings
-- [ ] `P3-NOTIFY-03` Add basic template global settings
-- [ ] `P3-NOTIFY-04` Add retry/queue behavior foundation
+- [x] `P3-NOTIFY-01` Add channel enable/disable settings
+- [x] `P3-NOTIFY-02` Add sender name settings
+- [x] `P3-NOTIFY-03` Add basic template global settings
+- [x] `P3-NOTIFY-04` Add retry/queue behavior foundation
 
 ### 3.9 Shipping settings
-- [ ] `P3-SHIPSET-01` Add shipping defaults
-- [ ] `P3-SHIPSET-02` Add carrier/method management foundation
-- [ ] `P3-SHIPSET-03` Add tracking-related defaults
+- [x] `P3-SHIPSET-01` Add shipping defaults
+- [x] `P3-SHIPSET-02` Add carrier/method management foundation
+- [x] `P3-SHIPSET-03` Add tracking-related defaults
 
 ### 3.10 System / maintenance settings
-- [ ] `P3-SYSTEM-01` Add maintenance mode
-- [ ] `P3-SYSTEM-02` Add media/storage settings foundation
-- [ ] `P3-SYSTEM-03` Add feature flags foundation
+- [x] `P3-SYSTEM-01` Add maintenance mode
+- [x] `P3-SYSTEM-02` Add media/storage settings foundation
+- [x] `P3-SYSTEM-03` Add feature flags foundation
 
 ## Acceptance Criteria
 - Settings are grouped, validated, cached, and secure.
@@ -625,74 +625,74 @@ Build the product catalog foundation with strong admin UX and SEO readiness.
 ## Tasks
 
 ### 4.1 Category management
-- [ ] `P4-CATEGORY-01` Define nested category model
-- [ ] `P4-CATEGORY-02` Add parent/child support
-- [ ] `P4-CATEGORY-03` Add category create/edit/delete rules
-- [ ] `P4-CATEGORY-04` Add category ordering
-- [ ] `P4-CATEGORY-05` Add slug management
-- [ ] `P4-CATEGORY-06` Add category image
-- [ ] `P4-CATEGORY-07` Add category description
-- [ ] `P4-CATEGORY-08` Add active/inactive status
-- [ ] `P4-CATEGORY-09` Add SEO fields
+- [x] `P4-CATEGORY-01` Define nested category model
+- [x] `P4-CATEGORY-02` Add parent/child support
+- [x] `P4-CATEGORY-03` Add category create/edit/delete rules
+- [x] `P4-CATEGORY-04` Add category ordering
+- [x] `P4-CATEGORY-05` Add slug management
+- [x] `P4-CATEGORY-06` Add category image
+- [x] `P4-CATEGORY-07` Add category description
+- [x] `P4-CATEGORY-08` Add active/inactive status
+- [x] `P4-CATEGORY-09` Add SEO fields
 
 ### 4.2 Product model design
-- [ ] `P4-PRODUCT-01` Add simple product support
-- [ ] `P4-PRODUCT-02` Add variable product support
-- [ ] `P4-PRODUCT-03` Add SKU
-- [ ] `P4-PRODUCT-04` Add slug
-- [ ] `P4-PRODUCT-05` Add statuses: draft/published/archived
-- [ ] `P4-PRODUCT-06` Add product type handling
-- [ ] `P4-PRODUCT-07` Add category relationships
-- [ ] `P4-PRODUCT-08` Add tags
-- [ ] `P4-PRODUCT-09` Add dimensions/weight
-- [ ] `P4-PRODUCT-10` Add featured flag
+- [x] `P4-PRODUCT-01` Add simple product support
+- [x] `P4-PRODUCT-02` Add variable product support
+- [x] `P4-PRODUCT-03` Add SKU
+- [x] `P4-PRODUCT-04` Add slug
+- [x] `P4-PRODUCT-05` Add statuses: draft/published/archived
+- [x] `P4-PRODUCT-06` Add product type handling
+- [x] `P4-PRODUCT-07` Add category relationships
+- [x] `P4-PRODUCT-08` Add tags
+- [x] `P4-PRODUCT-09` Add dimensions/weight
+- [x] `P4-PRODUCT-10` Add featured flag
 
 ### 4.3 Product pricing fields
-- [ ] `P4-PRICE-01` Add price
-- [ ] `P4-PRICE-02` Add sale price
-- [ ] `P4-PRICE-03` Add internal cost if included
-- [ ] `P4-PRICE-04` Add currency-ready structure
+- [x] `P4-PRICE-01` Add price
+- [x] `P4-PRICE-02` Add sale price
+- [x] `P4-PRICE-03` Add internal cost if included
+- [x] `P4-PRICE-04` Add currency-ready structure
 
 ### 4.4 Product description fields
-- [ ] `P4-DESC-01` Add short description
-- [ ] `P4-DESC-02` Add full description
-- [ ] `P4-DESC-03` Add rich content support if needed
+- [x] `P4-DESC-01` Add short description
+- [x] `P4-DESC-02` Add full description
+- [x] `P4-DESC-03` Add rich content support if needed
 
 ### 4.5 Product media
-- [ ] `P4-MEDIA-01` Add featured image
-- [ ] `P4-MEDIA-02` Add gallery
-- [ ] `P4-MEDIA-03` Add media ordering
-- [ ] `P4-MEDIA-04` Add alt text foundation
-- [ ] `P4-MEDIA-05` Add media storage abstraction
-- [ ] `P4-MEDIA-06` Add image processing queue if needed
+- [x] `P4-MEDIA-01` Add featured image
+- [x] `P4-MEDIA-02` Add gallery
+- [x] `P4-MEDIA-03` Add media ordering
+- [x] `P4-MEDIA-04` Add alt text foundation
+- [x] `P4-MEDIA-05` Add media storage abstraction
+- [x] `P4-MEDIA-06` Add image processing queue if needed
 
 ### 4.6 Variable products
-- [ ] `P4-VARIANT-01` Add option/attribute foundation
-- [ ] `P4-VARIANT-02` Add variant SKU
-- [ ] `P4-VARIANT-03` Add variant price
-- [ ] `P4-VARIANT-04` Add variant stock
-- [ ] `P4-VARIANT-05` Add variant media support if needed
+- [x] `P4-VARIANT-01` Add option/attribute foundation
+- [x] `P4-VARIANT-02` Add variant SKU
+- [x] `P4-VARIANT-03` Add variant price
+- [x] `P4-VARIANT-04` Add variant stock
+- [x] `P4-VARIANT-05` Add variant media support 
 
 ### 4.7 Merchandising fields
-- [ ] `P4-MERCH-01` Add related products
-- [ ] `P4-MERCH-02` Add upsells
-- [ ] `P4-MERCH-03` Add cross-sells
-- [ ] `P4-MERCH-04` Add product badges foundation
+- [x] `P4-MERCH-01` Add related products
+- [x] `P4-MERCH-02` Add upsells
+- [x] `P4-MERCH-03` Add cross-sells
+- [x] `P4-MERCH-04` Add product badges foundation
 
 ### 4.8 Catalog SEO
-- [ ] `P4-SEO-01` Add product meta title
-- [ ] `P4-SEO-02` Add product meta description
-- [ ] `P4-SEO-03` Add canonical foundation
-- [ ] `P4-SEO-04` Add OG fields if included
-- [ ] `P4-SEO-05` Add noindex foundation if included
-- [ ] `P4-SEO-06` Add category SEO
+- [x] `P4-SEO-01` Add product meta title
+- [x] `P4-SEO-02` Add product meta description
+- [x] `P4-SEO-03` Add canonical foundation
+- [x] `P4-SEO-04` Add OG fields if included
+- [x] `P4-SEO-05` Add noindex foundation if included
+- [x] `P4-SEO-06` Add category SEO
 
 ### 4.9 Catalog admin UX
-- [ ] `P4-ADMIN-01` Build table with search/filter
-- [ ] `P4-ADMIN-02` Add filters for status/category/type/stock
-- [ ] `P4-ADMIN-03` Add bulk actions
-- [ ] `P4-ADMIN-04` Add draft/published workflows
-- [ ] `P4-ADMIN-05` Add audit log visibility for edits
+- [x] `P4-ADMIN-01` Build table with search/filter
+- [x] `P4-ADMIN-02` Add filters for status/category/type/stock
+- [x] `P4-ADMIN-03` Add bulk actions
+- [x] `P4-ADMIN-04` Add draft/published workflows
+- [x] `P4-ADMIN-05` Add audit log visibility for edits
 
 ## Acceptance Criteria
 - Products and categories are easy to manage.
@@ -724,44 +724,44 @@ Build inventory features stronger than basic ecommerce stock handling, with bran
 ## Tasks
 
 ### 5.1 Inventory data model
-- [ ] `P5-MODEL-01` Define stock item model or equivalent
-- [ ] `P5-MODEL-02` Add product-level stock
-- [ ] `P5-MODEL-03` Add variant-level stock
-- [ ] `P5-MODEL-04` Add branch-awareness
-- [ ] `P5-MODEL-05` Add reservation/release-ready fields
+- [x] `P5-MODEL-01` Define stock item model or equivalent
+- [x] `P5-MODEL-02` Add product-level stock
+- [x] `P5-MODEL-03` Add variant-level stock
+- [x] `P5-MODEL-04` Add branch-awareness
+- [x] `P5-MODEL-05` Add reservation/release-ready fields
 
 ### 5.2 Stock adjustment workflows
-- [ ] `P5-ADJUST-01` Build manual adjustment UI
-- [ ] `P5-ADJUST-02` Add adjustment reasons
-- [ ] `P5-ADJUST-03` Support positive/negative adjustments
-- [ ] `P5-ADJUST-04` Add staff attribution
-- [ ] `P5-ADJUST-05` Add audit logs
+- [x] `P5-ADJUST-01` Build manual adjustment UI
+- [x] `P5-ADJUST-02` Add adjustment reasons
+- [x] `P5-ADJUST-03` Support positive/negative adjustments
+- [x] `P5-ADJUST-04` Add staff attribution
+- [x] `P5-ADJUST-05` Add audit logs
 
 ### 5.3 Low stock management
-- [ ] `P5-LOWSTOCK-01` Add threshold fields
-- [ ] `P5-LOWSTOCK-02` Add low stock alert list
-- [ ] `P5-LOWSTOCK-03` Add dashboard widgets
+- [x] `P5-LOWSTOCK-01` Add threshold fields
+- [x] `P5-LOWSTOCK-02` Add low stock alert list
+- [x] `P5-LOWSTOCK-03` Add dashboard widgets
 
 ### 5.4 Damaged stock
-- [ ] `P5-DAMAGE-01` Build damaged stock workflow
-- [ ] `P5-DAMAGE-02` Add separate reason logging
-- [ ] `P5-DAMAGE-03` Add reporting visibility
+- [x] `P5-DAMAGE-01` Build damaged stock workflow
+- [x] `P5-DAMAGE-02` Add separate reason logging
+- [x] `P5-DAMAGE-03` Add reporting visibility
 
 ### 5.5 Reservation and release design
-- [ ] `P5-RESERVE-01` Define reserve stock on checkout/payment stage rules
-- [ ] `P5-RESERVE-02` Implement release reserved stock on cancellation/failure/timeout
-- [ ] `P5-RESERVE-03` Ensure future readiness even if simple first pass
+- [x] `P5-RESERVE-01` Define reserve stock on checkout/payment stage rules
+- [x] `P5-RESERVE-02` Implement release reserved stock on cancellation/failure/timeout
+- [x] `P5-RESERVE-03` Ensure future readiness even if simple first pass
 
 ### 5.6 Branch-aware architecture
-- [ ] `P5-BRANCH-01` Add branch stock visibility
-- [ ] `P5-BRANCH-02` Add branch stock update rules
-- [ ] `P5-BRANCH-03` Add transfer-ready schema and services
+- [x] `P5-BRANCH-01` Add branch stock visibility
+- [x] `P5-BRANCH-02` Add branch stock update rules
+- [x] `P5-BRANCH-03` Add transfer-ready schema and services
 
 ### 5.7 Inventory reports foundation
-- [ ] `P5-REPORT-01` Add current stock report
-- [ ] `P5-REPORT-02` Add adjustment history report
-- [ ] `P5-REPORT-03` Add low stock report
-- [ ] `P5-REPORT-04` Add damaged stock report
+- [x] `P5-REPORT-01` Add current stock report
+- [x] `P5-REPORT-02` Add adjustment history report
+- [x] `P5-REPORT-03` Add low stock report
+- [x] `P5-REPORT-04` Add damaged stock report
 
 ## Acceptance Criteria
 - Stock changes are auditable.
@@ -792,44 +792,44 @@ Build the customer identity and account layer used by checkout, orders, support,
 ## Tasks
 
 ### 6.1 Customer model refinement
-- [ ] `P6-CUSTOMER-01` Add customer-specific fields
-- [ ] `P6-CUSTOMER-02` Add account states
-- [ ] `P6-CUSTOMER-03` Add marketing preference fields foundation if needed
+- [x] `P6-CUSTOMER-01` Add customer-specific fields
+- [x] `P6-CUSTOMER-02` Add account states
+- [x] `P6-CUSTOMER-03` Add marketing preference fields foundation 
 
 ### 6.2 Customer profile
-- [ ] `P6-PROFILE-01` Add profile picture
-- [ ] `P6-PROFILE-02` Add first name
-- [ ] `P6-PROFILE-03` Add last name
-- [ ] `P6-PROFILE-04` Add email
-- [ ] `P6-PROFILE-05` Add username
-- [ ] `P6-PROFILE-06` Add password change
+- [x] `P6-PROFILE-01` Add profile picture
+- [x] `P6-PROFILE-02` Add first name
+- [x] `P6-PROFILE-03` Add last name
+- [x] `P6-PROFILE-04` Add email
+- [x] `P6-PROFILE-05` Add username
+- [x] `P6-PROFILE-06` Add password change
 
 ### 6.3 Address book
-- [ ] `P6-ADDRESS-01` Add billing addresses
-- [ ] `P6-ADDRESS-02` Add shipping addresses
-- [ ] `P6-ADDRESS-03` Add add/edit/delete actions
-- [ ] `P6-ADDRESS-04` Add default/primary address
-- [ ] `P6-ADDRESS-05` Add validation rules
-- [ ] `P6-ADDRESS-06` Add country/city/state structure as needed
+- [x] `P6-ADDRESS-01` Add billing addresses
+- [x] `P6-ADDRESS-02` Add shipping addresses
+- [x] `P6-ADDRESS-03` Add add/edit/delete actions
+- [x] `P6-ADDRESS-04` Add default/primary address
+- [x] `P6-ADDRESS-05` Add validation rules
+- [x] `P6-ADDRESS-06` Add country/city/state structure as needed
 
 ### 6.4 Account area screens
-- [ ] `P6-ACCOUNT-01` Build account overview
-- [ ] `P6-ACCOUNT-02` Build order history
-- [ ] `P6-ACCOUNT-03` Build order details
-- [ ] `P6-ACCOUNT-04` Build tracking visibility
-- [ ] `P6-ACCOUNT-05` Build address management
-- [ ] `P6-ACCOUNT-06` Build profile edit
+- [x] `P6-ACCOUNT-01` Build account overview
+- [x] `P6-ACCOUNT-02` Build order history
+- [x] `P6-ACCOUNT-03` Build order details
+- [x] `P6-ACCOUNT-04` Build tracking visibility
+- [x] `P6-ACCOUNT-05` Build address management
+- [x] `P6-ACCOUNT-06` Build profile edit
 
 ### 6.5 Checkout-created accounts
-- [ ] `P6-CHECKOUT-01` Add auto account creation after checkout
-- [ ] `P6-CHECKOUT-02` Add password setup link or magic-link flow
-- [ ] `P6-CHECKOUT-03` Add welcome notification trigger
-- [ ] `P6-CHECKOUT-04` Ensure no plain password sending
+- [x] `P6-CHECKOUT-01` Add auto account creation after checkout
+- [x] `P6-CHECKOUT-02` Add password setup link or magic-link flow
+- [x] `P6-CHECKOUT-03` Add welcome notification trigger
+- [x] `P6-CHECKOUT-04` Ensure no plain password sending
 
 ### 6.6 Customer support timeline foundation
-- [ ] `P6-TIMELINE-01` Add customer order summary
-- [ ] `P6-TIMELINE-02` Add recent order statuses
-- [ ] `P6-TIMELINE-03` Add internal notes foundation
+- [x] `P6-TIMELINE-01` Add customer order summary
+- [x] `P6-TIMELINE-02` Add recent order statuses
+- [x] `P6-TIMELINE-03` Add internal notes foundation
 
 ## Acceptance Criteria
 - Customers can manage profile and addresses.
@@ -861,67 +861,67 @@ Implement the full commerce flow from cart through checkout to post-order states
 ## Tasks
 
 ### 7.1 Cart foundation
-- [ ] `P7-CART-01` Add add/remove/update items
-- [ ] `P7-CART-02` Add quantity management
-- [ ] `P7-CART-03` Add coupon apply/remove
-- [ ] `P7-CART-04` Add cart totals
-- [ ] `P7-CART-05` Add shipping estimate foundation
-- [ ] `P7-CART-06` Add free shipping progress foundation if included
-- [ ] `P7-CART-07` Add upsell/bundle suggestion foundation
+- [x] `P7-CART-01` Add add/remove/update items
+- [x] `P7-CART-02` Add quantity management
+- [x] `P7-CART-03` Add coupon apply/remove
+- [x] `P7-CART-04` Add cart totals
+- [x] `P7-CART-05` Add shipping estimate foundation
+- [x] `P7-CART-06` Add free shipping progress foundation if included
+- [x] `P7-CART-07` Add upsell/bundle suggestion foundation
 
 ### 7.2 Checkout form flow
-- [ ] `P7-CHECKOUT-01` Add guest checkout
-- [ ] `P7-CHECKOUT-02` Add logged-in checkout
-- [ ] `P7-CHECKOUT-03` Add billing address handling
-- [ ] `P7-CHECKOUT-04` Add shipping address handling
-- [ ] `P7-CHECKOUT-05` Add validation
-- [ ] `P7-CHECKOUT-06` Add address reuse
-- [ ] `P7-CHECKOUT-07` Add clear error states
+- [x] `P7-CHECKOUT-01` Add guest checkout
+- [x] `P7-CHECKOUT-02` Add logged-in checkout
+- [x] `P7-CHECKOUT-03` Add billing address handling
+- [x] `P7-CHECKOUT-04` Add shipping address handling
+- [x] `P7-CHECKOUT-05` Add validation
+- [x] `P7-CHECKOUT-06` Add address reuse
+- [x] `P7-CHECKOUT-07` Add clear error states
 
 ### 7.3 Order creation pipeline
-- [ ] `P7-ORDER-01` Add order snapshot creation
-- [ ] `P7-ORDER-02` Add line item snapshot
-- [ ] `P7-ORDER-03` Add address snapshot
-- [ ] `P7-ORDER-04` Add pricing/tax/discount/shipping summary
-- [ ] `P7-ORDER-05` Add internal order IDs/reference generation
+- [x] `P7-ORDER-01` Add order snapshot creation
+- [x] `P7-ORDER-02` Add line item snapshot
+- [x] `P7-ORDER-03` Add address snapshot
+- [x] `P7-ORDER-04` Add pricing/tax/discount/shipping summary
+- [x] `P7-ORDER-05` Add internal order IDs/reference generation
 
 ### 7.4 Account auto-creation on checkout
-- [ ] `P7-AUTOACC-01` Add secure account generation
-- [ ] `P7-AUTOACC-02` Add post-checkout access flow
-- [ ] `P7-AUTOACC-03` Add welcome communication trigger
+- [x] `P7-AUTOACC-01` Add secure account generation
+- [x] `P7-AUTOACC-02` Add post-checkout access flow
+- [x] `P7-AUTOACC-03` Add welcome communication trigger
 
 ### 7.5 Thank you page
-- [ ] `P7-THANKYOU-01` Build order success summary
-- [ ] `P7-THANKYOU-02` Add next steps
-- [ ] `P7-THANKYOU-03` Add tracking/order lookup access
+- [x] `P7-THANKYOU-01` Build order success summary
+- [x] `P7-THANKYOU-02` Add next steps
+- [x] `P7-THANKYOU-03` Add tracking/order lookup access
 
 ### 7.6 Payment error page
-- [ ] `P7-PAYERR-01` Build clear failure explanation
-- [ ] `P7-PAYERR-02` Add retry or recovery CTA
-- [ ] `P7-PAYERR-03` Add order/payment reference if needed
+- [x] `P7-PAYERR-01` Build clear failure explanation
+- [x] `P7-PAYERR-02` Add retry or recovery CTA
+- [x] `P7-PAYERR-03` Add order/payment reference if needed
 
 ### 7.7 Order statuses and lifecycle
-- [ ] `P7-STATUS-01` Add Pending
-- [ ] `P7-STATUS-02` Add Awaiting payment
-- [ ] `P7-STATUS-03` Add Paid
-- [ ] `P7-STATUS-04` Add Preparing
-- [ ] `P7-STATUS-05` Add Shipped
-- [ ] `P7-STATUS-06` Add Delivered
-- [ ] `P7-STATUS-07` Add Failed
-- [ ] `P7-STATUS-08` Add Cancelled
-- [ ] `P7-STATUS-09` Add Returned/refund-ready states foundation
+- [x] `P7-STATUS-01` Add Pending
+- [x] `P7-STATUS-02` Add Awaiting payment
+- [x] `P7-STATUS-03` Add Paid
+- [x] `P7-STATUS-04` Add Preparing
+- [x] `P7-STATUS-05` Add Shipped
+- [x] `P7-STATUS-06` Add Delivered
+- [x] `P7-STATUS-07` Add Failed
+- [x] `P7-STATUS-08` Add Cancelled
+- [x] `P7-STATUS-09` Add Returned/refund-ready states foundation
 
 ### 7.8 Order admin UX
-- [ ] `P7-ADMIN-01` Build orders table
-- [ ] `P7-ADMIN-02` Add search/filter
-- [ ] `P7-ADMIN-03` Add status filters
-- [ ] `P7-ADMIN-04` Add date filters
-- [ ] `P7-ADMIN-05` Add customer filter
-- [ ] `P7-ADMIN-06` Add payment/shipping filter
-- [ ] `P7-ADMIN-07` Build order detail page with timeline
-- [ ] `P7-ADMIN-08` Add internal notes
-- [ ] `P7-ADMIN-09` Add customer notes
-- [ ] `P7-ADMIN-10` Add audit visibility
+- [x] `P7-ADMIN-01` Build orders table
+- [x] `P7-ADMIN-02` Add search/filter
+- [x] `P7-ADMIN-03` Add status filters
+- [x] `P7-ADMIN-04` Add date filters
+- [x] `P7-ADMIN-05` Add customer filter
+- [x] `P7-ADMIN-06` Add payment/shipping filter
+- [x] `P7-ADMIN-07` Build order detail page with timeline
+- [x] `P7-ADMIN-08` Add internal notes
+- [x] `P7-ADMIN-09` Add customer notes
+- [x] `P7-ADMIN-10` Add audit visibility
 
 ## Acceptance Criteria
 - Checkout works for guest and authenticated users.
@@ -952,52 +952,52 @@ Implement a clean, extensible payments architecture with Moroccan and global pay
 ## Tasks
 
 ### 8.1 Payment domain foundation
-- [ ] `P8-DOMAIN-01` Define payment transaction model
-- [ ] `P8-DOMAIN-02` Define payment status model/fields
-- [ ] `P8-DOMAIN-03` Map orders and transactions
-- [ ] `P8-DOMAIN-04` Define gateway abstraction interface
+- [x] `P8-DOMAIN-01` Define payment transaction model
+- [x] `P8-DOMAIN-02` Define payment status model/fields
+- [x] `P8-DOMAIN-03` Map orders and transactions
+- [x] `P8-DOMAIN-04` Define gateway abstraction interface
 
 ### 8.2 Gateway adapter architecture
-- [ ] `P8-ADAPTER-01` Define provider contract/interface
-- [ ] `P8-ADAPTER-02` Define request/response normalization
-- [ ] `P8-ADAPTER-03` Define error handling conventions
-- [ ] `P8-ADAPTER-04` Build webhook/callback handling foundation
+- [x] `P8-ADAPTER-01` Define provider contract/interface
+- [x] `P8-ADAPTER-02` Define request/response normalization
+- [x] `P8-ADAPTER-03` Define error handling conventions
+- [x] `P8-ADAPTER-04` Build webhook/callback handling foundation
 
 ### 8.3 CMI Morocco integration foundation
-- [ ] `P8-CMI-01` Add settings fields
-- [ ] `P8-CMI-02` Add initiation flow
-- [ ] `P8-CMI-03` Add response handling
-- [ ] `P8-CMI-04` Add logging
+- [x] `P8-CMI-01` Add settings fields
+- [x] `P8-CMI-02` Add initiation flow
+- [x] `P8-CMI-03` Add response handling
+- [x] `P8-CMI-04` Add logging
 
 ### 8.4 Payzone Morocco integration foundation
-- [ ] `P8-PAYZONE-01` Add settings fields
-- [ ] `P8-PAYZONE-02` Add initiation flow
-- [ ] `P8-PAYZONE-03` Add response handling
-- [ ] `P8-PAYZONE-04` Add logging
+- [x] `P8-PAYZONE-01` Add settings fields
+- [x] `P8-PAYZONE-02` Add initiation flow
+- [x] `P8-PAYZONE-03` Add response handling
+- [x] `P8-PAYZONE-04` Add logging
 
 ### 8.5 Stripe integration foundation
-- [ ] `P8-STRIPE-01` Add settings fields
-- [ ] `P8-STRIPE-02` Add initiation flow
-- [ ] `P8-STRIPE-03` Add response handling
-- [ ] `P8-STRIPE-04` Add logging
+- [x] `P8-STRIPE-01` Add settings fields
+- [x] `P8-STRIPE-02` Add initiation flow
+- [x] `P8-STRIPE-03` Add response handling
+- [x] `P8-STRIPE-04` Add logging
 
 ### 8.6 Offline payment methods
-- [ ] `P8-OFFLINE-01` Build offline method CRUD
-- [ ] `P8-OFFLINE-02` Add bank transfer default
-- [ ] `P8-OFFLINE-03` Add admin instructions
-- [ ] `P8-OFFLINE-04` Add checkout rendering
-- [ ] `P8-OFFLINE-05` Add verification workflow foundation
+- [x] `P8-OFFLINE-01` Build offline method CRUD
+- [x] `P8-OFFLINE-02` Add bank transfer default
+- [x] `P8-OFFLINE-03` Add admin instructions
+- [x] `P8-OFFLINE-04` Add checkout rendering
+- [x] `P8-OFFLINE-05` Add verification workflow foundation
 
 ### 8.7 Gateway settings admin
-- [ ] `P8-GATEWAY-01` Add test/live modes
-- [ ] `P8-GATEWAY-02` Add enable/disable controls
-- [ ] `P8-GATEWAY-03` Add secret storage
-- [ ] `P8-GATEWAY-04` Add validation
+- [x] `P8-GATEWAY-01` Add test/live modes
+- [x] `P8-GATEWAY-02` Add enable/disable controls
+- [x] `P8-GATEWAY-03` Add secret storage
+- [x] `P8-GATEWAY-04` Add validation
 
 ### 8.8 Payment logs and audit
-- [ ] `P8-LOGS-01` Add request/response logging with safe redaction
-- [ ] `P8-LOGS-02` Add failure logs
-- [ ] `P8-LOGS-03` Add status change audit
+- [x] `P8-LOGS-01` Add request/response logging with safe redaction
+- [x] `P8-LOGS-02` Add failure logs
+- [x] `P8-LOGS-03` Add status change audit
 
 ## Acceptance Criteria
 - Payment methods are modular.

@@ -11,6 +11,7 @@ use App\Modules\IAM\Http\Controllers\StaffAccessLinkController;
 use App\Modules\IAM\Http\Controllers\StaffAccessSetupController;
 use App\Modules\IAM\Http\Controllers\StaffSessionController;
 use App\Modules\IAM\Http\Controllers\TwoFactorSetupController;
+use App\Modules\Checkout\Http\Controllers\CheckoutResultController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +32,10 @@ Route::middleware('guest')->group(function () {
         ->name('staff.access.setup.store');
 });
 
+Route::get('/checkout/success/{reference}', [CheckoutResultController::class, 'success'])
+    ->middleware('signed')
+    ->name('checkout.success.signed');
+
 // Customer auth surface
 Route::prefix('account')->name('customer.')->group(function () {
     Route::get('login', [CustomerAuthController::class, 'showLogin'])->name('login');
@@ -49,6 +54,15 @@ Route::prefix('account')->name('customer.')->group(function () {
 
     Route::middleware('customer.only')->group(function () {
         Route::get('/', [CustomerAuthController::class, 'home'])->name('account.home');
+        Route::get('orders', [\App\Modules\Customers\Http\Controllers\CustomerOrderController::class, 'index'])->name('account.orders.index');
+        Route::get('orders/{order}', [\App\Modules\Customers\Http\Controllers\CustomerOrderController::class, 'show'])->name('account.orders.show');
+        Route::get('profile', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'edit'])->name('account.profile.edit');
+        Route::put('profile', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'updateProfile'])->name('account.profile.update');
+        Route::put('password', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'updatePassword'])->name('account.password.update');
+        Route::get('addresses', [\App\Modules\Customers\Http\Controllers\AddressController::class, 'manage'])->name('account.addresses.index');
+        Route::post('addresses', [\App\Modules\Customers\Http\Controllers\AddressController::class, 'store'])->name('account.addresses.store');
+        Route::put('addresses/{address}', [\App\Modules\Customers\Http\Controllers\AddressController::class, 'update'])->name('account.addresses.update');
+        Route::delete('addresses/{address}', [\App\Modules\Customers\Http\Controllers\AddressController::class, 'destroy'])->name('account.addresses.destroy');
         Route::post('logout', [CustomerAuthController::class, 'logout'])->name('logout');
     });
 });
@@ -97,6 +111,8 @@ Route::middleware('auth')->group(function () {
         // Catalog
         Route::prefix('catalog')->name('admin.catalog.')->group(function () {
             Route::resource('categories', \App\Modules\Catalog\Http\Controllers\CategoryController::class)->except(['show']);
+            Route::post('products/bulk', [\App\Modules\Catalog\Http\Controllers\ProductController::class, 'bulk'])->name('products.bulk');
+            Route::post('products/{product}/status', [\App\Modules\Catalog\Http\Controllers\ProductController::class, 'updateStatus'])->name('products.status');
             Route::resource('products', \App\Modules\Catalog\Http\Controllers\ProductController::class)->except(['show']);
         });
 
@@ -115,6 +131,13 @@ Route::middleware('auth')->group(function () {
         // Inventory
         Route::prefix('inventory')->name('admin.inventory.')->group(function () {
             Route::get('/', [\App\Modules\Inventory\Http\Controllers\InventoryController::class, 'index'])->name('index');
+            Route::get('/low-stock', [\App\Modules\Inventory\Http\Controllers\InventoryController::class, 'lowStock'])->name('low-stock');
+            Route::get('/damage/create', [\App\Modules\Inventory\Http\Controllers\InventoryController::class, 'createDamageReport'])->name('damage.create');
+            Route::post('/damage', [\App\Modules\Inventory\Http\Controllers\InventoryController::class, 'storeDamageReport'])->name('damage.store');
+            Route::get('/damage', [\App\Modules\Inventory\Http\Controllers\InventoryController::class, 'damagedStock'])->name('damage.index');
+            Route::get('/adjustments/create', [\App\Modules\Inventory\Http\Controllers\InventoryController::class, 'createAdjustment'])->name('adjustments.create');
+            Route::post('/adjustments', [\App\Modules\Inventory\Http\Controllers\InventoryController::class, 'storeAdjustment'])->name('adjustments.store');
+            Route::post('/{stockItem}/threshold', [\App\Modules\Inventory\Http\Controllers\InventoryController::class, 'updateThreshold'])->name('threshold.update');
             Route::resource('suppliers', \App\Modules\Organizations\Http\Controllers\AdminSupplierController::class)->names([
                 'index' => 'suppliers.index',
                 'create' => 'suppliers.create',
@@ -138,6 +161,8 @@ Route::middleware('auth')->group(function () {
             // Reports
             Route::get('/reports/stock', [\App\Modules\Inventory\Http\Controllers\InventoryReportsController::class, 'currentStock'])->name('reports.stock');
             Route::get('/reports/adjustments', [\App\Modules\Inventory\Http\Controllers\InventoryReportsController::class, 'adjustments'])->name('reports.adjustments');
+            Route::get('/reports/low-stock', [\App\Modules\Inventory\Http\Controllers\InventoryReportsController::class, 'lowStock'])->name('reports.low-stock');
+            Route::get('/reports/damaged-stock', [\App\Modules\Inventory\Http\Controllers\InventoryReportsController::class, 'damagedStock'])->name('reports.damaged-stock');
         });
 
         // Shipping
@@ -179,14 +204,14 @@ Route::middleware('auth')->group(function () {
         });
 
         // Promotions & Coupons
-        Route::prefix('promotions')->name('admin.promotions.')->group(function () {
+        Route::prefix('promotions')->name('admin.promotions.')->middleware('feature.enabled:promotions')->group(function () {
             Route::resource('coupons', \App\Modules\Promotions\Http\Controllers\CouponController::class)
                 ->except(['show']);
             Route::get('reports', [\App\Modules\Promotions\Http\Controllers\CouponController::class, 'reports'])->name('reports');
         });
 
         // CMS & Blog
-        Route::prefix('cms')->name('admin.cms.')->group(function () {
+        Route::prefix('cms')->name('admin.cms.')->middleware('feature.enabled:cms')->group(function () {
             // Blog Categories
             Route::resource('categories', \App\Modules\Cms\Http\Controllers\BlogCategoryController::class)
                 ->except(['show']);
@@ -210,6 +235,8 @@ Route::middleware('auth')->group(function () {
         Route::prefix('finance')->name('admin.finance.')->group(function () {
             Route::get('transactions', [\App\Modules\Finance\Http\Controllers\TransactionController::class, 'index'])->name('transactions.index');
             Route::get('transactions/{transaction}', [\App\Modules\Finance\Http\Controllers\TransactionController::class, 'show'])->name('transactions.show');
+            Route::post('transactions/{transaction}/verify-offline', [\App\Modules\Finance\Http\Controllers\TransactionController::class, 'verifyOffline'])->name('transactions.verify-offline');
+            Route::post('transactions/{transaction}/fail-offline', [\App\Modules\Finance\Http\Controllers\TransactionController::class, 'failOffline'])->name('transactions.fail-offline');
 
             Route::get('refunds', [\App\Modules\Finance\Http\Controllers\RefundController::class, 'index'])->name('refunds.index');
             Route::post('refunds/{refund}/approve', [\App\Modules\Finance\Http\Controllers\RefundController::class, 'approve'])->name('refunds.approve');
@@ -329,9 +356,9 @@ Route::prefix('payment')->name('payment.')->group(function () {
     Route::post('/stripe/webhook', [\App\Modules\Payments\Http\Controllers\PaymentCallbackController::class, 'stripeWebhook'])->name('stripe.webhook');
 });
 
-// Checkout result pages (stubs — future SPA/Blade views)
-Route::get('/checkout/success', fn() => 'Payment successful.')->name('checkout.success');
-Route::get('/checkout/failed', fn() => 'Payment failed.')->name('checkout.failed');
+// Checkout result pages
+Route::get('/checkout/success', [CheckoutResultController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/failed', [CheckoutResultController::class, 'failed'])->name('checkout.failed');
 
 // Redirect root to admin
 Route::get('/', function () {

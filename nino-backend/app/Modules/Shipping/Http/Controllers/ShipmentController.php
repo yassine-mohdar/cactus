@@ -7,6 +7,7 @@ use App\Modules\Orders\Models\Order;
 use App\Modules\Shipping\Enums\ShipmentStatus;
 use App\Modules\Shipping\Models\Shipment;
 use App\Modules\Shipping\Models\ShippingMethod;
+use App\Modules\Shipping\Services\ShippingSettingsService;
 use App\Modules\Shipping\Services\ShipmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 class ShipmentController extends Controller
 {
     public function __construct(
-        private ShipmentService $shipmentService
+        private ShipmentService $shipmentService,
+        private ShippingSettingsService $shippingSettings,
     ) {}
 
     /**
@@ -191,6 +193,17 @@ class ShipmentController extends Controller
         ]);
 
         $newStatus = ShipmentStatus::from($validated['status']);
+
+        if (
+            $newStatus === ShipmentStatus::DISPATCHED
+            && $this->shippingSettings->trackingRequiredOnDispatch()
+            && empty($validated['tracking_number'])
+            && ! filled($shipment->tracking_number)
+        ) {
+            return back()->withErrors([
+                'tracking_number' => 'A tracking number is required before a shipment can be dispatched.',
+            ]);
+        }
 
         // Update tracking if provided with the status change
         if (!empty($validated['tracking_number'])) {

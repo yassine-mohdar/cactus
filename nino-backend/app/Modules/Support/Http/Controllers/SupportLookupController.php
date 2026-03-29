@@ -77,6 +77,7 @@ class SupportLookupController extends Controller
         $notes = InternalNote::where('notable_type', Order::class)
             ->where('notable_id', $order->id)
             ->with('author')
+            ->orderByDesc('is_pinned')
             ->recent()
             ->get();
 
@@ -90,6 +91,55 @@ class SupportLookupController extends Controller
         // Transactions for this order
         $transactions = PaymentTransaction::where('order_id', $order->id)->get();
 
-        return view('admin.support.lookup.timeline', compact('order', 'notes', 'activities', 'transactions'));
+        $recentCustomerOrders = collect();
+        $customerOrderSummary = [
+            'total_orders' => 0,
+            'recent_status_counts' => [],
+            'last_order_at' => null,
+        ];
+
+        if ($order->customer_id) {
+            $recentCustomerOrders = Order::query()
+                ->where('customer_id', $order->customer_id)
+                ->whereKeyNot($order->id)
+                ->orderByDesc('created_at')
+                ->limit(5)
+                ->get([
+                    'id',
+                    'reference_number',
+                    'status',
+                    'grand_total',
+                    'currency',
+                    'created_at',
+                ]);
+
+            $customerOrders = Order::query()
+                ->where('customer_id', $order->customer_id)
+                ->orderByDesc('created_at')
+                ->get(['id', 'status', 'created_at']);
+
+            $customerOrderSummary = [
+                'total_orders' => $customerOrders->count(),
+                'recent_status_counts' => $customerOrders
+                    ->take(5)
+                    ->groupBy(fn (Order $customerOrder) => $customerOrder->status?->value ?? 'unknown')
+                    ->map(fn ($orders, string $status) => [
+                        'status' => $status,
+                        'label' => $orders->first()?->status?->label() ?? ucfirst(str_replace('_', ' ', $status)),
+                        'count' => $orders->count(),
+                    ])
+                    ->values(),
+                'last_order_at' => $customerOrders->first()?->created_at,
+            ];
+        }
+
+        return view('admin.support.lookup.timeline', compact(
+            'order',
+            'notes',
+            'activities',
+            'transactions',
+            'recentCustomerOrders',
+            'customerOrderSummary',
+        ));
     }
 }

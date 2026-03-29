@@ -50,6 +50,53 @@
             @if($gateway->gateway_id === 'offline_transfer')
                 <div class="space-y-4">
                     <div>
+                        <label class="block text-sm font-semibold text-slate-900 mb-1">Method Label</label>
+                        <input type="text" name="metadata[method_label]" value="{{ $gateway->metadata['method_label'] ?? 'Bank Transfer' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="Bank Transfer">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-900 mb-1">Bank Name</label>
+                            <input type="text" name="metadata[bank_name]" value="{{ $gateway->metadata['bank_name'] ?? '' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="Attijariwafa Bank">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-900 mb-1">Account Holder</label>
+                            <input type="text" name="metadata[account_holder]" value="{{ $gateway->metadata['account_holder'] ?? '' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="NinoWorld SARL AU">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-900 mb-1">Account Number</label>
+                            <input type="text" name="metadata[account_number]" value="{{ $gateway->metadata['account_number'] ?? '' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="12345678901234567890">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-900 mb-1">IBAN</label>
+                            <input type="text" name="metadata[iban]" value="{{ $gateway->metadata['iban'] ?? '' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="MA64001122334455667788990011">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-900 mb-1">SWIFT Code</label>
+                            <input type="text" name="metadata[swift_code]" value="{{ $gateway->metadata['swift_code'] ?? '' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="BCMAMAMC">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-900 mb-1">Payment Window (Hours)</label>
+                            <input type="number" min="1" max="168" name="metadata[payment_window_hours]" value="{{ $gateway->metadata['payment_window_hours'] ?? 48 }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="48">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-900 mb-1">Reference Prefix</label>
+                            <input type="text" name="metadata[reference_prefix]" value="{{ $gateway->metadata['reference_prefix'] ?? 'NINO' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="NINO">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-900 mb-1">Require Receipt Confirmation</label>
+                            <select name="metadata[require_receipt]" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20">
+                                <option value="1" {{ (bool) ($gateway->metadata['require_receipt'] ?? true) ? 'selected' : '' }}>Yes</option>
+                                <option value="0" {{ ! (bool) ($gateway->metadata['require_receipt'] ?? true) ? 'selected' : '' }}>No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
                         <label class="block text-sm font-semibold text-slate-900 mb-1">Bank Instructions (Displayed to Customer)</label>
                         <textarea name="metadata[instructions]" rows="4" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring focus:ring-slate-900/20" placeholder="e.g. Please wire funds to CIH Account 123456789. Send receipt to contact@ninoworld.com">{{ $gateway->metadata['instructions'] ?? '' }}</textarea>
                     </div>
@@ -66,6 +113,15 @@
                         {{-- Encrypted column, intentionally obfuscated --}}
                         <input type="password" name="credentials[secret_key]" value="{{ $gateway->getCredential('secret_key') ? '*******' : '' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="sk_test_..." >
                         <p class="text-xs text-slate-500 mt-1">Leave blank unless updating. Encrypted restly.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-900 mb-1">Webhook Secret <span class="text-red-600">*</span></label>
+                        <input type="password" name="credentials[webhook_secret]" value="{{ $gateway->getCredential('webhook_secret') ? '*******' : '' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="whsec_...">
+                        <p class="text-xs text-slate-500 mt-1">Used to verify inbound Stripe webhooks.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-900 mb-1">Currency</label>
+                        <input type="text" name="metadata[currency]" value="{{ $gateway->metadata['currency'] ?? 'MAD' }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20" placeholder="MAD">
                     </div>
                 </div>
             @elseif($gateway->gateway_id === 'cmi')

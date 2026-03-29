@@ -35,5 +35,6 @@ return [
     */
     'queues' => [
         'notifications' => 'notifications',
+        'media' => 'media',
     ],
 ];

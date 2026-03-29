@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 interface PaymentGatewayInterface
 {
     /**
+     * Stable internal gateway identifier used for settings, logs, and transactions.
+     */
+    public function gatewayId(): string;
+
+    /**
      * Bootstraps the payment attempt. 
      * For Stripe, this generates a Checkout Session URL.
      * For CMI, this generates the payload hash required for their hosted form.

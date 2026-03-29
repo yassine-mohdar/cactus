@@ -20,6 +20,7 @@
                 <x-admin.card title="Category Details">
                     <div class="space-y-4">
                         <x-admin.input name="name" label="Category Name" :value="old('name', $category->name)" required />
+                        <x-admin.input name="slug" label="Slug" :value="old('slug', $category->slug)" placeholder="auto-generated-from-name" />
                         
                         <div>
                             <label class="block text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Description</label>
@@ -54,9 +55,9 @@
                             <label class="block text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Parent Category</label>
                             <x-admin.select name="parent_id">
                                 <option value="">None (Top Level)</option>
-                                @foreach($categories as $cat)
-                                    <option value="{{ $cat->id }}" @selected(old('parent_id', $category->parent_id) == $cat->id)>
-                                        {{ $cat->name }}
+                                @foreach($parentOptions as $option)
+                                    <option value="{{ $option['id'] }}" @selected((string) old('parent_id', $category->parent_id) === (string) $option['id'])>
+                                        {{ $option['label'] }}
                                     </option>
                                 @endforeach
                             </x-admin.select>

@@ -11,12 +11,30 @@
 
         <div class="flex items-center gap-3">
             @livewire('admin.inventory.sync-button')
+            <x-nino.button href="{{ route('admin.inventory.damage.create') }}" variant="secondary" icon="warning">Report Damage</x-nino.button>
+            <x-nino.button href="{{ route('admin.inventory.low-stock') }}" variant="secondary" icon="warning">Low Stock Alerts</x-nino.button>
+            <x-nino.button href="{{ route('admin.inventory.adjustments.create') }}" variant="secondary" icon="tune">Manual Adjustment</x-nino.button>
             <x-nino.button variant="primary" icon="add" @click="$dispatch('open-purchase-order-modal')">Purchase Order</x-nino.button>
         </div>
     </div>
 @endsection
 
 @section('content')
+    <div class="mb-6 grid gap-4 md:grid-cols-4">
+        <x-nino.detail-section title="Visible Stock" subtitle="Inventory rows in your current operational scope.">
+            <p class="font-mono text-2xl font-bold text-[#1E2B27]">{{ number_format($summary['visible_items']) }}</p>
+        </x-nino.detail-section>
+        <x-nino.detail-section title="Visible Branches" subtitle="Branches available to your current inventory access.">
+            <p class="font-mono text-2xl font-bold text-[#1E2B27]">{{ number_format($summary['visible_branches']) }}</p>
+        </x-nino.detail-section>
+        <x-nino.detail-section title="Reserved Units" subtitle="Units currently held against checkout or payment flow.">
+            <p class="font-mono text-2xl font-bold text-[#1E2B27]">{{ number_format($summary['reserved_units']) }}</p>
+        </x-nino.detail-section>
+        <x-nino.detail-section title="Global Stock" subtitle="Platform-wide stock rows outside branch-specific inventory.">
+            <p class="font-mono text-2xl font-bold text-[#1E2B27]">{{ number_format($summary['global_items']) }}</p>
+        </x-nino.detail-section>
+    </div>
+
     <div class="filter-toolbar mb-6">
         <form method="GET" class="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:w-full xl:max-w-5xl">
@@ -63,12 +81,16 @@
                 <th class="text-left">Branch</th>
                 <th class="text-right">Available</th>
                 <th class="text-right">Reserved</th>
+                <th class="text-right">Threshold</th>
                 <th class="text-center">Status</th>
                 <th class="text-right">Actions</th>
             </x-slot>
 
             <x-slot name="body">
                 @forelse($items as $item)
+                    @php
+                        $effectiveThreshold = max(1, (int) ($item->low_stock_threshold ?? 5));
+                    @endphp
                     <tr>
                         <td class="text-left">
                             <div class="flex items-center gap-4">
@@ -82,7 +104,10 @@
                             </div>
                         </td>
                         <td class="text-left text-sm font-medium text-[#61706B]">
-                            {{ $item->branch->name ?? 'Default' }}
+                            <div class="flex flex-col">
+                                <span>{{ $item->branch->name ?? 'Global' }}</span>
+                                <span class="mt-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-[#7A8681]">{{ $item->stockScopeLabel() }}</span>
+                            </div>
                         </td>
                         <td class="text-right text-sm font-mono font-bold text-[#1E2B27]">
                             {{ $item->available_quantity }}
@@ -90,8 +115,13 @@
                         <td class="text-right text-sm font-mono text-[#61706B]">
                             {{ $item->reserved_quantity }}
                         </td>
+                        <td class="text-right text-sm font-mono text-[#61706B]">
+                            {{ $item->low_stock_threshold }}
+                        </td>
                         <td class="text-center text-xs">
-                            @if($item->available_quantity <= 5)
+                            @if($item->available_quantity <= 0)
+                                <x-nino.status-badge tone="danger" size="sm">Out of Stock</x-nino.status-badge>
+                            @elseif($item->available_quantity <= $effectiveThreshold)
                                 <x-nino.status-badge tone="danger" size="sm">Low Stock</x-nino.status-badge>
                             @else
                                 <x-nino.status-badge tone="success" size="sm">In Stock</x-nino.status-badge>
@@ -99,9 +129,17 @@
                         </td>
                         <td class="text-right">
                             <div class="table-actions">
-                                <button type="button" @click="$dispatch('openQuickEdit', { id: {{ $item->id }} })" class="table-action-link gap-1.5" aria-label="Quick adjust {{ $item->product->name ?? 'inventory item' }}">
+                                <a href="{{ route('admin.inventory.adjustments.create', ['stock_item_id' => $item->id]) }}" class="table-action-link gap-1.5" aria-label="Manual adjust {{ $item->product->name ?? 'inventory item' }}">
                                     <span class="material-symbols-outlined text-[1.2em]">edit_square</span>
                                     <span class="hidden xl:inline">Adjust</span>
+                                </a>
+                                <a href="{{ route('admin.inventory.damage.create', ['stock_item_id' => $item->id]) }}" class="table-action-link gap-1.5" aria-label="Report damage for {{ $item->product->name ?? 'inventory item' }}">
+                                    <span class="material-symbols-outlined text-[1.2em]">warning</span>
+                                    <span class="hidden xl:inline">Damage</span>
+                                </a>
+                                <button type="button" @click="$dispatch('openQuickEdit', { id: {{ $item->id }} })" class="table-action-link gap-1.5" aria-label="Quick adjust {{ $item->product->name ?? 'inventory item' }}">
+                                    <span class="material-symbols-outlined text-[1.2em]">bolt</span>
+                                    <span class="hidden xl:inline">Quick</span>
                                 </button>
                                 <a href="{{ route('admin.inventory.reports.adjustments', ['search' => $item->sku]) }}" class="table-action-link gap-1.5" aria-label="View stock history for {{ $item->sku ?? 'inventory item' }}">
                                     <span class="material-symbols-outlined text-[1.2em]">history</span>
@@ -112,7 +150,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="datatable-empty">
+                        <td colspan="7" class="datatable-empty">
                             <div class="datatable-empty-panel">
                                 <p class="text-sm font-semibold text-[#1E2B27]">No products in inventory.</p>
                                 <p class="text-sm text-[#61706B]">Start by adding products to your catalog or creating a purchase order.</p>

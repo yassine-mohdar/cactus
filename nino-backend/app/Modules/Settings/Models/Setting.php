@@ -25,6 +25,7 @@ class Setting extends Model
         return match ($this->type) {
             'boolean' => filter_var($raw, FILTER_VALIDATE_BOOLEAN),
             'integer' => (int) $raw,
+            'number'  => (float) $raw,
             'json'    => json_decode($raw, true),
             default   => $raw,
         };
@@ -38,6 +39,7 @@ class Setting extends Model
         $stored = match ($type) {
             'boolean' => $value ? '1' : '0',
             'integer' => (string) $value,
+            'number'  => (string) $value,
             'json'    => json_encode($value),
             default   => (string) $value,
         };

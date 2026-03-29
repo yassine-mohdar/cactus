@@ -39,7 +39,7 @@
 
         <div class="filter-toolbar">
             <form method="GET" class="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-                <div class="grid gap-3 sm:grid-cols-2 xl:w-full xl:max-w-3xl">
+                <div class="grid gap-3 sm:grid-cols-2 xl:w-full xl:max-w-6xl xl:grid-cols-3">
                     <div class="filter-field">
                         <label class="filter-label" for="orders-search">Search</label>
                         <input id="orders-search" type="text" name="search" placeholder="Reference number or customer..." value="{{ request('search') }}" class="input-field" />
@@ -55,11 +55,60 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="filter-field">
+                        <label class="filter-label" for="orders-date-from">Date From</label>
+                        <input id="orders-date-from" type="date" name="date_from" value="{{ request('date_from') }}" class="input-field" />
+                    </div>
+                    <div class="filter-field">
+                        <label class="filter-label" for="orders-date-to">Date To</label>
+                        <input id="orders-date-to" type="date" name="date_to" value="{{ request('date_to') }}" class="input-field" />
+                    </div>
+                    <div class="filter-field">
+                        <label class="filter-label" for="orders-customer">Customer</label>
+                        <select id="orders-customer" name="customer_id" class="input-field min-w-[200px]">
+                            <option value="">All customers</option>
+                            @foreach($customers as $customer)
+                                <option value="{{ $customer->id }}" {{ (string) request('customer_id') === (string) $customer->id ? 'selected' : '' }}>
+                                    {{ $customer->full_name ?: $customer->email }}{{ $customer->email ? ' - ' . $customer->email : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label class="filter-label" for="orders-payment-method">Payment Method</label>
+                        <select id="orders-payment-method" name="payment_method" class="input-field min-w-[180px]">
+                            <option value="">All payment methods</option>
+                            @foreach($paymentMethods as $paymentMethod)
+                                <option value="{{ $paymentMethod['value'] }}" {{ request('payment_method') === $paymentMethod['value'] ? 'selected' : '' }}>
+                                    {{ $paymentMethod['label'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label class="filter-label" for="orders-shipping-method">Shipping Method</label>
+                        <select id="orders-shipping-method" name="shipping_method" class="input-field min-w-[180px]">
+                            <option value="">All shipping methods</option>
+                            @foreach($shippingMethods as $shippingMethod)
+                                <option value="{{ $shippingMethod['value'] }}" {{ request('shipping_method') === $shippingMethod['value'] ? 'selected' : '' }}>
+                                    {{ $shippingMethod['label'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-3">
                     <x-nino.button type="submit" variant="primary">Apply Filters</x-nino.button>
-                    @if(request()->filled('search') || request()->filled('status'))
+                    @if(
+                        request()->filled('search')
+                        || request()->filled('status')
+                        || request()->filled('date_from')
+                        || request()->filled('date_to')
+                        || request()->filled('customer_id')
+                        || request()->filled('payment_method')
+                        || request()->filled('shipping_method')
+                    )
                         <x-nino.button href="{{ route('admin.orders.index') }}" variant="outline">Clear</x-nino.button>
                     @endif
                 </div>
@@ -121,7 +170,15 @@
                                     title="No orders found"
                                     description="We couldn't find any orders matching the current filters. Adjust the search criteria or clear the filters to broaden the queue."
                                     icon="shopping_bag">
-                                    @if(request()->filled('search') || request()->filled('status'))
+                                    @if(
+                                        request()->filled('search')
+                                        || request()->filled('status')
+                                        || request()->filled('date_from')
+                                        || request()->filled('date_to')
+                                        || request()->filled('customer_id')
+                                        || request()->filled('payment_method')
+                                        || request()->filled('shipping_method')
+                                    )
                                         <x-nino.button href="{{ route('admin.orders.index') }}" variant="outline">Clear All Filters</x-nino.button>
                                     @endif
                                 </x-nino.empty-state>

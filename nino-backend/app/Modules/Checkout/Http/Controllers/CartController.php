@@ -91,11 +91,19 @@ class CartController extends Controller
             $request->header('X-Cart-Session-Id')
         );
 
-        $service->applyCoupon($cart, $request->code);
+        $result = $service->applyCoupon($cart, $request->code, $request->user('sanctum'));
+
+        if (! ($result['valid'] ?? false)) {
+            return response()->json([
+                'message' => $result['error'] ?? 'Coupon could not be applied.',
+                'error_code' => $result['error_code'] ?? 'COUPON_INVALID',
+                'cart' => $service->getSummary($cart->fresh()),
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'Coupon applied',
-            'cart' => $service->getSummary($cart)
+            'cart' => $service->getSummary($cart->fresh())
         ]);
     }
 

@@ -30,6 +30,8 @@ class PaymentLogger
         'cvv', 'CVV', 'cvv2', 'cvc',
         'secret_key', 'secretKey', 'hash_key', 'hashKey',
         'password', 'client_secret',
+        'api_key', 'apiKey',
+        'webhook_secret', 'webhookSecret',
         'storeKey', 'store_key',
     ];
 

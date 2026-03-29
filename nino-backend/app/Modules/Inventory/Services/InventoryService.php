@@ -5,6 +5,8 @@ namespace App\Modules\Inventory\Services;
 use App\Modules\Audit\Services\AuditLogger;
 use App\Modules\Inventory\Models\StockItem;
 use App\Modules\Inventory\Models\StockMovement;
+use App\Modules\Orders\Enums\OrderStatus;
+use App\Modules\Orders\Models\Order;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -228,13 +230,15 @@ class InventoryService
         int $quantity,
         ?int $userId = null,
         ?string $referenceType = null,
-        ?string $referenceId = null
+        ?string $referenceId = null,
+        string $reason = 'order_cancelled',
+        ?string $notes = null,
     ): StockMovement {
         if ($quantity <= 0) {
             throw new Exception("Release quantity must be greater than zero.");
         }
 
-        return DB::transaction(function () use ($stockItem, $quantity, $userId, $referenceType, $referenceId) {
+        return DB::transaction(function () use ($stockItem, $quantity, $userId, $referenceType, $referenceId, $reason, $notes) {
             $lockedItem = StockItem::lockForUpdate()->find($stockItem->id);
 
             // Don't release more than what is reserved
@@ -258,15 +262,65 @@ class InventoryService
                 'stock_item_id' => $lockedItem->id,
                 'user_id' => $userId,
                 'type' => 'release',
-                'reason' => 'order_cancelled',
+                'reason' => $reason,
                 'quantity' => 0, // Physical quantity remains unchanged
                 'quantity_before' => $lockedItem->quantity,
                 'quantity_after' => $lockedItem->quantity,
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
-                'notes' => "Released {$actualRelease} reserved units.",
+                'notes' => $notes ?: "Released {$actualRelease} reserved units.",
             ]);
         });
+    }
+
+    public function releaseReservationsForOrder(
+        Order $order,
+        string $reason = 'order_cancelled',
+        ?int $userId = null,
+    ): int {
+        $order->loadMissing('lineItems');
+
+        $releasedReservations = 0;
+
+        foreach ($order->lineItems as $lineItem) {
+            $stockItem = $this->resolveReservableStockItemForOrderLine($lineItem->product_id, $lineItem->variant_id);
+
+            if (! $stockItem || $stockItem->reserved_quantity <= 0) {
+                continue;
+            }
+
+            $this->releaseStock(
+                $stockItem,
+                (int) $lineItem->quantity,
+                userId: $userId,
+                referenceType: Order::class,
+                referenceId: (string) $order->id,
+                reason: $reason,
+            );
+
+            $releasedReservations++;
+        }
+
+        return $releasedReservations;
+    }
+
+    public function releaseExpiredReservations(int $timeoutMinutes = 120, ?int $userId = null): int
+    {
+        $expiredOrders = Order::query()
+            ->whereIn('status', [OrderStatus::PENDING, OrderStatus::AWAITING_PAYMENT])
+            ->where('created_at', '<=', now()->subMinutes($timeoutMinutes))
+            ->with('lineItems')
+            ->get();
+
+        $releasedOrders = 0;
+
+        foreach ($expiredOrders as $order) {
+            if ($this->releaseReservationsForOrder($order, reason: 'order_timeout', userId: $userId) > 0) {
+                $releasedOrders++;
+            }
+        }
+
+        return $releasedOrders;
     }
 
     private function stockTargetLabel(StockItem $stockItem): string
@@ -306,5 +360,21 @@ class InventoryService
         }
 
         return 'in_stock';
+    }
+
+    private function resolveReservableStockItemForOrderLine(int $productId, ?int $variantId): ?StockItem
+    {
+        $query = StockItem::query()->whereNull('branch_id');
+
+        if ($variantId) {
+            return $query
+                ->where('product_variant_id', $variantId)
+                ->first();
+        }
+
+        return $query
+            ->where('product_id', $productId)
+            ->whereNull('product_variant_id')
+            ->first();
     }
 }

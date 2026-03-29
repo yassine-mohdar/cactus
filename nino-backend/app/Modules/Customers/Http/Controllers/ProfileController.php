@@ -9,6 +9,7 @@ use App\Modules\Settings\Services\PasswordPolicyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
@@ -17,6 +18,13 @@ class ProfileController extends Controller
         private readonly UserAvatarService $avatars,
         private readonly PasswordPolicyService $passwordPolicy,
     ) {}
+
+    public function edit(Request $request)
+    {
+        return view('customer.account.profile', [
+            'customer' => $request->user(),
+        ]);
+    }
 
     /**
      * Update the customer's profile details.
@@ -28,18 +36,39 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
+            'email' => ['nullable', 'string', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'username' => 'nullable|string|max:255|unique:users,username,' . $user->id,
             'marketing_opt_in' => 'nullable|boolean',
             'avatar' => 'nullable|image|max:2048',
         ]);
 
-        $user->update(collect($validated)->except('avatar')->all());
+        $profileData = collect($validated)
+            ->except('avatar')
+            ->when(
+                array_key_exists('email', $validated),
+                function ($data) use ($user, $validated) {
+                    $normalizedEmail = Str::lower(trim((string) $validated['email']));
+
+                    return $data
+                        ->put('email', $normalizedEmail)
+                        ->when($normalizedEmail !== $user->email, fn ($payload) => $payload->put('email_verified_at', null));
+                }
+            )
+            ->all();
+
+        $user->forceFill($profileData)->save();
 
         if ($request->hasFile('avatar')) {
             $this->avatars->replace($user, $request->file('avatar'));
         }
 
         $user->refresh();
+
+        if (! ($request->expectsJson() || $request->is('api/*'))) {
+            return redirect()
+                ->route('customer.account.profile.edit')
+                ->with('success', 'Profile updated successfully.');
+        }
 
         return response()->json([
             'message' => 'Profile updated successfully.',
@@ -66,6 +95,12 @@ class ProfileController extends Controller
             $request->user(),
             $request->session()->getId(),
         );
+
+        if (! ($request->expectsJson() || $request->is('api/*'))) {
+            return redirect()
+                ->route('customer.account.profile.edit')
+                ->with('success', 'Password updated successfully.');
+        }
 
         return response()->json([
             'message' => 'Password updated successfully.'

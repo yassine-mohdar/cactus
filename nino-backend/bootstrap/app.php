@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Middleware\ApplyGeneralSettings;
+use App\Http\Middleware\ApplyFinanceSettings;
 use App\Http\Middleware\ApplySecuritySettings;
+use App\Http\Middleware\ApplySystemSettings;
 use App\Http\Middleware\EnsureCustomerUser;
+use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureStaffUser;
 use App\Http\Middleware\EnsureStaffTwoFactorIsConfigured;
 use App\Http\Middleware\EnsureUserHasAnyPermission;
@@ -20,9 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [
             ApplyGeneralSettings::class,
+            ApplyFinanceSettings::class,
             ApplySecuritySettings::class,
         ], append: [
             LogSlowOperations::class,
+            ApplySystemSettings::class,
         ]);
 
         $middleware->preventRequestForgery([
@@ -33,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'customer.only' => EnsureCustomerUser::class,
+            'feature.enabled' => EnsureFeatureEnabled::class,
             'staff.only' => EnsureStaffUser::class,
             'staff.2fa.enforced' => EnsureStaffTwoFactorIsConfigured::class,
             'permission.any' => EnsureUserHasAnyPermission::class,

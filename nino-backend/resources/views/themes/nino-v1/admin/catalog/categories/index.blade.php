@@ -32,6 +32,7 @@
                         <th>Name</th>
                         <th>Slug</th>
                         <th>Parent</th>
+                        <th class="text-center">Order</th>
                         <th class="text-center">Status</th>
                         <th class="text-right">Actions</th>
                     </tr>
@@ -59,6 +60,7 @@
                                     <span class="text-outline text-xs italic">None</span>
                                 @endif
                             </td>
+                            <td class="px-6 py-4 text-center font-mono text-xs text-slate-500">{{ $category->sort_order }}</td>
                             <td class="px-6 py-4 text-center">
                                 @if($category->is_active)
                                     <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-900">ACTIVE</span>
@@ -84,7 +86,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="datatable-empty">
+                            <td colspan="6" class="datatable-empty">
                                 <div class="datatable-empty-panel">
                                     <p class="text-sm font-semibold text-slate-900">No categories found.</p>
                                     <p class="text-sm text-slate-500">Create categories to structure product discovery and merchandising.</p>

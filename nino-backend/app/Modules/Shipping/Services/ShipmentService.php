@@ -2,6 +2,10 @@
 
 namespace App\Modules\Shipping\Services;
 
+use App\Modules\Finance\Enums\RefundStatus;
+use App\Modules\Finance\Models\RefundRequest;
+use App\Modules\Notifications\Services\NotificationTriggerService;
+use App\Modules\Orders\Enums\OrderStatus;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Shipping\Enums\ShipmentStatus;
 use App\Modules\Shipping\Models\Shipment;
@@ -19,6 +23,11 @@ use Illuminate\Support\Facades\DB;
  */
 class ShipmentService
 {
+    public function __construct(
+        private readonly ShippingSettingsService $shippingSettings,
+        private readonly NotificationTriggerService $notificationTriggerService,
+    ) {}
+
     /**
      * Create a shipment for an order.
      */
@@ -33,7 +42,9 @@ class ShipmentService
                 'order_id' => $order->id,
                 'shipping_method_id' => $shippingMethodId,
                 'status' => ShipmentStatus::PENDING,
-                'carrier_name' => $shippingMethod?->carrier ?? ($attributes['carrier_name'] ?? null),
+                'carrier_name' => $shippingMethod?->carrier
+                    ?? ($attributes['carrier_name'] ?? null)
+                    ?? $this->shippingSettings->defaultCarrierName(),
                 'carrier_service' => $shippingMethod?->name ?? ($attributes['carrier_service'] ?? null),
             ], $attributes));
 
@@ -89,6 +100,7 @@ class ShipmentService
 
             $shipment->update($update);
             $this->recordStatusChange($shipment, $oldStatus, $newStatus, $notes);
+            $this->syncOrderStatusFromShipment($shipment, $newStatus);
 
             return $shipment->fresh();
         });
@@ -184,6 +196,88 @@ class ShipmentService
             'changed_by' => $user?->id,
             'changed_by_name' => $user ? ($user->first_name . ' ' . $user->last_name) : 'System',
             'ip_address' => request()?->ip(),
+        ]);
+    }
+
+    private function syncOrderStatusFromShipment(Shipment $shipment, ShipmentStatus $shipmentStatus): void
+    {
+        $order = $shipment->order;
+
+        if (! $order) {
+            return;
+        }
+
+        $currentOrderStatus = $order->status instanceof OrderStatus
+            ? $order->status
+            : OrderStatus::from((string) $order->status);
+
+        if (in_array($currentOrderStatus, [OrderStatus::DELIVERED, OrderStatus::REFUNDED, OrderStatus::CANCELLED], true)) {
+            return;
+        }
+
+        $nextOrderStatus = match ($shipmentStatus) {
+            ShipmentStatus::READY_TO_SHIP,
+            ShipmentStatus::PACKED => OrderStatus::PREPARING,
+            ShipmentStatus::DISPATCHED,
+            ShipmentStatus::IN_TRANSIT => OrderStatus::SHIPPED,
+            ShipmentStatus::DELIVERED => OrderStatus::DELIVERED,
+            ShipmentStatus::FAILED_DELIVERY => OrderStatus::FAILED,
+            ShipmentStatus::CANCELLED => OrderStatus::CANCELLED,
+            default => null,
+        };
+
+        if ($shipmentStatus === ShipmentStatus::RETURNED) {
+            $this->syncReturnedOrderState($order, $currentOrderStatus);
+
+            return;
+        }
+
+        if (! $nextOrderStatus || $currentOrderStatus === $nextOrderStatus) {
+            return;
+        }
+
+        $order->update([
+            'status' => $nextOrderStatus,
+        ]);
+
+        if ($shipmentStatus === ShipmentStatus::DISPATCHED) {
+            $this->notificationTriggerService->orderShipped(
+                $order->fresh(),
+                $shipment->fresh(['shippingMethod']),
+            );
+        }
+    }
+
+    private function syncReturnedOrderState(Order $order, OrderStatus $currentOrderStatus): void
+    {
+        $requiresRefundFoundation = $order->payment_method !== 'cash_on_delivery';
+
+        if ($requiresRefundFoundation) {
+            RefundRequest::query()->firstOrCreate(
+                [
+                    'order_id' => $order->id,
+                    'status' => RefundStatus::REQUESTED,
+                ],
+                [
+                    'customer_id' => $order->customer_id,
+                    'amount' => $order->grand_total,
+                    'original_order_total' => $order->grand_total,
+                    'currency' => $order->currency,
+                    'reason' => 'Shipment returned to sender',
+                ],
+            );
+        }
+
+        $nextOrderStatus = $requiresRefundFoundation
+            ? OrderStatus::REFUNDED
+            : OrderStatus::CANCELLED;
+
+        if ($currentOrderStatus === $nextOrderStatus) {
+            return;
+        }
+
+        $order->update([
+            'status' => $nextOrderStatus,
         ]);
     }
 }

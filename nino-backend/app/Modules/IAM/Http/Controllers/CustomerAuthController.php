@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\IAM\Http\Requests\CustomerLoginRequest;
 use App\Modules\IAM\Services\AdminHomeRouteService;
+use App\Modules\Customers\Services\CustomerAccountPresenter;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class CustomerAuthController extends Controller
 {
     public function __construct(
         private readonly AdminHomeRouteService $homeRoutes,
+        private readonly CustomerAccountPresenter $accountPresenter,
     ) {}
 
     public function showLogin(Request $request)
@@ -69,9 +71,13 @@ class CustomerAuthController extends Controller
 
     public function home(Request $request)
     {
-        $customer = $request->user()?->loadCount(['addresses', 'orders']);
+        $customer = $request->user();
+        $overview = $this->accountPresenter->overview($customer);
 
-        return view('customer.account.home', compact('customer'));
+        return view('customer.account.home', [
+            'customer' => $customer,
+            'overview' => $overview,
+        ]);
     }
 
     public function logout(Request $request): RedirectResponse

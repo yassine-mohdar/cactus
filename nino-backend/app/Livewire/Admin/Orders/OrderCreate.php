@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Orders;
 
 use App\Models\User;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Finance\Services\FinanceSettingsService;
 use App\Modules\Orders\Enums\OrderStatus;
 use App\Modules\Orders\Models\Order;
 use Exception;
@@ -117,7 +118,7 @@ class OrderCreate extends Component
                     'reference_number' => 'ORD-' . strtoupper(uniqid()),
                     'customer_id' => $this->customer_id,
                     'status' => OrderStatus::PENDING,
-                    'currency' => 'MAD',
+                    'currency' => app(FinanceSettingsService::class)->baseCurrency(),
                     'subtotal' => $this->subtotal,
                     'grand_total' => $this->grand_total,
                     'payment_method' => $this->payment_method,

@@ -18,6 +18,7 @@ use App\Modules\Finance\Enums\TransactionStatus;
 use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\PaymentTransaction;
 use App\Modules\Finance\Models\RefundRequest;
+use App\Modules\Finance\Services\FinanceSettingsService;
 use App\Modules\Inventory\Models\StockItem;
 use App\Modules\Orders\Enums\OrderStatus;
 use App\Modules\Orders\Models\Order;
@@ -711,7 +712,7 @@ class DashboardMetricsService
                     'title' => 'Low Stock Hotspots',
                     'value' => $stockAlerts,
                     'meta' => 'Low-stock and out-of-stock items across active inventory',
-                    'href' => route('admin.inventory.index', ['filter' => 'low_stock']),
+                    'href' => route('admin.inventory.low-stock'),
                     'cta' => 'Open inventory',
                     'tone' => $stockAlerts > 0 ? 'warning' : 'success',
                 ],
@@ -749,7 +750,7 @@ class DashboardMetricsService
                 'stock_alerts' => [
                     'count' => $stockAlerts,
                     'items' => $lowStock->take(5)->values()->all(),
-                    'href' => route('admin.inventory.index', ['filter' => 'low_stock']),
+                    'href' => route('admin.inventory.low-stock'),
                 ],
                 'payment_exceptions' => [
                     'count' => (int) $paymentExceptionItems->count(),
@@ -1937,14 +1938,14 @@ class DashboardMetricsService
             $stockWorkspace['low_stock'] = [
                 'count' => $stockAlerts,
                 'items' => $lowStock->take(5)->values()->all(),
-                'href' => route('admin.inventory.index', ['filter' => 'low_stock']),
+                'href' => route('admin.inventory.low-stock'),
             ];
 
             $stockWorkspace['damaged_stock'] = [
                 'damaged_events' => (int) ($damagedStockSummary->damaged_events ?? 0),
                 'damaged_units' => (int) ($damagedStockSummary->damaged_units ?? 0),
                 'items' => $damagedItems->values()->all(),
-                'href' => route('admin.inventory.reports.adjustments'),
+                'href' => route('admin.inventory.damage.index'),
             ];
 
             $adjustmentSummary = DB::table('inventory_movements')
@@ -2109,7 +2110,7 @@ class DashboardMetricsService
                 'low_stock_alerts' => [
                     'count' => $stockAlerts,
                     'items' => $lowStock->take(5)->values()->all(),
-                    'href' => route('admin.inventory.index', ['filter' => 'low_stock']),
+                    'href' => route('admin.inventory.low-stock'),
                 ],
                 'shipping_exceptions' => [
                     'count' => (int) Shipment::query()
@@ -2232,6 +2233,10 @@ class DashboardMetricsService
 
     protected function formatMoney(float $amount, string $currency = 'MAD'): string
     {
+        if ($currency === 'MAD') {
+            $currency = app(FinanceSettingsService::class)->baseCurrency();
+        }
+
         return number_format($amount, 2).' '.$currency;
     }
 
