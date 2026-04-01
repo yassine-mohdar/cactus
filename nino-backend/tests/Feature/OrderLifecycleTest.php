@@ -242,12 +242,13 @@ class OrderLifecycleTest extends TestCase
         $response->assertSeeText('Yassine Bennani');
         $response->assertSeeText('ord-life-2001@example.test');
         $response->assertSeeText('0612345678');
-        $response->assertSeeText('Casablanca, 20000');
+        $response->assertSeeText('Casablanca');
+        $response->assertSeeText('20000');
     }
 
     public function test_admin_order_show_renders_timeline_internal_notes_customer_notes_and_audit_history(): void
     {
-        $staffUser = $this->makeStaffUser();
+        $staffUser = $this->makeStaffUser(canOverrideStatus: true);
         $order = $this->createOrder('ORD-LIFE-2002', OrderStatus::SHIPPED, 310.00);
         $order->update([
             'payment_method' => 'stripe',
@@ -319,7 +320,7 @@ class OrderLifecycleTest extends TestCase
         $response->assertOk();
         $response->assertSeeText('Operational Timeline');
         $response->assertSeeText('Payment transaction Completed');
-        $response->assertSeeText('Shipment transition');
+        $response->assertSeeText('Shipment status updated');
         $response->assertSeeText('Handed off to carrier');
         $response->assertSeeText('Internal Notes');
         $response->assertSeeText('Customer requested silent delivery after 6 PM.');
@@ -328,11 +329,137 @@ class OrderLifecycleTest extends TestCase
         $response->assertSeeText('Recent Audit Activity');
         $response->assertSeeText('Orders Updated');
         $response->assertSeeText('Shipment status pushed order into shipped state.');
+        $response->assertSeeText('Manual status override');
+        $response->assertSeeText('Update Order Status');
+    }
+
+    public function test_admin_order_show_renders_same_status_shipment_audit_rows_as_activity(): void
+    {
+        $staffUser = $this->makeStaffUser();
+        $order = $this->createOrder('ORD-LIFE-2002A', OrderStatus::PREPARING, 145.00);
+
+        $shippingMethod = ShippingMethod::create([
+            'name' => 'Standard Maroc',
+            'slug' => 'standard-maroc-order-audit',
+            'carrier' => 'Sendit',
+            'base_cost' => 45,
+            'estimated_days' => '24h - 48h',
+            'is_enabled' => true,
+        ]);
+
+        $shipment = Shipment::create([
+            'order_id' => $order->id,
+            'shipping_method_id' => $shippingMethod->id,
+            'status' => ShipmentStatus::READY_TO_SHIP,
+            'carrier_name' => 'Sendit',
+            'tracking_number' => 'DH1BFE69390',
+        ]);
+
+        ShipmentStatusHistory::create([
+            'shipment_id' => $shipment->id,
+            'status_from' => ShipmentStatus::READY_TO_SHIP->value,
+            'status_to' => ShipmentStatus::READY_TO_SHIP->value,
+            'notes' => 'Tracking updated: DH1BFE69390',
+            'changed_by' => $staffUser->id,
+            'changed_by_name' => $staffUser->name,
+        ]);
+
+        $response = $this->actingAs($staffUser)->get(route('admin.orders.show', $order));
+
+        $response->assertOk();
+        $response->assertSeeText('Shipment tracking updated');
+        $response->assertSeeText('Tracking updated: DH1BFE69390');
+        $response->assertDontSeeText('Ready To Ship -> Ready To Ship');
+    }
+
+    public function test_admin_order_show_renders_sendit_fulfillment_tracking_and_label_actions(): void
+    {
+        $staffUser = $this->makeStaffUser();
+        $order = $this->createOrder('ORD-LIFE-2006', OrderStatus::PREPARING, 245.00);
+
+        $carrier = \App\Modules\Shipping\Models\ShippingCarrier::create([
+            'name' => 'Sendit',
+            'code' => 'sendit-order-show',
+            'provider' => \App\Modules\Shipping\Models\ShippingCarrier::PROVIDER_SENDIT,
+            'is_enabled' => true,
+            'credentials' => [
+                'public_key' => 'public-order-show',
+                'secret_key' => 'secret-order-show',
+            ],
+            'settings' => [
+                'pickup_district_id' => 101,
+            ],
+        ]);
+
+        $shippingMethod = ShippingMethod::create([
+            'name' => 'Sendit Standard',
+            'slug' => 'sendit-standard-order-show',
+            'carrier' => 'Sendit',
+            'shipping_carrier_id' => $carrier->id,
+            'base_cost' => 45,
+            'estimated_days' => '24h - 48h',
+            'is_enabled' => true,
+        ]);
+
+        Shipment::create([
+            'order_id' => $order->id,
+            'shipping_method_id' => $shippingMethod->id,
+            'status' => ShipmentStatus::READY_TO_SHIP,
+            'carrier_name' => 'Sendit',
+            'tracking_number' => 'TRACK-SENDIT-1001',
+            'external_reference' => 'SDT-ORDER-1001',
+            'external_status' => 'PENDING',
+            'last_provider_sync_at' => now()->subMinutes(10),
+        ]);
+
+        $response = $this->actingAs($staffUser)->get(route('admin.orders.show', $order));
+
+        $response->assertOk();
+        $response->assertSeeText('Shipment Fulfillment');
+        $response->assertSeeText('TRACK-SENDIT-1001');
+        $response->assertSeeText('SDT-ORDER-1001');
+        $response->assertSeeText('Download A4 Label');
+        $response->assertSeeText('Download Thermal Label');
+    }
+
+    public function test_admin_order_detail_can_manually_override_status_and_write_audit_log(): void
+    {
+        $staffUser = $this->makeStaffUser(canOverrideStatus: true);
+        $order = $this->createOrder('ORD-LIFE-2004', OrderStatus::AWAITING_PAYMENT, 210.00);
+
+        $this->actingAs($staffUser)
+            ->post(route('admin.orders.status', $order), [
+                'status' => OrderStatus::PREPARING->value,
+                'notes' => 'Payment confirmed manually by operations.',
+            ])
+            ->assertRedirect(route('admin.orders.show', $order));
+
+        $this->assertSame(OrderStatus::PREPARING, $order->fresh()->status);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'orders.status_overridden',
+            'auditable_type' => Order::class,
+            'auditable_id' => $order->id,
+            'notes' => 'Payment confirmed manually by operations.',
+        ]);
+    }
+
+    public function test_admin_order_detail_status_override_requires_override_permission(): void
+    {
+        $staffUser = $this->makeStaffUser();
+        $order = $this->createOrder('ORD-LIFE-2005', OrderStatus::AWAITING_PAYMENT, 210.00);
+
+        $this->actingAs($staffUser)
+            ->post(route('admin.orders.status', $order), [
+                'status' => OrderStatus::PREPARING->value,
+            ])
+            ->assertForbidden();
+
+        $this->assertSame(OrderStatus::AWAITING_PAYMENT, $order->fresh()->status);
     }
 
     public function test_admin_order_internal_notes_can_be_added_pinned_and_deleted_from_the_detail_flow(): void
     {
-        $staffUser = $this->makeStaffUser();
+        $staffUser = $this->makeStaffUser(canManageSupport: true);
         $order = $this->createOrder('ORD-LIFE-2003', OrderStatus::PREPARING, 250.00);
 
         $this->actingAs($staffUser)
@@ -484,18 +611,28 @@ class OrderLifecycleTest extends TestCase
         ]);
     }
 
-    private function makeStaffUser(): User
+    private function makeStaffUser(bool $canOverrideStatus = false, bool $canManageSupport = false): User
     {
         $user = User::factory()->create([
             'type' => 'staff',
             'status' => 'active',
         ]);
 
-        foreach (['orders.viewAny', 'orders.view'] as $permission) {
+        foreach (['orders.viewAny', 'orders.view', 'orders.override_status', 'support.manage_tickets'] as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
 
-        $user->givePermissionTo(['orders.viewAny', 'orders.view']);
+        $permissions = ['orders.viewAny', 'orders.view'];
+
+        if ($canOverrideStatus) {
+            $permissions[] = 'orders.override_status';
+        }
+
+        if ($canManageSupport) {
+            $permissions[] = 'support.manage_tickets';
+        }
+
+        $user->givePermissionTo($permissions);
 
         return $user;
     }

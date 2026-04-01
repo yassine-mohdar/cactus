@@ -7,6 +7,11 @@ use App\Modules\Finance\Enums\PaymentMethod;
 use App\Modules\Finance\Enums\TransactionStatus;
 use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\PaymentTransaction;
+use App\Modules\Catalog\Models\Product;
+use App\Modules\Inventory\Models\StockItem;
+use App\Modules\Notifications\Enums\NotificationChannel;
+use App\Modules\Notifications\Enums\NotificationEvent;
+use App\Modules\Notifications\Models\NotificationTemplate;
 use App\Modules\Orders\Enums\OrderStatus;
 use App\Modules\Orders\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,6 +24,15 @@ class FinanceTransactionOfflineVerificationTest extends TestCase
 
     public function test_pending_offline_transfer_can_be_verified_and_promotes_order_to_paid(): void
     {
+        NotificationTemplate::create([
+            'event' => NotificationEvent::PAYMENT_SUCCESS,
+            'channel' => NotificationChannel::EMAIL,
+            'name' => 'Payment success email',
+            'subject' => 'Payment success',
+            'body' => 'Payment success body',
+            'is_enabled' => true,
+        ]);
+
         $staff = $this->makeFinanceUser();
         $order = $this->makeAwaitingPaymentOrder();
 
@@ -48,12 +62,48 @@ class FinanceTransactionOfflineVerificationTest extends TestCase
         $this->assertSame($staff->id, $transaction->processed_by);
         $this->assertSame('verified', data_get($transaction->metadata, 'offline_review.decision'));
         $this->assertSame(OrderStatus::PAID, $order->status);
+        $this->assertDatabaseHas('notification_logs', [
+            'event' => NotificationEvent::PAYMENT_SUCCESS->value,
+            'customer_id' => $order->customer_id,
+            'order_reference' => $order->reference_number,
+        ]);
     }
 
     public function test_pending_offline_transfer_can_be_failed_and_promotes_order_to_failed(): void
     {
+        NotificationTemplate::create([
+            'event' => NotificationEvent::PAYMENT_FAILED,
+            'channel' => NotificationChannel::EMAIL,
+            'name' => 'Payment failed email',
+            'subject' => 'Payment failed',
+            'body' => 'Payment failed body',
+            'is_enabled' => true,
+        ]);
+
         $staff = $this->makeFinanceUser();
         $order = $this->makeAwaitingPaymentOrder();
+        $product = Product::factory()->create([
+            'status' => 'published',
+        ]);
+        $stockItem = StockItem::factory()->create([
+            'product_id' => $product->id,
+            'product_variant_id' => null,
+            'branch_id' => null,
+            'quantity' => 6,
+            'reserved_quantity' => 2,
+            'low_stock_threshold' => 1,
+            'status' => StockItem::STATUS_IN_STOCK,
+        ]);
+        $order->lineItems()->create([
+            'product_id' => $product->id,
+            'variant_id' => null,
+            'product_name' => 'Reserved order item',
+            'variant_name' => null,
+            'sku' => 'RES-001',
+            'unit_price' => 125,
+            'quantity' => 2,
+            'line_total' => 250,
+        ]);
 
         $transaction = PaymentTransaction::create([
             'order_id' => $order->id,
@@ -82,6 +132,18 @@ class FinanceTransactionOfflineVerificationTest extends TestCase
         $this->assertSame('failed', data_get($transaction->metadata, 'offline_review.decision'));
         $this->assertSame('No incoming transfer was found for the supplied receipt.', $transaction->failure_reason);
         $this->assertSame(OrderStatus::FAILED, $order->status);
+        $this->assertSame(0, $stockItem->fresh()->reserved_quantity);
+        $this->assertDatabaseHas('inventory_movements', [
+            'stock_item_id' => $stockItem->id,
+            'reason' => 'payment_failed',
+            'reference_type' => Order::class,
+            'reference_id' => (string) $order->id,
+        ]);
+        $this->assertDatabaseHas('notification_logs', [
+            'event' => NotificationEvent::PAYMENT_FAILED->value,
+            'customer_id' => $order->customer_id,
+            'order_reference' => $order->reference_number,
+        ]);
     }
 
     public function test_gateway_credentials_are_encrypted_at_rest(): void
@@ -112,12 +174,14 @@ class FinanceTransactionOfflineVerificationTest extends TestCase
     private function makeFinanceUser(): User
     {
         Permission::findOrCreate('finance.viewAny', 'web');
+        Permission::findOrCreate('payments.viewAny', 'web');
+        Permission::findOrCreate('payments.refund', 'web');
 
         $user = User::factory()->staff()->create([
             'status' => 'active',
         ]);
 
-        $user->givePermissionTo('finance.viewAny');
+        $user->givePermissionTo(['finance.viewAny', 'payments.viewAny', 'payments.refund']);
 
         return $user;
     }

@@ -1,6 +1,7 @@
 @php
     $isEditing = isset($category);
     $currentParent = old('parent_id', $isEditing ? $category->parent_id : null);
+    $mediaOptions = $mediaOptions ?? collect();
 @endphp
 
 <div class="form-layout">
@@ -127,6 +128,21 @@
                 @endif
 
                 <input type="file" name="image" accept="image/*" class="form-upload">
+                <x-admin.input
+                    name="existing_image_path"
+                    label="Reuse existing media path"
+                    :value="old('existing_image_path', $isEditing ? $category->image_path : null)"
+                    :error="$errors->first('existing_image_path')"
+                    placeholder="categories/editorial-picks.jpg"
+                    list="category-media-library" />
+                <datalist id="category-media-library">
+                    @foreach($mediaOptions as $option)
+                        <option value="{{ $option['path'] }}">{{ $option['label'] }}</option>
+                    @endforeach
+                </datalist>
+                <div class="form-note">
+                    Reuse an already uploaded asset by selecting its storage path, or upload a new file to replace the current image.
+                </div>
 
                 @error('image')
                     <p class="text-sm text-red-600">{{ $message }}</p>

@@ -97,7 +97,7 @@
                     @endif
                 </td>
                 <td class="px-4 py-3 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $txn->type->badgeColor() }}">{{ $txn->type->label() }}</span></td>
-                <td class="px-4 py-3 text-center text-xs">{{ $txn->payment_method->icon() }} {{ $txn->payment_method->label() }}</td>
+                <td class="px-4 py-3 text-center text-xs">{{ $txn->resolvedPaymentMethodIcon() }} {{ $txn->resolvedPaymentMethodLabel() }}</td>
                 <td class="px-4 py-3 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $txn->status->badgeColor() }}">{{ $txn->status->label() }}</span></td>
                 <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ $txn->formattedAmount() }}</td>
                 <td class="px-4 py-3 text-right text-xs text-slate-500">{{ $txn->fee_amount > 0 ? number_format($txn->fee_amount, 2) : '—' }}</td>

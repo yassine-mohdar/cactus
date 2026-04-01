@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Modules\Audit\Services\AuditLogger;
 use App\Modules\Payments\Gateways\OfflinePaymentGateway;
 use App\Modules\Payments\Models\GatewaySetting;
+use App\Modules\Payments\Models\PaymentMethod;
+use App\Modules\Payments\Services\PaymentMethodAvailabilityService;
+use App\Modules\Shipping\Models\ShippingCarrier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -14,21 +17,81 @@ class AdminGatewaySettingController extends Controller
 {
     public function __construct(
         private readonly AuditLogger $audit,
+        private readonly PaymentMethodAvailabilityService $paymentMethodAvailability,
     ) {}
 
     /**
      * Display a listing of all available payment gateways so Admins can configure their keys.
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', GatewaySetting::class);
 
-        // Auto-seed required Gateway skeletons on first load so the Admin has something to configure
-        $this->ensureBaseGatewaysExist();
+        $this->paymentMethodAvailability->ensureDefaults();
 
-        $gateways = GatewaySetting::orderBy('name')->get();
+        $selectedTab = in_array($request->string('tab')->value(), ['methods', 'providers'], true)
+            ? $request->string('tab')->value()
+            : 'methods';
 
-        return view('admin.gateways.index', compact('gateways'));
+        $paymentMethodsQuery = PaymentMethod::query()
+            ->with(['shippingCarriers', 'gatewaySetting'])
+            ->orderBy('sort_order')
+            ->orderBy('name');
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+            $paymentMethodsQuery->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('behavior', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('enabled')) {
+            $paymentMethodsQuery->where('is_enabled', $request->boolean('enabled'));
+        }
+
+        if ($request->filled('channel')) {
+            $paymentMethodsQuery->where('channel', $request->input('channel'));
+        }
+
+        if ($request->filled('behavior')) {
+            $paymentMethodsQuery->where('behavior', $request->input('behavior'));
+        }
+
+        if ($request->boolean('carrier_linked')) {
+            $paymentMethodsQuery->whereHas('shippingCarriers');
+        }
+
+        $paymentMethods = $paymentMethodsQuery->get();
+        $carrierOptions = ShippingCarrier::query()->enabled()->orderBy('name')->get();
+
+        $editingMethod = null;
+        if ($request->filled('method') && $request->input('method') !== 'new') {
+            $editingMethod = PaymentMethod::query()
+                ->with(['shippingCarriers', 'gatewaySetting'])
+                ->find($request->input('method'));
+        }
+
+        $gatewaySortOrder = ['cmi', 'payzone', 'stripe', 'offline_transfer'];
+        $gateways = GatewaySetting::query()
+            ->whereIn('gateway_id', $gatewaySortOrder)
+            ->get()
+            ->sortBy(fn (GatewaySetting $gateway) => array_search($gateway->gateway_id, $gatewaySortOrder, true))
+            ->values();
+
+        $selectedGateway = $request->filled('gateway')
+            ? $gateways->firstWhere('gateway_id', $request->input('gateway'))
+            : $gateways->first();
+
+        return view('admin.gateways.index', compact(
+            'gateways',
+            'selectedGateway',
+            'selectedTab',
+            'paymentMethods',
+            'editingMethod',
+            'carrierOptions',
+        ));
     }
 
     /**
@@ -62,6 +125,7 @@ class AdminGatewaySettingController extends Controller
         ];
 
         $gateway->update($validated);
+        $this->paymentMethodAvailability->syncProviderState();
 
         $this->audit->log(
             action: 'payments.gateway.updated',
@@ -81,7 +145,9 @@ class AdminGatewaySettingController extends Controller
             ],
         );
 
-        return redirect()->route('admin.gateways.index')->with('success', "{$gateway->name} settings updated successfully.");
+        return redirect()
+            ->route('admin.gateways.index', ['tab' => 'providers', 'gateway' => $gateway->gateway_id])
+            ->with('success', "{$gateway->name} settings updated successfully.");
     }
 
     /**
@@ -205,56 +271,6 @@ class AdminGatewaySettingController extends Controller
      */
     private function ensureBaseGatewaysExist(): void
     {
-        $adapters = [
-            [
-                'gateway_id' => 'offline_transfer',
-                'name' => 'Offline Bank Transfer',
-                'metadata' => [
-                    'method_label' => 'Bank Transfer',
-                    'checkout_title' => 'Bank transfer instructions',
-                    'checkout_description' => 'Show the account details after checkout so customers can complete the transfer manually.',
-                    'instructions' => 'Please complete the transfer using the bank details below and share your receipt with the finance team.',
-                    'admin_instructions' => 'Finance should validate the transfer reference and receipt before marking the transaction as completed.',
-                    'payment_window_hours' => 48,
-                    'reference_prefix' => 'NINO',
-                    'require_receipt' => true,
-                ],
-            ],
-            [
-                'gateway_id' => 'cmi',
-                'name' => 'CMI (Centre Monétique Interbancaire)',
-                'metadata' => [
-                    'currency_code' => '504',
-                    'language' => 'fr',
-                ],
-            ],
-            [
-                'gateway_id' => 'payzone',
-                'name' => 'Payzone Morocco',
-                'metadata' => [
-                    'currency' => 'MAD',
-                ],
-            ],
-            [
-                'gateway_id' => 'stripe',
-                'name' => 'Stripe',
-                'metadata' => [
-                    'currency' => 'MAD',
-                ],
-            ]
-        ];
-
-        foreach ($adapters as $adapter) {
-            GatewaySetting::firstOrCreate(
-                ['gateway_id' => $adapter['gateway_id']],
-                [
-                    'name' => $adapter['name'],
-                    'is_enabled' => false,
-                    'mode' => 'test',
-                    'credentials' => [],
-                    'metadata' => $adapter['metadata'] ?? [],
-                ]
-            );
-        }
+        $this->paymentMethodAvailability->ensureDefaults();
     }
 }

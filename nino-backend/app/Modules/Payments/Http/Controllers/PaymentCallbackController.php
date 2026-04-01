@@ -4,6 +4,7 @@ namespace App\Modules\Payments\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Inventory\Services\InventoryService;
+use App\Modules\Finance\Services\InvoiceService;
 use App\Modules\Notifications\Services\NotificationTriggerService;
 use App\Modules\Orders\Enums\OrderStatus;
 use App\Modules\Payments\Models\PaymentTransaction;
@@ -25,6 +26,7 @@ class PaymentCallbackController extends Controller
     public function __construct(
         private readonly PaymentCallbackHandler $callbackHandler,
         private readonly InventoryService $inventoryService,
+        private readonly InvoiceService $invoiceService,
         private readonly NotificationTriggerService $notificationTriggerService,
     ) {}
 
@@ -229,7 +231,7 @@ class PaymentCallbackController extends Controller
 
         $order = $transaction->order;
         $shouldTriggerFailure = $reason === 'payment_failed'
-            && ! in_array($order->status, [OrderStatus::FAILED, OrderStatus::CANCELLED, OrderStatus::REFUNDED], true);
+            && ! in_array($order->status, [OrderStatus::FAILED, OrderStatus::REFUND_PENDING, OrderStatus::CANCELLED, OrderStatus::REFUNDED], true);
 
         if (in_array($order->status, [OrderStatus::PAID, OrderStatus::PREPARING, OrderStatus::SHIPPED, OrderStatus::DELIVERED], true)) {
             return;
@@ -247,6 +249,10 @@ class PaymentCallbackController extends Controller
                 $this->resolveTransactionPaymentMethod($transaction),
                 $this->resolveTransactionReference($transaction),
             );
+        }
+
+        if ($reason === 'order_cancelled') {
+            $this->notificationTriggerService->orderCancelled($order->fresh());
         }
     }
 
@@ -305,6 +311,7 @@ class PaymentCallbackController extends Controller
             $order->update([
                 'status' => OrderStatus::PAID,
             ]);
+            $this->invoiceService->ensureInvoiceForOrder($order->fresh(['transactions', 'shipments', 'invoice']), $transaction->fresh());
 
             $this->notificationTriggerService->paymentSuccess(
                 $order->fresh(),

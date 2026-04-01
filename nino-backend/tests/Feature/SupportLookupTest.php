@@ -6,8 +6,11 @@ use App\Models\User;
 use App\Modules\Orders\Enums\OrderStatus;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Orders\Models\OrderAddress;
+use App\Modules\Shipping\Enums\ShipmentStatus;
+use App\Modules\Shipping\Models\Shipment;
 use App\Modules\Support\Models\InternalNote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class SupportLookupTest extends TestCase
@@ -28,6 +31,33 @@ class SupportLookupTest extends TestCase
         $response->assertSeeText('yassine@example.com');
         $response->assertSeeText('0612345678');
         $response->assertSeeText('Paid');
+    }
+
+    public function test_support_lookup_can_find_orders_by_tracking_number_and_sendit_reference(): void
+    {
+        $this->withoutVite();
+
+        [$staff, $order] = $this->createOrderContext();
+
+        Shipment::create([
+            'order_id' => $order->id,
+            'status' => ShipmentStatus::READY_TO_SHIP->value,
+            'carrier_name' => 'Sendit',
+            'tracking_number' => 'TRACK-SUPPORT-1001',
+            'external_reference' => 'DH1BFE69390',
+        ]);
+
+        $trackingResponse = $this->actingAs($staff)->get(route('admin.support.lookup', ['q' => 'TRACK-SUPPORT-1001']));
+
+        $trackingResponse->assertOk();
+        $trackingResponse->assertSeeText($order->reference_number);
+        $trackingResponse->assertSeeText('TRACK-SUPPORT-1001');
+
+        $referenceResponse = $this->actingAs($staff)->get(route('admin.support.lookup', ['q' => 'DH1BFE69390']));
+
+        $referenceResponse->assertOk();
+        $referenceResponse->assertSeeText($order->reference_number);
+        $referenceResponse->assertSeeText('DH1BFE69390');
     }
 
     public function test_support_order_timeline_uses_current_order_relations(): void
@@ -90,6 +120,12 @@ class SupportLookupTest extends TestCase
             'type' => 'staff',
             'status' => 'active',
         ]);
+
+        foreach (['support.viewAny', 'support.manage_tickets'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $staff->givePermissionTo(['support.viewAny', 'support.manage_tickets']);
 
         $customer = User::factory()->create([
             'name' => 'Yassine Bennani',

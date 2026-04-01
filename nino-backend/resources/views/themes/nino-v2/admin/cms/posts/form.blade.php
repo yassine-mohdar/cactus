@@ -3,6 +3,7 @@
 @php
     $editing = isset($post);
     $selectedTags = old('tag_ids', $editing ? $post->tags->pluck('id')->toArray() : []);
+    $mediaOptions = $mediaOptions ?? collect();
 @endphp
 
 @section('title', $editing ? 'Edit Post' : 'New Post')
@@ -56,8 +57,13 @@
                     </div>
                     <div>
                         <label class="filter-label" for="post-featured-image">Featured Image URL</label>
-                        <input id="post-featured-image" type="text" name="featured_image" value="{{ old('featured_image', $post->featured_image ?? '') }}" class="input-field" placeholder="/storage/blog/hero.jpg">
+                        <input id="post-featured-image" type="text" name="featured_image" value="{{ old('featured_image', $post->featured_image ?? '') }}" class="input-field" placeholder="/storage/blog/hero.jpg" list="cms-media-library">
                     </div>
+                    <datalist id="cms-media-library">
+                        @foreach($mediaOptions as $option)
+                            <option value="{{ $option['url'] }}">{{ $option['label'] }}</option>
+                        @endforeach
+                    </datalist>
                 </div>
             </x-nino.entity-form-section>
 
@@ -122,7 +128,7 @@
                         </div>
                         <div>
                             <label class="filter-label" for="post-og-image">OG Image URL</label>
-                            <input id="post-og-image" type="text" name="og_image" value="{{ old('og_image', $post->og_image ?? '') }}" class="input-field">
+                            <input id="post-og-image" type="text" name="og_image" value="{{ old('og_image', $post->og_image ?? '') }}" class="input-field" list="cms-media-library">
                         </div>
                         <div class="md:col-span-2">
                             <label class="filter-label" for="post-og-description">OG Description</label>

@@ -4,6 +4,8 @@ namespace App\Modules\Shipping\Services;
 
 use App\Modules\Finance\Enums\RefundStatus;
 use App\Modules\Finance\Models\RefundRequest;
+use App\Modules\Finance\Services\InvoiceService;
+use App\Modules\Inventory\Services\InventoryService;
 use App\Modules\Notifications\Services\NotificationTriggerService;
 use App\Modules\Orders\Enums\OrderStatus;
 use App\Modules\Orders\Models\Order;
@@ -25,6 +27,8 @@ class ShipmentService
 {
     public function __construct(
         private readonly ShippingSettingsService $shippingSettings,
+        private readonly InventoryService $inventoryService,
+        private readonly InvoiceService $invoiceService,
         private readonly NotificationTriggerService $notificationTriggerService,
     ) {}
 
@@ -42,7 +46,8 @@ class ShipmentService
                 'order_id' => $order->id,
                 'shipping_method_id' => $shippingMethodId,
                 'status' => ShipmentStatus::PENDING,
-                'carrier_name' => $shippingMethod?->carrier
+                'carrier_name' => $shippingMethod?->shippingCarrier?->name
+                    ?? $shippingMethod?->carrier
                     ?? ($attributes['carrier_name'] ?? null)
                     ?? $this->shippingSettings->defaultCarrierName(),
                 'carrier_service' => $shippingMethod?->name ?? ($attributes['carrier_service'] ?? null),
@@ -100,6 +105,15 @@ class ShipmentService
 
             $shipment->update($update);
             $this->recordStatusChange($shipment, $oldStatus, $newStatus, $notes);
+
+            if ($newStatus === ShipmentStatus::DISPATCHED && $shipment->order) {
+                $this->inventoryService->finalizeReservationsForOrder(
+                    $shipment->order,
+                    reason: 'shipment_dispatched',
+                    userId: Auth::id(),
+                );
+            }
+
             $this->syncOrderStatusFromShipment($shipment, $newStatus);
 
             return $shipment->fresh();
@@ -134,6 +148,42 @@ class ShipmentService
         );
 
         return $shipment->fresh();
+    }
+
+    public function applyExternalStatus(
+        Shipment $shipment,
+        ShipmentStatus $newStatus,
+        ?string $notes = null,
+        array $extraAttributes = [],
+    ): Shipment {
+        if ($shipment->status === $newStatus) {
+            return $shipment;
+        }
+
+        if ($shipment->canTransitionTo($newStatus)) {
+            return $this->transitionStatus($shipment, $newStatus, $notes, $extraAttributes);
+        }
+
+        return DB::transaction(function () use ($shipment, $newStatus, $notes, $extraAttributes) {
+            $oldStatus = $shipment->status;
+            $update = array_merge(['status' => $newStatus], $extraAttributes);
+
+            match ($newStatus) {
+                ShipmentStatus::DELIVERED => $update['delivered_at'] = now(),
+                ShipmentStatus::FAILED_DELIVERY => $update = array_merge($update, [
+                    'failed_at' => now(),
+                    'has_delivery_issue' => true,
+                    'failure_reason' => $notes ?? $shipment->failure_reason,
+                ]),
+                default => null,
+            };
+
+            $shipment->update($update);
+            $this->recordStatusChange($shipment, $oldStatus, $newStatus, $notes ?? 'External provider sync.');
+            $this->syncOrderStatusFromShipment($shipment, $newStatus);
+
+            return $shipment->fresh();
+        });
     }
 
     /**
@@ -211,7 +261,7 @@ class ShipmentService
             ? $order->status
             : OrderStatus::from((string) $order->status);
 
-        if (in_array($currentOrderStatus, [OrderStatus::DELIVERED, OrderStatus::REFUNDED, OrderStatus::CANCELLED], true)) {
+        if (in_array($currentOrderStatus, [OrderStatus::DELIVERED, OrderStatus::REFUNDED, OrderStatus::REFUND_PENDING, OrderStatus::CANCELLED], true)) {
             return;
         }
 
@@ -240,17 +290,29 @@ class ShipmentService
             'status' => $nextOrderStatus,
         ]);
 
+        $freshOrder = $order->fresh();
+        $freshShipment = $shipment->fresh(['shippingMethod']);
+
         if ($shipmentStatus === ShipmentStatus::DISPATCHED) {
-            $this->notificationTriggerService->orderShipped(
-                $order->fresh(),
-                $shipment->fresh(['shippingMethod']),
-            );
+            $this->notificationTriggerService->orderShipped($freshOrder, $freshShipment);
+        }
+
+        if ($shipmentStatus === ShipmentStatus::DELIVERED) {
+            if ($freshOrder->isCodPaymentMethod()) {
+                $this->invoiceService->ensureInvoiceForOrder($freshOrder);
+            }
+
+            $this->notificationTriggerService->orderDelivered($freshOrder, $freshShipment);
+        }
+
+        if ($shipmentStatus === ShipmentStatus::CANCELLED) {
+            $this->notificationTriggerService->orderCancelled($freshOrder);
         }
     }
 
     private function syncReturnedOrderState(Order $order, OrderStatus $currentOrderStatus): void
     {
-        $requiresRefundFoundation = $order->payment_method !== 'cash_on_delivery';
+        $requiresRefundFoundation = ! $order->isCodPaymentMethod();
 
         if ($requiresRefundFoundation) {
             RefundRequest::query()->firstOrCreate(
@@ -269,7 +331,7 @@ class ShipmentService
         }
 
         $nextOrderStatus = $requiresRefundFoundation
-            ? OrderStatus::REFUNDED
+            ? OrderStatus::REFUND_PENDING
             : OrderStatus::CANCELLED;
 
         if ($currentOrderStatus === $nextOrderStatus) {

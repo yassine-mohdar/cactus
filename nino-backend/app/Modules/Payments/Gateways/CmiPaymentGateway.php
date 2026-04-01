@@ -2,12 +2,12 @@
 
 namespace App\Modules\Payments\Gateways;
 
+use App\Modules\Finance\Models\PaymentTransaction;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Payments\Contracts\PaymentGatewayInterface;
 use App\Modules\Payments\DTOs\PaymentResponse;
 use App\Modules\Payments\Enums\PaymentStatus;
 use App\Modules\Payments\Models\GatewaySetting;
-use App\Modules\Payments\Models\PaymentTransaction;
 use App\Modules\Payments\Services\PaymentLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -111,6 +111,11 @@ class CmiPaymentGateway implements PaymentGatewayInterface
         // Create the transaction record
         $transaction = PaymentTransaction::create([
             'order_id' => $order->id,
+            'customer_id' => $order->customer_id,
+            'payment_method_id' => $order->payment_method_id,
+            'payment_method_label' => $order->resolvedPaymentMethodLabel(),
+            'payment_method_behavior' => $order->paymentMethodBehavior(),
+            'payment_method' => $order->resolvedPaymentMethodCode() ?? 'cmi',
             'gateway' => self::GATEWAY_ID,
             'status' => PaymentStatus::PENDING,
             'amount' => $order->grand_total,

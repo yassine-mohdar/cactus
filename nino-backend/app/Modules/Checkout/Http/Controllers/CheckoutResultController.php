@@ -37,7 +37,7 @@ class CheckoutResultController extends Controller
                 'grand_total' => number_format((float) $order->grand_total, 2, '.', ''),
                 'items_count' => (int) $order->lineItems->sum('quantity'),
                 'shipping_method' => $order->shipping_method,
-                'payment_method' => $order->payment_method,
+                'payment_method' => $order->resolvedPaymentMethodLabel(),
             ],
             'account' => $this->buildAccountSummary($request->user(), $order),
             'lookup' => [
@@ -107,7 +107,7 @@ class CheckoutResultController extends Controller
     {
         $order = Order::query()
             ->where('reference_number', $reference)
-            ->with(['customer', 'lineItems', 'shippingAddress', 'billingAddress', 'shipment'])
+            ->with(['customer', 'lineItems', 'shippingAddress', 'billingAddress', 'shipment', 'paymentMethodRecord'])
             ->first();
 
         if ($order) {
@@ -119,7 +119,7 @@ class CheckoutResultController extends Controller
         }
 
         $transaction = PaymentTransaction::query()
-            ->with(['order.customer', 'order.lineItems', 'order.shippingAddress', 'order.billingAddress', 'order.shipment'])
+            ->with(['order.customer', 'order.lineItems', 'order.shippingAddress', 'order.billingAddress', 'order.shipment', 'order.paymentMethodRecord'])
             ->where(function ($query) use ($reference) {
                 if (Schema::hasColumn('payment_transactions', 'reference')) {
                     $query->orWhere('reference', $reference);
@@ -160,7 +160,8 @@ class CheckoutResultController extends Controller
      */
     protected function buildOfflinePaymentSummary(Order $order): ?array
     {
-        if (! in_array($order->payment_method, ['bank_transfer', 'offline_transfer'], true)) {
+        if (! $order->paymentMethodRecord?->isOfflineManual()
+            && ! in_array($order->resolvedPaymentMethodCode(), ['bank_transfer'], true)) {
             return null;
         }
 
@@ -173,6 +174,9 @@ class CheckoutResultController extends Controller
             return $transaction->payload['offline_method'];
         }
 
-        return app(OfflinePaymentGateway::class)->checkoutDetails(reference: $transaction?->gateway_reference);
+        return app(OfflinePaymentGateway::class)->checkoutDetails(
+            reference: $transaction?->gateway_reference,
+            paymentMethod: $order->paymentMethodRecord,
+        );
     }
 }

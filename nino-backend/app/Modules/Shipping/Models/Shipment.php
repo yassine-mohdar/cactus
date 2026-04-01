@@ -5,6 +5,7 @@ namespace App\Modules\Shipping\Models;
 use App\Models\User;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Shipping\Enums\ShipmentStatus;
+use App\Modules\Shipping\Models\ShippingCarrier;
 use App\Modules\Shipping\Services\ShippingSettingsService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,7 +20,13 @@ class Shipment extends Model
         'carrier_name',
         'carrier_service',
         'tracking_number',
+        'external_reference',
+        'external_status',
         'tracking_url',
+        'label_url',
+        'external_payload',
+        'last_provider_sync_at',
+        'provider_error',
         'weight',
         'dimensions',
         'package_count',
@@ -45,6 +52,8 @@ class Shipment extends Model
         'delivered_at' => 'datetime',
         'failed_at' => 'datetime',
         'returned_at' => 'datetime',
+        'last_provider_sync_at' => 'datetime',
+        'external_payload' => 'array',
     ];
 
     // ──────────────────────────────────────────────────────────────
@@ -126,8 +135,21 @@ class Shipment extends Model
      */
     public function getTrackingLink(): ?string
     {
+        if ($this->usesSendit()) {
+            $senditCode = $this->external_reference ?: $this->tracking_number;
+
+            if ($senditCode) {
+                return 'https://app.sendit.ma/deliveries/'.urlencode($senditCode);
+            }
+        }
+
         if ($this->tracking_url) {
             return $this->tracking_url;
+        }
+
+        $carrierTemplate = $this->shippingMethod?->shippingCarrier?->tracking_url_template;
+        if ($carrierTemplate && $this->tracking_number) {
+            return str_replace('{tracking_number}', urlencode($this->tracking_number), $carrierTemplate);
         }
 
         if (!$this->tracking_number || !$this->carrier_name) {
@@ -143,5 +165,10 @@ class Shipment extends Model
             'ups' => "https://www.ups.com/track?tracknum={$this->tracking_number}",
             default => app(ShippingSettingsService::class)->buildTrackingUrl($this->tracking_number),
         };
+    }
+
+    public function usesSendit(): bool
+    {
+        return $this->shippingMethod?->shippingCarrier?->provider === ShippingCarrier::PROVIDER_SENDIT;
     }
 }

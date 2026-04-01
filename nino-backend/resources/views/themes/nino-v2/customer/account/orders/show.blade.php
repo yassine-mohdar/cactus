@@ -20,6 +20,10 @@
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <a href="{{ route('customer.account.orders.index') }}" class="btn-secondary">Back to orders</a>
+                    @if($invoice)
+                        <a href="{{ route('customer.account.orders.invoice.preview', $order) }}" class="btn-secondary">Preview invoice</a>
+                        <a href="{{ route('customer.account.orders.invoice', $order) }}" class="btn-primary">Download PDF</a>
+                    @endif
                     @if($tracking && $tracking['tracking_url'])
                         <a href="{{ $tracking['tracking_url'] }}" target="_blank" rel="noopener noreferrer" class="btn-primary">Open tracking</a>
                     @endif

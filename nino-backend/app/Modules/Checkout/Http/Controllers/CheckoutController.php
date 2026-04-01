@@ -7,8 +7,10 @@ use App\Modules\Checkout\Exceptions\CheckoutException;
 use App\Modules\Checkout\Http\Requests\ProcessCheckoutRequest;
 use App\Modules\Checkout\Services\CheckoutService;
 use App\Modules\Payments\Gateways\OfflinePaymentGateway;
+use App\Modules\Payments\DTOs\PaymentResponse;
 use App\Modules\Payments\Services\PaymentGatewayRegistry;
 use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
@@ -81,11 +83,19 @@ class CheckoutController extends Controller
     {
         $gateway = $this->paymentGatewayRegistry->resolveForPaymentMethod($order->payment_method);
 
-        if (! $gateway instanceof OfflinePaymentGateway) {
+        if (! $gateway) {
             return null;
         }
 
         $response = $gateway->initiatePayment($order);
+
+        return $gateway instanceof OfflinePaymentGateway
+            ? $this->offlinePaymentPayload($gateway, $response)
+            : $this->onlinePaymentPayload($gateway->gatewayId(), $response);
+    }
+
+    private function offlinePaymentPayload(OfflinePaymentGateway $gateway, PaymentResponse $response): array
+    {
         $details = $response->rawPayload['offline_method'] ?? $gateway->checkoutDetails(reference: $response->gatewayReference);
 
         return [
@@ -95,6 +105,23 @@ class CheckoutController extends Controller
             'reference' => $response->gatewayReference,
             'message' => $response->message,
             'offline_method' => $details,
+        ];
+    }
+
+    private function onlinePaymentPayload(string $gatewayId, PaymentResponse $response): array
+    {
+        $rawPayload = $response->rawPayload ?? [];
+        $gatewayUrl = $response->redirectUrl ?? data_get($rawPayload, 'gateway_url');
+
+        return [
+            'gateway' => $gatewayId,
+            'status' => $response->status,
+            'reference' => $response->gatewayReference,
+            'message' => $response->message,
+            'redirect_url' => $gatewayUrl,
+            'redirect_method' => $gatewayId === 'cmi' ? 'POST' : 'GET',
+            'form_fields' => $gatewayId === 'cmi' ? Arr::except($rawPayload, ['gateway_url']) : [],
+            'raw' => $gatewayId === 'cmi' ? [] : $rawPayload,
         ];
     }
 }

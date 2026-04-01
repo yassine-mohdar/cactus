@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Lab404\Impersonate\Events\LeaveImpersonation;
 use Lab404\Impersonate\Events\TakeImpersonation;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -187,7 +188,7 @@ class AuditLogTest extends TestCase
             ],
         ]);
 
-        $response->assertRedirect(route('admin.gateways.index'));
+        $response->assertRedirect(route('admin.gateways.index', ['tab' => 'providers', 'gateway' => 'stripe']));
 
         $auditLog = AuditLog::query()->where('action', 'payments.gateway.updated')->latest('id')->firstOrFail();
 
@@ -377,10 +378,13 @@ class AuditLogTest extends TestCase
 
     public function test_refund_status_updates_are_audited(): void
     {
+        Permission::findOrCreate('payments.refund', 'web');
+
         $staffUser = User::factory()->create([
             'type' => 'staff',
             'status' => 'active',
         ]);
+        $staffUser->givePermissionTo('payments.refund');
         $customer = User::factory()->create([
             'type' => 'customer',
             'status' => 'active',

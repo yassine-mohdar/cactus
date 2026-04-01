@@ -3,6 +3,7 @@
 namespace App\Modules\Checkout\Http\Requests;
 
 use App\Modules\Customers\Models\Address;
+use App\Modules\Payments\Services\PaymentMethodAvailabilityService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +20,16 @@ class ProcessCheckoutRequest extends FormRequest
 
         // Core differences based on authentication state
         $rules = [
-            'payment_method' => 'required|string',
+            'payment_method' => [
+                'required',
+                'string',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! app(PaymentMethodAvailabilityService::class)->resolveByCode((string) $value)) {
+                        $fail('The selected payment method is not available.');
+                    }
+                },
+            ],
+            'shipping_method_id' => ['nullable', 'integer', Rule::exists('shipping_methods', 'id')],
         ];
 
         if (!$user) {

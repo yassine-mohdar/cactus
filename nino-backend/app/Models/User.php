@@ -8,6 +8,7 @@ use App\Modules\IAM\Notifications\StaffResetPasswordNotification;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Organizations\Models\Organization;
 use App\Modules\Community\Models\GroupMembership;
+use App\Modules\Finance\Models\Invoice;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -136,6 +137,11 @@ class User extends Authenticatable
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'customer_id');
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class, 'customer_id');
     }
 
     public function communityGroupMemberships(): HasMany

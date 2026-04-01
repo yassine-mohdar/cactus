@@ -14,6 +14,10 @@ use App\Modules\Inventory\Services\InventoryService;
 use App\Modules\Notifications\Services\NotificationTriggerService;
 use App\Modules\Orders\Enums\OrderStatus;
 use App\Modules\Orders\Models\Order;
+use App\Modules\Orders\Services\OrderPostCreationAutomationService;
+use App\Modules\Payments\Models\PaymentMethod;
+use App\Modules\Payments\Services\PaymentMethodAvailabilityService;
+use App\Modules\Shipping\Models\ShippingMethod as ShippingMethodRecord;
 use App\Modules\Shipping\Services\ShippingSettingsService;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +30,8 @@ class CheckoutService
         protected ShippingSettingsService $shippingSettings,
         protected InventoryService $inventoryService,
         protected NotificationTriggerService $notificationTriggerService,
+        protected PaymentMethodAvailabilityService $paymentMethodAvailability,
+        protected OrderPostCreationAutomationService $orderPostCreationAutomation,
     ) {}
 
     /**
@@ -33,7 +39,8 @@ class CheckoutService
      */
     public function processCheckout(array $data, ?User $user, ?string $sessionId): Order
     {
-        return DB::transaction(function () use ($data, $user, $sessionId) {
+        /** @var Order $order */
+        $order = DB::transaction(function () use ($data, $user, $sessionId) {
             // 1. Resolve Cart
             $cart = $this->cartService->getCart($user, $sessionId);
             
@@ -58,19 +65,24 @@ class CheckoutService
 
             // 3. Calculate Final Totals from CartService
             $cartSummary = $this->cartService->getSummary($cart);
+            $paymentSnapshot = $this->paymentMethodAvailability->snapshot($data['payment_method'] ?? null);
+            $selectedShippingMethod = $this->resolveCheckoutShippingMethod($data['shipping_method_id'] ?? null);
 
             // 4. Build Master Order Record
             $order = Order::create([
                 'customer_id' => $user->id,
-                'status' => $this->resolveInitialOrderStatus($data['payment_method'] ?? null),
+                'status' => $this->resolveInitialOrderStatus($paymentSnapshot['behavior'] ?? null, $paymentSnapshot['code'] ?? null),
                 'currency' => $cartSummary['currency'],
                 'subtotal' => $cartSummary['totals']['subtotal'],
                 'tax_total' => $cartSummary['totals']['tax'],
                 'shipping_total' => $cartSummary['totals']['shipping_estimate'],
                 'discount_total' => $cartSummary['totals']['discount'],
                 'grand_total' => $cartSummary['totals']['grand_total'],
-                'payment_method' => $data['payment_method'],
-                'shipping_method' => $this->shippingSettings->defaultMethodCode(),
+                'payment_method' => $paymentSnapshot['code'] ?? $data['payment_method'],
+                'payment_method_id' => $paymentSnapshot['id'],
+                'payment_method_label' => $paymentSnapshot['label'],
+                'shipping_method' => $selectedShippingMethod?->name ?? $this->shippingSettings->defaultMethodCode(),
+                'shipping_method_id' => $selectedShippingMethod?->id,
             ]);
 
             // 5. Snapshot Line Items
@@ -105,17 +117,38 @@ class CheckoutService
             $cart->delete();
 
             $this->notificationTriggerService->orderPlaced($order);
-            
+
             return $order;
         });
+
+        $this->orderPostCreationAutomation->bootstrap($order->fresh([
+            'paymentMethodRecord',
+            'shippingMethodRecord.shippingCarrier',
+            'addresses',
+            'lineItems',
+        ]));
+
+        return $order->fresh(['customer']);
     }
 
-    protected function resolveInitialOrderStatus(?string $paymentMethod): OrderStatus
+    protected function resolveInitialOrderStatus(?string $behavior, ?string $paymentMethodCode): OrderStatus
     {
-        return match ($paymentMethod) {
-            null, '', 'cash_on_delivery' => OrderStatus::PENDING,
+        return match (true) {
+            $behavior === PaymentMethod::BEHAVIOR_COD,
+            in_array($paymentMethodCode, [null, '', 'cod'], true) => OrderStatus::PENDING,
             default => OrderStatus::AWAITING_PAYMENT,
         };
+    }
+
+    protected function resolveCheckoutShippingMethod(mixed $shippingMethodId): ?ShippingMethodRecord
+    {
+        if (! filled($shippingMethodId)) {
+            return null;
+        }
+
+        return ShippingMethodRecord::query()
+            ->enabled()
+            ->find($shippingMethodId);
     }
 
     protected function resolveReservableStockItem($cartItem): ?StockItem

@@ -1,16 +1,35 @@
 # PROJECT_PROGRESS.md
 
 ## Last Updated
-2026-03-21
+2026-03-29
 
 ## Current Phase
-Phase 10 — Notifications, Email, SMS, WhatsApp, and Messaging Center
+Phase 18 — Final Stabilization, QA, Testing, and Release Readiness
 
 ## Phase Routing Note
 - Phase 2A is intentionally deferred by user instruction.
-- Active execution has moved from completed Phase 8 payment foundations into the Phase 10 notification trigger track.
+- Active execution is now on release-candidate hardening and tracker reconciliation after the final backend completion pass.
 
 ## Last Batch Completed
+### Batch 129 — Release Candidate Hardening and Tracker Reconciliation (2026-03-29)
+- Implemented final release-blocking backend hardening across checkout, notifications, bulk actions, media reuse, and runtime defaults.
+- Unified product bulk actions behind a shared catalog service so both catalog and reports entrypoints now use the live product status schema instead of the stale `products.is_active` path.
+- Completed release-blocking notification lifecycle wiring:
+  - password setup notifications now write through the notification trigger/log system
+  - shipment delivery and cancellation now trigger customer notifications from the real shipment lifecycle
+  - payment cancellation now triggers the order-cancelled notification path from the real callback flow
+- Completed checkout gateway initiation on the production checkout path so online gateways now return redirect/form payloads directly from checkout, with CMI covered as the primary release gateway.
+- Added admin media reuse support for category and CMS post workflows through reusable public-media suggestions, closing the remaining media-picker depth gap without introducing a second media storage model.
+- Updated `.env.example` to document the MySQL-local runtime contract and the current mail/runtime defaults expected by release readiness.
+- Reconciled stale tracker state:
+  - `P12-ENTITYSEO-01`, `P12-ENTITYSEO-02`, `P12-UX-04`, and `P15-BULK-01` are now marked complete in [phases-tasks.md](phases-tasks.md)
+  - `PHASES.md` now reflects Phases 10, 11, 12, 13, 15, and 18 as done
+- Verification:
+  - `php artisan test tests/Feature/CheckoutFlowTest.php tests/Feature/ShippingAdminTest.php tests/Feature/NotificationTriggerTest.php tests/Feature/PaymentGatewayAdapterTest.php`
+  - `php artisan test tests/Feature/CheckoutFlowTest.php tests/Feature/ShippingAdminTest.php tests/Feature/ProductAdminWorkflowTest.php`
+  - `php artisan test`
+  - Result: targeted suites passing; full suite passing with `308` tests and `2127` assertions
+
 ### Batch 128 — Phase 10 Production Trigger Wiring Batch 1 (2026-03-21)
 - Implemented only `P10-TRIGGER-01`, `P10-TRIGGER-02`, `P10-TRIGGER-03`, and `P10-TRIGGER-04`.
 - Wired real order-placed notifications from [CheckoutService](app/Modules/Checkout/Services/CheckoutService.php) so completed checkout now dispatches the operational order notification through the production checkout path.

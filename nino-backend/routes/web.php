@@ -12,6 +12,8 @@ use App\Modules\IAM\Http\Controllers\StaffAccessSetupController;
 use App\Modules\IAM\Http\Controllers\StaffSessionController;
 use App\Modules\IAM\Http\Controllers\TwoFactorSetupController;
 use App\Modules\Checkout\Http\Controllers\CheckoutResultController;
+use App\Modules\Customers\Http\Controllers\CustomerInvoiceController;
+use App\Modules\Finance\Http\Controllers\AdminInvoiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,6 +58,8 @@ Route::prefix('account')->name('customer.')->group(function () {
         Route::get('/', [CustomerAuthController::class, 'home'])->name('account.home');
         Route::get('orders', [\App\Modules\Customers\Http\Controllers\CustomerOrderController::class, 'index'])->name('account.orders.index');
         Route::get('orders/{order}', [\App\Modules\Customers\Http\Controllers\CustomerOrderController::class, 'show'])->name('account.orders.show');
+        Route::get('orders/{order}/invoice', [CustomerInvoiceController::class, 'show'])->name('account.orders.invoice');
+        Route::get('orders/{order}/invoice/preview', [CustomerInvoiceController::class, 'preview'])->name('account.orders.invoice.preview');
         Route::get('profile', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'edit'])->name('account.profile.edit');
         Route::put('profile', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'updateProfile'])->name('account.profile.update');
         Route::put('password', [\App\Modules\Customers\Http\Controllers\ProfileController::class, 'updatePassword'])->name('account.password.update');
@@ -104,6 +108,10 @@ Route::middleware('auth')->group(function () {
         Route::get('orders', [\App\Modules\Orders\Http\Controllers\OrderController::class, 'index'])->name('admin.orders.index');
         Route::get('orders/create', \App\Livewire\Admin\Orders\OrderCreate::class)->name('admin.orders.create');
         Route::get('orders/{order}', [\App\Modules\Orders\Http\Controllers\OrderController::class, 'show'])->name('admin.orders.show');
+        Route::get('orders/{order}/invoice', [AdminInvoiceController::class, 'show'])->name('admin.orders.invoice');
+        Route::get('orders/{order}/invoice/preview', [AdminInvoiceController::class, 'preview'])->name('admin.orders.invoice.preview');
+        Route::put('orders/{order}/delivery-contact', [\App\Modules\Orders\Http\Controllers\OrderController::class, 'updateDeliveryContact'])->name('admin.orders.delivery-contact');
+        Route::post('orders/{order}/status', [\App\Modules\Orders\Http\Controllers\OrderController::class, 'updateStatus'])->name('admin.orders.status');
 
         // Customers
         Route::resource('customers', \App\Modules\Customers\Http\Controllers\AdminCustomerController::class)->names('admin.customers');
@@ -126,6 +134,10 @@ Route::middleware('auth')->group(function () {
         Route::prefix('gateways')->middleware('permission.any:finance.manage_gateways')->group(function () {
             Route::get('/', [\App\Modules\Payments\Http\Controllers\AdminGatewaySettingController::class, 'index'])->name('admin.gateways.index');
             Route::put('/{gateway}', [\App\Modules\Payments\Http\Controllers\AdminGatewaySettingController::class, 'update'])->name('admin.gateways.update');
+            Route::post('/methods', [\App\Modules\Payments\Http\Controllers\AdminPaymentMethodController::class, 'store'])->name('admin.gateways.methods.store');
+            Route::put('/methods/{paymentMethod}', [\App\Modules\Payments\Http\Controllers\AdminPaymentMethodController::class, 'update'])->name('admin.gateways.methods.update');
+            Route::post('/methods/{paymentMethod}/toggle', [\App\Modules\Payments\Http\Controllers\AdminPaymentMethodController::class, 'toggle'])->name('admin.gateways.methods.toggle');
+            Route::delete('/methods/{paymentMethod}', [\App\Modules\Payments\Http\Controllers\AdminPaymentMethodController::class, 'destroy'])->name('admin.gateways.methods.destroy');
         });
 
         // Inventory
@@ -167,6 +179,11 @@ Route::middleware('auth')->group(function () {
 
         // Shipping
         Route::prefix('shipping')->name('admin.shipping.')->group(function () {
+            Route::resource('carriers', \App\Modules\Shipping\Http\Controllers\ShippingCarrierController::class)
+                ->except(['show'])
+                ->names('carriers');
+            Route::post('carriers/{carrier}/sync-districts', [\App\Modules\Shipping\Http\Controllers\ShippingCarrierController::class, 'syncDistricts'])->name('carriers.sync-districts');
+
             // Shipping Methods CRUD
             Route::resource('methods', \App\Modules\Shipping\Http\Controllers\ShippingMethodController::class)
                 ->except(['show'])
@@ -179,6 +196,10 @@ Route::middleware('auth')->group(function () {
             Route::post('shipments/{shipment}/status', [\App\Modules\Shipping\Http\Controllers\ShipmentController::class, 'updateStatus'])->name('shipments.status');
             Route::post('shipments/{shipment}/tracking', [\App\Modules\Shipping\Http\Controllers\ShipmentController::class, 'updateTracking'])->name('shipments.tracking');
             Route::post('shipments/{shipment}/issue', [\App\Modules\Shipping\Http\Controllers\ShipmentController::class, 'toggleIssue'])->name('shipments.issue');
+            Route::post('shipments/{shipment}/sendit/create', [\App\Modules\Shipping\Http\Controllers\ShipmentController::class, 'createSenditDelivery'])->name('shipments.sendit.create');
+            Route::post('shipments/{shipment}/sendit/update', [\App\Modules\Shipping\Http\Controllers\ShipmentController::class, 'updateSenditDelivery'])->name('shipments.sendit.update');
+            Route::post('shipments/{shipment}/sendit/sync', [\App\Modules\Shipping\Http\Controllers\ShipmentController::class, 'syncSenditStatus'])->name('shipments.sendit.sync');
+            Route::get('shipments/{shipment}/sendit/label', [\App\Modules\Shipping\Http\Controllers\ShipmentController::class, 'downloadSenditLabel'])->name('shipments.sendit.label');
 
             // Reports
             Route::get('reports', [\App\Modules\Shipping\Http\Controllers\ShipmentController::class, 'reports'])->name('reports');
@@ -342,6 +363,10 @@ Route::get('api/orders/{reference}', [\App\Modules\Orders\Http\Controllers\Order
 // Payment Gateway Callbacks & Webhooks (Public, no auth middleware)
 // These endpoints are called by external gateway servers and customer browsers.
 // ──────────────────────────────────────────────────────────────
+Route::post('shipping/sendit/{carrier:code}/webhook', \App\Modules\Shipping\Http\Controllers\SenditWebhookController::class)
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('shipping.sendit.webhook');
+
 Route::prefix('payment')->name('payment.')->group(function () {
     // CMI Morocco
     Route::match(['get', 'post'], '/cmi/callback', [\App\Modules\Payments\Http\Controllers\PaymentCallbackController::class, 'cmiCallback'])->name('cmi.callback');

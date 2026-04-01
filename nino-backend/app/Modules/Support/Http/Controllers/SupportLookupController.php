@@ -11,6 +11,11 @@ use Illuminate\Http\Request;
 
 class SupportLookupController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission.any:support.viewAny,support.manage_tickets');
+    }
+
     /**
      * Unified support search — searches orders, transactions, and customer data.
      */
@@ -31,10 +36,16 @@ class SupportLookupController extends Controller
                 ->with([
                     'customer:id,name,first_name,last_name,email,phone',
                     'billingAddress:id,order_id,first_name,last_name,phone',
+                    'shipments:id,order_id,tracking_number,external_reference,status',
                 ])
                 ->where(function ($query) use ($q) {
                     $query
                         ->where('reference_number', 'like', "%{$q}%")
+                        ->orWhereHas('shipments', function ($shipmentQuery) use ($q) {
+                            $shipmentQuery
+                                ->where('tracking_number', 'like', "%{$q}%")
+                                ->orWhere('external_reference', 'like', "%{$q}%");
+                        })
                         ->orWhereHas('customer', function ($customerQuery) use ($q) {
                             $customerQuery
                                 ->where('email', 'like', "%{$q}%")

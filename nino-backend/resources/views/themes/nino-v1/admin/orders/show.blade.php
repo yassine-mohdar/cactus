@@ -132,6 +132,38 @@
             </div>
         </div>
         @endif
+
+        @can('orders.override_status')
+        <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-200 bg-white-container-low">
+                <h3 class="font-bold text-lg font-headline text-slate-900">Manual Status Override</h3>
+            </div>
+            <form action="{{ route('admin.orders.status', $order) }}" method="POST" class="p-6 space-y-4 text-sm">
+                @csrf
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1" for="order-status-v1">Status</label>
+                    <select id="order-status-v1" name="status" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20">
+                        @foreach($statuses as $statusOption)
+                            <option value="{{ $statusOption->value }}" @selected(old('status', $order->status->value) === $statusOption->value)>{{ $statusOption->label() }}</option>
+                        @endforeach
+                    </select>
+                    @error('status')
+                        <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1" for="order-status-notes-v1">Reason / note</label>
+                    <textarea id="order-status-notes-v1" name="notes" rows="3" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:ring-slate-900/20">{{ old('notes') }}</textarea>
+                    @error('notes')
+                        <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+                <button type="submit" class="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800">
+                    Update Order Status
+                </button>
+            </form>
+        </div>
+        @endcan
         
         <!-- Customer Notes -->
         @if($order->customer_notes)

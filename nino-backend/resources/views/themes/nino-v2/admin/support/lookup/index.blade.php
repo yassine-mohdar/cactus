@@ -8,7 +8,7 @@
 {{-- Search --}}
 <form method="GET" class="filter-toolbar mb-6">
     <div class="flex flex-col gap-3 sm:flex-row">
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="Search by reference, email, phone, or customer name..." class="input-field flex-1" autofocus>
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Search by order reference, tracking number, email, phone, or customer name..." class="input-field flex-1" autofocus>
         <x-nino.button type="submit" variant="primary">Search</x-nino.button>
     </div>
 </form>
@@ -30,6 +30,7 @@
                     <th>Customer</th>
                     <th>Email</th>
                     <th>Phone</th>
+                    <th>Tracking</th>
                     <th class="text-center">Status</th>
                     <th class="text-right">Total</th>
                     <th>Date</th>
@@ -46,10 +47,16 @@
                         : trim($customer?->full_name ?: ($customer?->name ?? ''));
                     $customerEmail = $customer?->email;
                     $customerPhone = $billingAddress?->phone ?? $customer?->phone;
+                    $latestShipment = $order->shipments->sortByDesc('id')->first();
+                    $trackingValue = $latestShipment?->tracking_number ?: $latestShipment?->external_reference;
+                    $providerReference = $latestShipment?->external_reference && $latestShipment?->external_reference !== $trackingValue
+                        ? $latestShipment->external_reference
+                        : null;
                     $orderTone = match ($order->status?->value) {
                         'delivered' => 'success',
                         'shipped', 'paid' => 'info',
                         'failed', 'cancelled', 'refunded' => 'danger',
+                        'refund_pending' => 'warning',
                         default => 'warning',
                     };
                 @endphp
@@ -58,6 +65,12 @@
                     <td class="px-4 py-3 text-sm text-[#1E2B27]">{{ $customerName !== '' ? $customerName : '—' }}</td>
                     <td class="px-4 py-3 text-xs text-[#61706B]">{{ $customerEmail ?? '—' }}</td>
                     <td class="px-4 py-3 text-xs text-[#61706B]">{{ $customerPhone ?? '—' }}</td>
+                    <td class="px-4 py-3 font-mono text-xs text-[#61706B]">
+                        <span class="block">{{ $trackingValue ?? '—' }}</span>
+                        @if($providerReference)
+                            <span class="mt-1 block text-[11px] text-[#8C7B65]">Provider: {{ $providerReference }}</span>
+                        @endif
+                    </td>
                     <td class="px-4 py-3 text-center"><x-nino.status-badge :tone="$orderTone" size="sm">{{ $order->status?->label() ?? 'N/A' }}</x-nino.status-badge></td>
                     <td class="px-4 py-3 text-right font-semibold text-[#1E2B27]">{{ number_format((float) $order->grand_total, 2) }}</td>
                     <td class="px-4 py-3 text-xs text-[#61706B]">{{ $order->created_at->format('M d, H:i') }}</td>
@@ -69,7 +82,7 @@
         </div>
     </div>
     @else
-    <x-nino.empty-state title="No orders found" description="Try another reference, email, phone number, or customer name." icon="shopping_bag" />
+    <x-nino.empty-state title="No orders found" description="Try another reference, tracking number, email, phone number, or customer name." icon="shopping_bag" />
     @endif
 </div>
 
@@ -115,7 +128,7 @@
 @else
 <x-nino.empty-state
     title="Search support records"
-    description="Enter an order reference, email, phone number, customer name, or transaction reference to search."
+    description="Enter an order reference, tracking number, email, phone number, customer name, or transaction reference to search."
     icon="search" />
 @endif
 @endsection

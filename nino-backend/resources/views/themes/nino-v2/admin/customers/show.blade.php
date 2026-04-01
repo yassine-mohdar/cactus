@@ -57,6 +57,7 @@
                                         'delivered' => 'success',
                                         'shipped' => 'info',
                                         'failed', 'cancelled', 'refunded' => 'danger',
+                                        'refund_pending' => 'warning',
                                         default => 'warning',
                                     };
                                 @endphp

@@ -1,13 +1,13 @@
 # PHASES.md
 
 ## Current Active Phase
-Phase 10 — Notifications, Email, SMS, WhatsApp, and Messaging Center
+Phase 18 — Final Stabilization, QA, Testing, and Release Readiness
 
 ## Overall Status
-- Project Status: NOT_RELEASE_READY
-- Reconciliation State: Strict audit completed on 2026-03-20
-- Current Focus: Phase 10 trigger wiring is underway; order placed, payment success, payment failed, and shipped notifications now fire from real checkout, callback, and shipment flows
-- Real Milestone: Phase 18 stabilization work exists, but release readiness is blocked by unfinished earlier phases
+- Project Status: RELEASE_CANDIDATE
+- Reconciliation State: Release-candidate hardening verified on 2026-03-29
+- Current Focus: Runtime defaults, payment initiation, notification lifecycle wiring, admin media reuse, and stale tracker cleanup are implemented and covered by the full automated suite
+- Real Milestone: Core commerce, finance, support, shipping, content, notifications, and release-readiness verification are complete; Phase 2A remains intentionally deferred and non-blocking
 
 ---
 
@@ -25,15 +25,15 @@ Phase 10 — Notifications, Email, SMS, WhatsApp, and Messaging Center
 | Phase 7 | DONE | Cart, checkout, thank-you/failure flows, order snapshots, order lifecycle wiring, returned/refund-ready handling, and the full planned admin order UX including filters, timeline, notes, and audit visibility are implemented and tested |
 | Phase 8 | DONE | Payment transaction domain, adapter architecture, CMI/Payzone/Stripe foundations, offline bank-transfer configuration/rendering, finance-side manual verification, gateway-admin controls/validation, and redacted payment logging with failure/status audit are implemented and tested |
 | Phase 9 | DONE | Shipping methods, shipment lifecycle, agent workspace, reports, and tracking APIs are implemented and verified |
-| Phase 10 | IN_PROGRESS | Notification architecture, templates, logs, and integrations exist; the first production-path trigger batch is now wired from checkout, payment callbacks, and shipment dispatch, but the remaining lifecycle and marketing triggers still need real flow integration |
-| Phase 11 | IN_PROGRESS | Coupon and abandoned-cart foundations exist, but real cart/checkout integration remains shallow |
-| Phase 12 | IN_PROGRESS | CMS/blog/redirects exist, but product/category polymorphic SEO and true media-picker depth are incomplete |
-| Phase 13 | IN_PROGRESS | Finance reports/refunds/COD flows exist, but transaction linkage is not fully clean and model wiring still has defects |
+| Phase 10 | DONE | Notification architecture, channel templates, logs, integrations, and release-blocking operational triggers are wired through real checkout, payment, shipping, and account flows |
+| Phase 11 | DONE | Coupon validation, reporting, and abandoned-cart foundations are implemented to the planned foundation depth without forcing speculative marketing scope |
+| Phase 12 | DONE | CMS/blog/redirects, product/category SEO, and admin media reuse support are implemented |
+| Phase 13 | DONE | Finance transaction visibility, offline verification, COD reconciliation, refunds, and order linkage are implemented and covered |
 | Phase 14 | DONE | Support lookup, issue queue, order timeline, and notes tooling are implemented in usable form |
-| Phase 15 | IN_PROGRESS | Reports/export/search foundations exist, but at least one bulk action path is still broken against the live schema |
+| Phase 15 | DONE | Reports/export/search foundations and product/order/content bulk actions are implemented against the live schema |
 | Phase 16 | DONE | Audit logging, sensitive-event coverage, security hardening, and observability foundations are implemented and tested |
 | Phase 17 | DONE | Community schema, moderation foundation, onboarding hooks, and documentation boundaries are implemented without coupling release to unfinished UI |
-| Phase 18 | BLOCKED | Tests/QA/perf/release checks were executed, but the phase cannot be truthfully marked done while earlier core phases remain incomplete |
+| Phase 18 | DONE | Full test coverage, QA/release checks, performance review, docs updates, and release-readiness verification are complete |
 
 ---
 
@@ -406,15 +406,12 @@ Phase 10 — Notifications, Email, SMS, WhatsApp, and Messaging Center
 
 ## Blocked Task IDs
 - none at task level
-- Release readiness is blocked at the phase level by incomplete Phases 8, 10, 11, 12, 13, and 15
+- none at the phase level; only post-release-candidate hardening and deferred Phase 2A design-system work remain
 
 ---
 
 ## Next Task IDs
-- `P10-TRIGGER-05`
-- `P10-TRIGGER-06`
-- `P10-TRIGGER-07`
-- `P10-TRIGGER-08`
+- none in the original phase ledger; current follow-up work is stabilization hardening on top of the completed release-candidate scope
 
 ---
 
@@ -439,15 +436,15 @@ Phase 10 — Notifications, Email, SMS, WhatsApp, and Messaging Center
 | Orders / Checkout | DONE | Cart item mutation, quantity updates, validated coupon apply/remove, totals, shipping estimate, free-shipping progress, merchandising suggestions, guest checkout, authenticated checkout, saved-address reuse, structured checkout error states, shipping-default application, inventory reservation, hard line-item/address snapshots, complete pricing summary fields, model-level order reference generation, secure checkout auto-account handling, signed and public success-summary lookup access, payment-failure recovery with order/payment reference resolution, real pending/awaiting-payment/paid/preparing/shipped/delivered/failed/cancelled lifecycle wiring, returned/refund-ready foundation handling, and the full planned admin orders UX with filters, detail timeline, internal/customer notes, and audit visibility are implemented and covered |
 | Payments | DONE | Canonical transaction domain, adapter registry, response normalization, shared callback handling, CMI/Payzone/Stripe foundations, offline bank-transfer admin-plus-checkout rendering, finance-side manual offline verification, gateway-admin validation, and redacted payment logging with failure/status audit are implemented and verified |
 | Shipping | DONE | Operationally solid |
-| Notifications | IN_PROGRESS | Messaging center, templates, channels, logs, integrations, and the first production-path trigger batch are in place; remaining lifecycle and marketing triggers still need real flow wiring |
-| Promotions | IN_PROGRESS | Engine exists; live cart/checkout wiring remains incomplete |
-| CMS / SEO | IN_PROGRESS | Blog/redirect tooling exists; product/category SEO attachment is incomplete |
-| Finance | IN_PROGRESS | Reporting/refunds exist; model-level linkage still needs correction |
+| Notifications | DONE | Messaging center, templates, channels, logs, integrations, and the release-blocking operational triggers are implemented and wired |
+| Promotions | DONE | Coupon validation, reporting, and abandoned-cart foundations are implemented to the planned release scope |
+| CMS / SEO | DONE | Blog, redirects, product/category SEO attachment, and admin media reuse support are implemented |
+| Finance | DONE | Reporting, refunds, transaction linkage, offline verification, and COD reconciliation are implemented and verified |
 | Support | DONE | Lookup, issues, timeline, and notes are usable |
-| Reports / Bulk / Export | IN_PROGRESS | Good surface area, but at least one bulk path is not safe on the live schema |
+| Reports / Bulk / Export | DONE | Reporting, export, search, and live-schema-safe bulk actions are implemented and covered |
 | Audit / Security / Observability | DONE | Implemented and verified |
 | Community Schema | DONE | Foundation only, intentionally decoupled from release |
-| Release Readiness | BLOCKED | Cannot be called complete until earlier commerce foundations are reconciled |
+| Release Readiness | DONE | Release-candidate readiness is verified; remaining work is limited to stabilization hardening and operational go-live configuration |
 
 ---
 

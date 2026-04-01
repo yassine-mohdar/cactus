@@ -25,7 +25,7 @@ class PermissionsSeeder extends Seeder
             PermissionNaming::domain('categories', ['viewAny', 'create', 'update', 'delete']),
             PermissionNaming::domain('products', ['viewAny', 'view', 'create', 'update', 'delete', 'publish']),
             PermissionNaming::domain('inventory', ['viewAny', 'adjust', 'transfer']),
-            PermissionNaming::domain('orders', ['viewAny', 'view', 'create', 'update', 'cancel', 'refund']),
+            PermissionNaming::domain('orders', ['viewAny', 'view', 'create', 'update', 'override_status', 'cancel', 'refund']),
             PermissionNaming::domain('customers', ['viewAny', 'view', 'create', 'update', 'delete']),
             PermissionNaming::domain('shipping', ['viewAny', 'update', 'manage_carriers']),
             PermissionNaming::domain('finance', ['viewAny', 'manage_gateways']),

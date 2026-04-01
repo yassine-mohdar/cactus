@@ -4,6 +4,7 @@
     'type'    => 'button',  // button, submit
     'href'    => null,      // if provided, renders as <a>
     'icon'    => null,      // optional material symbol name
+    'navigate' => true,     // disable for file downloads / non-HTML responses
 ])
 
 @php
@@ -24,10 +25,11 @@
     ];
 
     $classes = $baseClasses . ' ' . ($variants[$variant] ?? $variants['primary']) . ' ' . ($sizes[$size] ?? $sizes['md']);
+    $resolvedHref = is_string($href) ? html_entity_decode($href, ENT_QUOTES, 'UTF-8') : $href;
 @endphp
 
 @if ($href)
-    <a href="{{ $href }}" {{ $attributes->merge(['class' => $classes]) }} wire:navigate>
+    <a href="{{ $resolvedHref }}" {{ $attributes->merge(['class' => $classes]) }} @if($navigate) wire:navigate @endif>
         @if($icon)
             <span class="material-symbols-outlined mr-1.5 text-[1.1em]">{{ $icon }}</span>
         @endif

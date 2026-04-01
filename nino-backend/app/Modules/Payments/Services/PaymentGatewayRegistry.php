@@ -8,6 +8,7 @@ use App\Modules\Payments\Gateways\CmiPaymentGateway;
 use App\Modules\Payments\Gateways\OfflinePaymentGateway;
 use App\Modules\Payments\Gateways\PayzonePaymentGateway;
 use App\Modules\Payments\Gateways\StripePaymentGateway;
+use App\Modules\Payments\Models\PaymentMethod;
 use Illuminate\Contracts\Container\Container;
 
 class PaymentGatewayRegistry
@@ -35,6 +36,7 @@ class PaymentGatewayRegistry
 
     public function __construct(
         private readonly Container $container,
+        private readonly PaymentMethodAvailabilityService $paymentMethodAvailability,
     ) {}
 
     /**
@@ -73,6 +75,18 @@ class PaymentGatewayRegistry
      */
     public function resolveForPaymentMethod(?string $paymentMethod): ?PaymentGatewayInterface
     {
+        $method = $this->paymentMethodAvailability->resolveByCode($paymentMethod);
+
+        if ($method) {
+            $gatewayId = match ($method->behavior) {
+                PaymentMethod::BEHAVIOR_GATEWAY => $method->providerGatewayId(),
+                PaymentMethod::BEHAVIOR_OFFLINE_MANUAL => 'offline_transfer',
+                default => null,
+            };
+
+            return $gatewayId ? $this->resolve($gatewayId) : null;
+        }
+
         $gatewayId = $this->normalizePaymentMethod($paymentMethod);
 
         return $gatewayId ? $this->resolve($gatewayId) : null;
@@ -82,7 +96,7 @@ class PaymentGatewayRegistry
     {
         $paymentMethod = strtolower(trim((string) $paymentMethod));
 
-        if ($paymentMethod === '' || $paymentMethod === 'cash_on_delivery') {
+        if ($paymentMethod === '' || in_array($paymentMethod, ['cash_on_delivery', 'cod'], true)) {
             return null;
         }
 

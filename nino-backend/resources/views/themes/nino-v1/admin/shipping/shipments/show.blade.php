@@ -114,6 +114,58 @@
             </form>
         </div>
 
+        @if($senditContext)
+        <div class="bg-white border border-slate-200 rounded-md shadow-sm p-5">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Sendit Provider</h2>
+            <div class="grid grid-cols-2 gap-3 text-sm mb-4">
+                <div>
+                    <span class="text-slate-500">Carrier:</span>
+                    <span class="text-slate-900 ml-1">{{ $senditContext['carrier']?->name ?? 'Sendit' }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500">Configured:</span>
+                    <span class="text-slate-900 ml-1">{{ $senditContext['configured'] ? 'Yes' : 'No' }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500">External Code:</span>
+                    <span class="font-mono text-xs text-slate-900 ml-1">{{ $shipment->external_reference ?: '—' }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500">External Status:</span>
+                    <span class="text-slate-900 ml-1">{{ $shipment->external_status ?: 'Not synced' }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500">Last Sync:</span>
+                    <span class="text-slate-900 ml-1">{{ $shipment->last_provider_sync_at?->format('M d, H:i') ?? 'Never' }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500">Provider Error:</span>
+                    <span class="text-slate-900 ml-1">{{ $shipment->provider_error ?: 'None' }}</span>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 border-t border-slate-200 pt-3">
+                @if(! $shipment->external_reference)
+                    <form action="{{ route('admin.shipping.shipments.sendit.create', $shipment) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 text-xs font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-sm">Create Sendit Delivery</button>
+                    </form>
+                @else
+                    <form action="{{ route('admin.shipping.shipments.sendit.update', $shipment) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 text-xs font-medium bg-white border border-slate-200 text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Update Delivery</button>
+                    </form>
+                    <form action="{{ route('admin.shipping.shipments.sendit.sync', $shipment) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 text-xs font-medium bg-white border border-slate-200 text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Sync Status</button>
+                    </form>
+                    <a href="{{ route('admin.shipping.shipments.sendit.label', [$shipment, 'format' => 'a4']) }}" class="px-4 py-2 text-xs font-medium bg-white border border-slate-200 text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Download A4 Label</a>
+                    <a href="{{ route('admin.shipping.shipments.sendit.label', [$shipment, 'format' => 'thermal']) }}" class="px-4 py-2 text-xs font-medium bg-white border border-slate-200 text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Download Thermal Label</a>
+                @endif
+            </div>
+        </div>
+        @endif
+
         {{-- Status Transition Card --}}
         @if(count($availableTransitions) > 0)
         <div class="bg-white border border-slate-200 rounded-md shadow-sm p-5">

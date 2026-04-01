@@ -103,7 +103,7 @@ class ExportController extends Controller
                             $txn->reference,
                             $txn->type->value ?? $txn->type,
                             $txn->status->value ?? $txn->status,
-                            $txn->payment_method->value ?? $txn->payment_method,
+                            $txn->resolvedPaymentMethodLabel(),
                             $txn->gateway ?? '',
                             number_format($txn->amount, 2),
                             number_format($txn->fee_amount, 2),

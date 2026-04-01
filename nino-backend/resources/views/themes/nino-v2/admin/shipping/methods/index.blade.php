@@ -71,7 +71,10 @@
                                 <p class="font-semibold text-[#1E2B27]">{{ $method->name }}</p>
                                 <p class="mt-1 text-xs font-mono text-[#7A8681]">{{ $method->slug }}</p>
                             </td>
-                            <td class="table-muted">{{ $method->carrier ?: 'Unassigned' }}</td>
+                            <td>
+                                <p class="table-muted">{{ $method->carrierLabel() }}</p>
+                                <p class="mt-1 text-xs font-mono text-[#7A8681]">{{ strtoupper($method->shippingCarrier?->provider ?? 'manual') }}</p>
+                            </td>
                             <td class="font-mono text-sm text-[#1E2B27]">{{ number_format((float) $method->base_cost, 2) }} MAD</td>
                             <td class="table-muted">{{ $method->free_shipping_threshold ? number_format((float) $method->free_shipping_threshold, 2).' MAD' : 'No threshold' }}</td>
                             <td class="table-muted">{{ $method->estimated_days ?: 'Not set' }}</td>

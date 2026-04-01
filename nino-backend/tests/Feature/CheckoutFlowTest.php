@@ -17,8 +17,13 @@ use App\Modules\Orders\Models\Order;
 use App\Modules\Notifications\Models\NotificationTemplate;
 use App\Modules\Notifications\Enums\NotificationEvent;
 use App\Modules\Payments\Models\GatewaySetting;
+use App\Modules\Shipping\Enums\ShipmentStatus;
+use App\Modules\Shipping\Models\ShippingCarrier;
+use App\Modules\Shipping\Models\ShippingCarrierDistrict;
+use App\Modules\Shipping\Models\ShippingMethod;
 use App\Modules\Settings\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -131,6 +136,11 @@ class CheckoutFlowTest extends TestCase
         });
         $this->assertDatabaseHas('notification_logs', [
             'event' => NotificationEvent::WELCOME->value,
+            'recipient' => $customer->email,
+            'customer_id' => $customer->id,
+        ]);
+        $this->assertDatabaseHas('notification_logs', [
+            'event' => NotificationEvent::PASSWORD_SETUP->value,
             'recipient' => $customer->email,
             'customer_id' => $customer->id,
         ]);
@@ -251,6 +261,68 @@ class CheckoutFlowTest extends TestCase
             ->assertSeeText('Track this order')
             ->assertSeeText('Awaiting Payment')
             ->assertSeeText($order->reference_number);
+    }
+
+    public function test_checkout_returns_primary_gateway_redirect_payload_for_cmi_orders(): void
+    {
+        GatewaySetting::create([
+            'gateway_id' => 'cmi',
+            'name' => 'CMI',
+            'is_enabled' => true,
+            'mode' => 'test',
+            'credentials' => [
+                'store_id' => 'store-test-01',
+                'client_id' => 'client-test-01',
+                'hash_key' => 'super-secret-hash',
+                'terminal_id' => 'terminal-99',
+            ],
+            'metadata' => [
+                'currency_code' => '504',
+                'language' => 'fr',
+            ],
+        ]);
+
+        $customer = User::factory()->customer()->create([
+            'status' => 'active',
+        ]);
+
+        $product = $this->createProduct('cmi-checkout-product', 350);
+        $cart = Cart::create([
+            'user_id' => $customer->id,
+            'currency' => 'MAD',
+        ]);
+
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        Sanctum::actingAs($customer);
+
+        $response = $this->postJson(route('api.checkout.process'), [
+            'payment_method' => 'cmi',
+            'shipping_address' => $this->addressPayload('CMI', 'Customer'),
+            'billing_address' => $this->addressPayload('CMI', 'Customer', [
+                'address_line_1' => '9 Billing Route',
+                'city' => 'Rabat',
+                'postal_code' => '10001',
+            ]),
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('payment.gateway', 'cmi');
+        $response->assertJsonPath('payment.redirect_url', 'https://testpayment.cmi.co.ma/fim/est3Dgate');
+        $response->assertJsonPath('payment.redirect_method', 'POST');
+        $this->assertNotEmpty($response->json('payment.form_fields.hash'));
+        $this->assertStringStartsWith('CMI-', (string) $response->json('payment.reference'));
+
+        $order = Order::firstOrFail();
+
+        $this->assertDatabaseHas('payment_transactions', [
+            'order_id' => $order->id,
+            'gateway' => 'cmi',
+        ]);
     }
 
     public function test_bank_transfer_checkout_returns_offline_payment_details_and_renders_instructions_on_success_page(): void
@@ -504,6 +576,114 @@ class CheckoutFlowTest extends TestCase
         $this->assertSame('express-priority', $order->shipping_method);
         $this->assertSame(65.0, (float) $order->shipping_total);
         $this->assertSame(305.0, (float) $order->grand_total);
+    }
+
+    public function test_cod_checkout_with_sendit_shipping_auto_creates_sendit_parcel_and_moves_order_to_preparing(): void
+    {
+        $product = $this->createProduct('sendit-cod-checkout-product', 120);
+        $stockItem = StockItem::factory()->create([
+            'product_id' => $product->id,
+            'product_variant_id' => null,
+            'branch_id' => null,
+            'quantity' => 10,
+            'reserved_quantity' => 0,
+            'low_stock_threshold' => 3,
+            'status' => StockItem::STATUS_IN_STOCK,
+        ]);
+
+        $carrier = ShippingCarrier::create([
+            'name' => 'Sendit',
+            'code' => 'sendit-checkout',
+            'provider' => ShippingCarrier::PROVIDER_SENDIT,
+            'is_enabled' => true,
+            'credentials' => [
+                'public_key' => 'public-checkout',
+                'secret_key' => 'secret-checkout',
+            ],
+            'settings' => [
+                'pickup_district_id' => 88,
+                'default_label_format' => 1,
+            ],
+        ]);
+
+        ShippingCarrierDistrict::create([
+            'shipping_carrier_id' => $carrier->id,
+            'external_id' => '1001',
+            'city' => 'Casablanca',
+            'district_name' => 'Casablanca - Achakkar',
+            'price' => 45,
+            'estimated_delivery' => '24h - 48h',
+            'is_pickup' => false,
+            'is_active' => true,
+        ]);
+
+        $shippingMethod = ShippingMethod::create([
+            'name' => 'Sendit Maroc',
+            'slug' => 'sendit-maroc',
+            'carrier' => 'Sendit',
+            'shipping_carrier_id' => $carrier->id,
+            'base_cost' => 0,
+            'estimated_days' => null,
+            'is_enabled' => true,
+        ]);
+
+        $sessionId = 'sendit-cod-checkout-session';
+
+        $cart = Cart::create([
+            'session_id' => $sessionId,
+            'currency' => 'MAD',
+        ]);
+
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        Http::fake([
+            'https://app.sendit.ma/api/v1/login' => Http::response([
+                'data' => ['token' => 'sendit-checkout-token'],
+            ]),
+            'https://app.sendit.ma/api/v1/deliveries' => Http::response([
+                'data' => [
+                    'code' => 'SDT-CHECKOUT-1001',
+                    'status' => 'PENDING',
+                    'labelUrl' => 'https://cdn.sendit.test/SDT-CHECKOUT-1001.pdf',
+                ],
+            ], 200),
+        ]);
+
+        $this->postJson(
+            route('api.checkout.process'),
+            [
+                'cart_session_id' => $sessionId,
+                'customer_email' => 'sendit.cod.checkout@example.com',
+                'customer_first_name' => 'Sendit',
+                'customer_last_name' => 'Checkout',
+                'payment_method' => 'cash_on_delivery',
+                'shipping_method_id' => $shippingMethod->id,
+                'shipping_address' => $this->addressPayload('Sendit', 'Checkout', [
+                    'city' => 'Casablanca',
+                ]),
+                'billing_address' => $this->addressPayload('Sendit', 'Checkout', [
+                    'city' => 'Casablanca',
+                ]),
+            ],
+            ['X-Cart-Session-Id' => $sessionId],
+        )->assertCreated();
+
+        $order = Order::query()->with(['shipments', 'transactions'])->latest('id')->firstOrFail();
+        $shipment = $order->shipments->sole();
+        $transaction = $order->transactions->sole();
+
+        $this->assertSame(OrderStatus::PREPARING->value, $order->status->value);
+        $this->assertSame(ShipmentStatus::READY_TO_SHIP, $shipment->status);
+        $this->assertSame('SDT-CHECKOUT-1001', $shipment->external_reference);
+        $this->assertSame('PENDING', $shipment->external_status);
+        $this->assertSame('cod', $transaction->payment_method);
+        $this->assertSame('cod', $transaction->payment_method_behavior);
+        $this->assertSame('cod', $transaction->gateway);
+        $this->assertSame(1, $stockItem->fresh()->reserved_quantity);
     }
 
     public function test_checkout_reserves_matching_global_stock_item_during_order_creation(): void

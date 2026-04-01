@@ -4,12 +4,17 @@ namespace App\Modules\IAM\Services;
 
 use App\Models\User;
 use App\Modules\IAM\Notifications\CustomerPasswordSetupNotification;
+use App\Modules\Notifications\Services\NotificationTriggerService;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\URL;
 use InvalidArgumentException;
 
 class CustomerPasswordSetupService
 {
+    public function __construct(
+        private readonly NotificationTriggerService $notificationTriggerService,
+    ) {}
+
     public function createSetupUrl(User $customer, string $source = 'checkout_created'): string
     {
         $this->ensureCustomerUser($customer);
@@ -34,6 +39,14 @@ class CustomerPasswordSetupService
             expiryMinutes: $this->expiresInMinutes(),
             source: $source,
         ));
+
+        $this->notificationTriggerService->passwordSetup(
+            $customer->email,
+            $customer->full_name !== '' ? $customer->full_name : ($customer->name ?? 'Customer'),
+            $setupUrl,
+            (int) ceil($this->expiresInMinutes() / 60),
+            $customer->id,
+        );
 
         return $setupUrl;
     }

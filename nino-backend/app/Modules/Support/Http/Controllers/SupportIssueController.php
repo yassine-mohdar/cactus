@@ -13,6 +13,12 @@ use Illuminate\Http\Request;
 
 class SupportIssueController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission.any:support.viewAny,support.manage_tickets')->only(['index', 'show']);
+        $this->middleware('permission.any:support.manage_tickets')->except(['index', 'show']);
+    }
+
     public function index(Request $request)
     {
         $query = SupportIssue::with(['order', 'assignee']);

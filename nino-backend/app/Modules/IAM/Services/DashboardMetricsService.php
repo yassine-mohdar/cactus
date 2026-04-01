@@ -2246,7 +2246,7 @@ class DashboardMetricsService
             OrderStatus::DELIVERED => 'success',
             OrderStatus::SHIPPED => 'info',
             OrderStatus::FAILED, OrderStatus::CANCELLED, OrderStatus::REFUNDED => 'danger',
-            OrderStatus::PREPARING, OrderStatus::PENDING, OrderStatus::AWAITING_PAYMENT => 'warning',
+            OrderStatus::REFUND_PENDING, OrderStatus::PREPARING, OrderStatus::PENDING, OrderStatus::AWAITING_PAYMENT => 'warning',
             default => 'neutral',
         };
     }

@@ -4,6 +4,7 @@ namespace App\Modules\Payments\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class GatewaySetting extends Model
@@ -36,5 +37,10 @@ class GatewaySetting extends Model
     {
         $creds = $this->credentials ?? [];
         return $creds[$key] ?? $default;
+    }
+
+    public function paymentMethods(): HasMany
+    {
+        return $this->hasMany(PaymentMethod::class);
     }
 }

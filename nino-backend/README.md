@@ -1,58 +1,149 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# NinoWorld Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 13 modular-monolith backend for NinoWorld commerce, operations, customer account, finance, shipping, CMS, and notifications.
 
-## About Laravel
+## Current State
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Release-candidate backend
+- Primary local database contract: MySQL
+- Primary online gateway: CMI
+- Secondary supported gateways: Payzone, Stripe
+- Offline payment support: bank transfer and COD
+- Notifications: email, SMS, WhatsApp
+- Full automated suite status: `308` tests passing
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP `8.4+`
+- Laravel `13`
+- MySQL `8+`
+- Node `23+`
+- npm `10+`
+- Database-backed queue, session, and cache by default
 
-## Learning Laravel
+## First Run
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+1. Install dependencies:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+npm install
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+2. Copy env and generate key:
 
-## Contributing
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3. Configure MySQL in `.env`:
 
-## Code of Conduct
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=nino-backend
+DB_USERNAME=root
+DB_PASSWORD=
+DB_SOCKET=
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Important:
+- Leave `DB_SOCKET` empty unless you know the exact working socket path.
+- The app uses database-backed `sessions`, `cache`, and `jobs`, so MySQL must be running before the app can serve requests correctly.
 
-## Security Vulnerabilities
+4. Prepare the database:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan migrate
+php artisan db:seed
+```
 
-## License
+5. Build frontend assets:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+npm run build
+```
+
+## Local Runbook
+
+Run the HTTP server:
+
+```bash
+php artisan serve --host=127.0.0.1 --port=8000
+```
+
+Run the queue worker in another terminal:
+
+```bash
+php artisan queue:work --queue=notifications,default --tries=3
+```
+
+Run Vite in development if you need live assets:
+
+```bash
+npm run dev
+```
+
+Open:
+
+- App: `http://127.0.0.1:8000`
+- Admin login: `http://127.0.0.1:8000/admin/login`
+- Customer login: `http://127.0.0.1:8000/login`
+
+## Release-Candidate Checklist
+
+Before calling the backend ready in a real environment:
+
+- MySQL is running and reachable on the configured host/port
+- `php artisan migrate --force` succeeds
+- `php artisan test` passes
+- SMTP credentials are valid if email delivery is enabled
+- Twilio credentials are valid if SMS delivery is enabled
+- WhatsApp API credentials are valid if WhatsApp delivery is enabled
+- Queue worker is running for notification dispatch
+- Gateway settings are configured for CMI in admin
+- Secondary gateways are disabled unless intentionally used
+
+## Payment Matrix
+
+- `cmi`: primary live gateway
+- `payzone`: supported secondary gateway
+- `stripe`: supported secondary gateway
+- `bank_transfer` / `offline_transfer`: release-ready offline path
+- `cash_on_delivery`: supported order flow without gateway initiation
+
+Checkout returns:
+
+- offline payment instructions for bank transfer
+- redirect/form payloads for online gateways
+- signed thank-you URL for order follow-up
+
+## Notifications
+
+Release-blocking operational notifications are wired through real flows:
+
+- `order_placed`
+- `payment_success`
+- `payment_failed`
+- `order_shipped`
+- `order_delivered`
+- `order_cancelled`
+- `welcome`
+- `password_setup`
+
+## Useful Commands
+
+```bash
+php artisan test
+php artisan migrate:status
+php artisan about
+php artisan queue:work --queue=notifications,default --tries=3
+php artisan config:clear
+php artisan cache:clear
+```
+
+## Known Non-Blocking Scope Decision
+
+Phase `2A` is intentionally deferred. It does not block backend release readiness.

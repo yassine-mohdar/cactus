@@ -2,8 +2,8 @@
 
 @section('header')
 <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold font-headline text-slate-900">Payment Gateways</h1>
-    <p class="text-sm text-slate-500">Configure API keys and activation states for your connected payment providers.</p>
+    <h1 class="text-2xl font-bold font-headline text-slate-900">Payments &amp; Gateways</h1>
+    <p class="text-sm text-slate-500">Manage checkout methods and provider credentials from one workspace.</p>
 </div>
 @endsection
 
@@ -13,6 +13,156 @@
 <div class="mb-6 rounded-lg border border-slate-200 bg-slate-900-container p-4 text-sm font-medium text-on-primary-container shadow-sm">
     {{ session('success') }}
 </div>
+@endif
+
+@php
+    $selectedMethod = $editingMethod ?? null;
+    $creatingMethod = request()->query('method') === 'new';
+    if (! $selectedMethod && $creatingMethod) {
+        $selectedMethod = new \App\Modules\Payments\Models\PaymentMethod([
+            'channel' => \App\Modules\Payments\Models\PaymentMethod::CHANNEL_OFFLINE,
+            'behavior' => \App\Modules\Payments\Models\PaymentMethod::BEHAVIOR_OFFLINE_MANUAL,
+            'is_enabled' => true,
+            'sort_order' => ($paymentMethods->max('sort_order') ?? 0) + 10,
+            'metadata' => [
+                'payment_window_hours' => 48,
+                'reference_prefix' => 'NINO',
+            ],
+        ]);
+    }
+@endphp
+
+<div class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Checkout Methods</p>
+            <h2 class="mt-2 text-xl font-bold text-slate-900">Payment Method Catalog</h2>
+            <p class="mt-1 text-sm text-slate-500">Offline methods can be created, carrier-linked, and used by both storefront checkout and admin manual orders.</p>
+        </div>
+        <a href="{{ route('admin.gateways.index', ['tab' => 'methods', 'method' => 'new']) }}" class="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium">Add Offline Method</a>
+    </div>
+
+    <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        @foreach($paymentMethods as $method)
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="font-semibold text-slate-900">{{ $method->checkoutLabel() }}</p>
+                        <p class="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">{{ strtoupper($method->channel) }} · {{ strtoupper(str_replace('_', ' ', $method->behavior)) }}</p>
+                        <p class="mt-2 text-sm text-slate-500">{{ $method->checkoutDescription() ?: 'No checkout description configured yet.' }}</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <span class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded border {{ $method->is_enabled ? 'bg-slate-100 text-slate-900 border-slate-300' : 'bg-white text-slate-500 border-slate-200' }}">
+                            {{ $method->is_enabled ? 'Enabled' : 'Disabled' }}
+                        </span>
+                        @if($method->isOnline())
+                            <a href="{{ route('admin.gateways.index', ['tab' => 'providers', 'gateway' => $method->providerGatewayId()]) }}" class="text-xs font-medium text-slate-700 underline">Manage Provider</a>
+                        @else
+                            <a href="{{ route('admin.gateways.index', ['tab' => 'methods', 'method' => $method->id]) }}" class="text-xs font-medium text-slate-700 underline">Edit</a>
+                        @endif
+                    </div>
+                </div>
+                @if($method->shippingCarriers->isNotEmpty())
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @foreach($method->shippingCarriers as $carrier)
+                            <span class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs text-slate-600 border border-slate-200">{{ $carrier->name }}</span>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        @endforeach
+    </div>
+</div>
+
+@if($selectedMethod && ! $selectedMethod->isOnline())
+    @php
+        $selectedCarrierIds = old('carrier_ids', $selectedMethod->exists ? $selectedMethod->shippingCarriers->pluck('id')->all() : []);
+        $methodAction = $selectedMethod->exists ? route('admin.gateways.methods.update', $selectedMethod) : route('admin.gateways.methods.store');
+    @endphp
+    <div class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{{ $selectedMethod->exists ? 'Edit Offline Method' : 'Create Offline Method' }}</p>
+                <h2 class="mt-2 text-xl font-bold text-slate-900">{{ $selectedMethod->exists ? $selectedMethod->checkoutLabel() : 'New Offline Method' }}</h2>
+            </div>
+            <a href="{{ route('admin.gateways.index') }}" class="text-sm font-medium text-slate-700 underline">Close</a>
+        </div>
+
+        <form method="POST" action="{{ $methodAction }}" class="mt-5 grid gap-5">
+            @csrf
+            @if($selectedMethod->exists)
+                @method('PUT')
+            @endif
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-900 mb-1">Name</label>
+                    <input type="text" name="name" value="{{ old('name', $selectedMethod->name) }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm" placeholder="Bank Deposit">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-900 mb-1">Code</label>
+                    <input type="text" name="code" value="{{ old('code', $selectedMethod->code) }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm" placeholder="bank_deposit">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-900 mb-1">Behavior</label>
+                    <select name="behavior" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm">
+                        <option value="offline_manual" {{ old('behavior', $selectedMethod->behavior) === 'offline_manual' ? 'selected' : '' }}>Offline Manual</option>
+                        <option value="cod" {{ old('behavior', $selectedMethod->behavior) === 'cod' ? 'selected' : '' }}>COD Workflow</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-900 mb-1">Sort Order</label>
+                    <input type="number" name="sort_order" min="0" max="9999" value="{{ old('sort_order', $selectedMethod->sort_order ?? 0) }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm">
+                </div>
+            </div>
+
+            <label class="inline-flex items-center gap-3 text-sm text-slate-900">
+                <input type="checkbox" name="is_enabled" value="1" {{ old('is_enabled', $selectedMethod->is_enabled) ? 'checked' : '' }}>
+                Enable this method
+            </label>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-900 mb-1">Checkout Label</label>
+                    <input type="text" name="metadata[method_label]" value="{{ old('metadata.method_label', data_get($selectedMethod->metadata, 'method_label')) }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-900 mb-1">Checkout Title</label>
+                    <input type="text" name="metadata[checkout_title]" value="{{ old('metadata.checkout_title', data_get($selectedMethod->metadata, 'checkout_title')) }}" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-900 mb-1">Customer Instructions</label>
+                <textarea name="metadata[instructions]" rows="4" class="w-full rounded-lg border-slate-200 bg-background text-sm text-slate-900 shadow-sm">{{ old('metadata.instructions', data_get($selectedMethod->metadata, 'instructions')) }}</textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-900 mb-1">Linked Carriers</label>
+                <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    @foreach($carrierOptions as $carrier)
+                        <label class="inline-flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900">
+                            <input type="checkbox" name="carrier_ids[]" value="{{ $carrier->id }}" {{ in_array($carrier->id, $selectedCarrierIds, true) ? 'checked' : '' }}>
+                            <span>{{ $carrier->name }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+                <span class="text-xs text-slate-500">Carrier-linked COD methods only appear when the selected shipping carrier matches.</span>
+                <button type="submit" class="px-5 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-sm">Save Method</button>
+            </div>
+        </form>
+
+        @if($selectedMethod->exists && ! in_array($selectedMethod->code, ['cod', 'bank_transfer'], true))
+            <form method="POST" action="{{ route('admin.gateways.methods.destroy', $selectedMethod) }}" onsubmit="return confirm('Delete this payment method?');" class="mt-3">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="text-sm font-medium text-red-700 underline">Delete method</button>
+            </form>
+        @endif
+    </div>
 @endif
 
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

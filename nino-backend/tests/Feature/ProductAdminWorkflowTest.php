@@ -45,6 +45,24 @@ class ProductAdminWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_legacy_reports_bulk_route_delegates_to_current_product_bulk_workflow(): void
+    {
+        $manager = $this->createProductManager();
+        $published = Product::factory()->published()->create(['sku' => 'BULK-LEGACY']);
+
+        $response = $this->actingAs($manager)->post(route('admin.bulk.products'), [
+            'action' => 'deactivate',
+            'ids' => [$published->id],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertSame(Product::STATUS_DRAFT, $published->fresh()->status);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'catalog.product.bulk_status_changed',
+            'auditable_id' => $published->id,
+        ]);
+    }
+
     public function test_single_product_status_workflow_can_move_between_draft_and_published(): void
     {
         $manager = $this->createProductManager();

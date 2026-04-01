@@ -94,6 +94,23 @@ class AdminThemeTest extends TestCase
         $this->assertStringContainsString('x-on:keydown.escape.window="closeSidebar()"', $layoutHtml);
     }
 
+    public function test_nino_v2_order_create_uses_reactive_bindings_for_checkout_driving_fields(): void
+    {
+        $this->activateAdminTheme('nino-v2');
+
+        $viewSource = file_get_contents(resource_path('views/themes/nino-v2/livewire/admin/orders/order-create.blade.php'));
+
+        $this->assertIsString($viewSource);
+        $this->assertStringContainsString('wire:model.live.debounce.300ms="items.{{ $index }}.price"', $viewSource);
+        $this->assertStringContainsString('wire:model.live.debounce.300ms="shipping_address.first_name"', $viewSource);
+        $this->assertStringContainsString('wire:model.live.debounce.300ms="shipping_address.address_line_1"', $viewSource);
+        $this->assertStringContainsString('Search by name, email, or phone...', $viewSource);
+        $this->assertStringContainsString('Create new customer', $viewSource);
+        $this->assertStringContainsString("shipping-methods-panel", $viewSource);
+        $this->assertStringContainsString('xl:sticky xl:top-24 xl:self-start', $viewSource);
+        $this->assertStringNotContainsString("mode' => 'compact'", $viewSource);
+    }
+
     private function assertThemeRendersExpectedViews(string $theme, string $authCopy): void
     {
         $this->activateAdminTheme($theme);

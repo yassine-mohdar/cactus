@@ -103,7 +103,7 @@
                     <x-slot:body>
                         @foreach($byMethod as $m)
                             <tr>
-                                <td class="font-medium text-[#17302A]">{{ \App\Modules\Finance\Enums\PaymentMethod::tryFrom($m->payment_method)?->icon() }} {{ \App\Modules\Finance\Enums\PaymentMethod::tryFrom($m->payment_method)?->label() ?? $m->payment_method }}</td>
+                                <td class="font-medium text-[#17302A]">{{ app(\App\Modules\Payments\Services\PaymentMethodAvailabilityService::class)->legacyIcon($m->payment_method) }} {{ app(\App\Modules\Payments\Services\PaymentMethodAvailabilityService::class)->legacyLabel($m->payment_method) ?? $m->payment_method }}</td>
                                 <td class="text-center font-semibold text-[#17302A]">{{ number_format($m->count) }}</td>
                                 <td class="text-right font-semibold text-[#17302A]">{{ number_format((float) $m->total, 2) }} MAD</td>
                             </tr>

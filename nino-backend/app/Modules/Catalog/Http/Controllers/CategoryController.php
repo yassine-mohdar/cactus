@@ -4,6 +4,7 @@ namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Models\Category;
+use App\Modules\Settings\Services\AdminMediaLibraryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,10 @@ use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
+    public function __construct(
+        private readonly AdminMediaLibraryService $mediaLibrary,
+    ) {}
+
     public function index()
     {
         $this->authorize('viewAny', Category::class);
@@ -38,8 +43,9 @@ class CategoryController extends Controller
         $this->authorize('create', Category::class);
 
         $parentOptions = $this->buildParentOptions();
+        $mediaOptions = $this->mediaLibrary->imageOptions(['categories', 'products', 'blog']);
 
-        return view('admin.catalog.categories.create', compact('parentOptions'));
+        return view('admin.catalog.categories.create', compact('parentOptions', 'mediaOptions'));
     }
 
     public function store(Request $request)
@@ -58,6 +64,7 @@ class CategoryController extends Controller
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
             'image' => 'nullable|image|max:2048',
+            'existing_image_path' => 'nullable|string|max:255',
             'sort_order' => 'nullable|integer|min:0|max:999999',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
@@ -78,6 +85,8 @@ class CategoryController extends Controller
 
         if ($request->hasFile('image')) {
             $category->image_path = $request->file('image')->store('categories', 'public');
+        } elseif ($request->filled('existing_image_path')) {
+            $category->image_path = (string) $request->string('existing_image_path');
         }
 
         $category->save();
@@ -90,8 +99,9 @@ class CategoryController extends Controller
         $this->authorize('update', $category);
 
         $parentOptions = $this->buildParentOptions($category);
+        $mediaOptions = $this->mediaLibrary->imageOptions(['categories', 'products', 'blog']);
 
-        return view('admin.catalog.categories.edit', compact('category', 'parentOptions'));
+        return view('admin.catalog.categories.edit', compact('category', 'parentOptions', 'mediaOptions'));
     }
 
     public function update(Request $request, Category $category)
@@ -117,6 +127,7 @@ class CategoryController extends Controller
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
             'image' => 'nullable|image|max:2048',
+            'existing_image_path' => 'nullable|string|max:255',
             'sort_order' => 'nullable|integer|min:0|max:999999',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
@@ -143,6 +154,8 @@ class CategoryController extends Controller
                 Storage::disk('public')->delete($category->image_path);
             }
             $category->image_path = $request->file('image')->store('categories', 'public');
+        } elseif ($request->filled('existing_image_path')) {
+            $category->image_path = (string) $request->string('existing_image_path');
         }
 
         $category->save();

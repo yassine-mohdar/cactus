@@ -139,7 +139,7 @@
                                 'delivered' => 'success',
                                 'shipped', 'paid' => 'info',
                                 'failed', 'cancelled', 'refunded' => 'danger',
-                                'preparing', 'pending', 'awaiting_payment' => 'warning',
+                                'refund_pending', 'preparing', 'pending', 'awaiting_payment' => 'warning',
                                 default => 'neutral',
                             };
                         @endphp

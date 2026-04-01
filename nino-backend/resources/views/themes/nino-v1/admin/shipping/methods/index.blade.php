@@ -37,7 +37,10 @@
             @forelse($methods as $method)
             <tr class="hover:bg-white-dim/50 transition-colors">
                 <td class="px-4 py-3 font-medium text-slate-900">{{ $method->name }}</td>
-                <td class="px-4 py-3 text-slate-500">{{ $method->carrier ?? '—' }}</td>
+                <td class="px-4 py-3 text-slate-500">
+                    <div>{{ $method->carrierLabel() }}</div>
+                    <div class="mt-1 text-[11px] font-mono uppercase tracking-[0.18em] text-slate-400">{{ $method->shippingCarrier?->provider ?? 'manual' }}</div>
+                </td>
                 <td class="px-4 py-3 text-slate-900">{{ number_format($method->base_cost, 2) }} MAD</td>
                 <td class="px-4 py-3 text-slate-500">{{ $method->free_shipping_threshold ? number_format($method->free_shipping_threshold, 2) . ' MAD' : '—' }}</td>
                 <td class="px-4 py-3 text-slate-500">{{ $method->estimated_days ?? '—' }}</td>

@@ -5,19 +5,26 @@ namespace App\Modules\Shipping\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Shipping\Enums\ShipmentStatus;
+use App\Modules\Shipping\Jobs\SyncSenditDeliveryUpdateJob;
 use App\Modules\Shipping\Models\Shipment;
 use App\Modules\Shipping\Models\ShippingMethod;
+use App\Modules\Shipping\Services\SenditService;
 use App\Modules\Shipping\Services\ShippingSettingsService;
 use App\Modules\Shipping\Services\ShipmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class ShipmentController extends Controller
 {
     public function __construct(
         private ShipmentService $shipmentService,
+        private SenditService $senditService,
         private ShippingSettingsService $shippingSettings,
-    ) {}
+    ) {
+        $this->middleware('permission.any:shipping.viewAny,shipping.update')->only(['index', 'show', 'reports']);
+        $this->middleware('permission.any:shipping.update')->only(['store', 'updateStatus', 'updateTracking', 'toggleIssue']);
+    }
 
     /**
      * Ready-to-ship queue + all shipments listing with filters.
@@ -137,7 +144,7 @@ class ShipmentController extends Controller
             'order.customer',
             'order.lineItems',
             'order.addresses',
-            'shippingMethod',
+            'shippingMethod.shippingCarrier',
             'statusHistory.changedByUser',
             'packedByUser',
             'dispatchedByUser',
@@ -145,8 +152,13 @@ class ShipmentController extends Controller
 
         $availableTransitions = $shipment->status->allowedTransitions();
         $shippingAddress = $shipment->order?->addresses?->firstWhere('type', 'shipping');
+        $senditCarrier = $shipment->shippingMethod?->shippingCarrier;
+        $senditContext = $shipment->usesSendit() ? [
+            'carrier' => $senditCarrier,
+            'configured' => $senditCarrier?->isConfigured() ?? false,
+        ] : null;
 
-        return view('admin.shipping.shipments.show', compact('shipment', 'availableTransitions', 'shippingAddress'));
+        return view('admin.shipping.shipments.show', compact('shipment', 'availableTransitions', 'shippingAddress', 'senditContext'));
     }
 
     /**
@@ -220,13 +232,23 @@ class ShipmentController extends Controller
         }
 
         try {
-            $this->shipmentService->transitionStatus(
-                $shipment,
-                $newStatus,
-                $validated['notes'] ?? null,
-                $extraAttributes
-            );
+            if ($newStatus === ShipmentStatus::CANCELLED && $shipment->usesSendit() && filled($shipment->external_reference)) {
+                $this->senditService->deleteDelivery(
+                    $shipment,
+                    transitionLocal: true,
+                    note: $validated['notes'] ?? 'Shipment cancelled before Sendit collection.',
+                );
+            } else {
+                $this->shipmentService->transitionStatus(
+                    $shipment,
+                    $newStatus,
+                    $validated['notes'] ?? null,
+                    $extraAttributes
+                );
+            }
         } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
@@ -279,6 +301,68 @@ class ShipmentController extends Controller
         return back()->with('success', 'Delivery issue flagged.');
     }
 
+    public function createSenditDelivery(Shipment $shipment)
+    {
+        $this->authorizeSenditShipment($shipment);
+
+        $this->senditService->createDelivery($shipment);
+
+        return back()->with('success', 'Sendit delivery created successfully.');
+    }
+
+    public function updateSenditDelivery(Shipment $shipment)
+    {
+        $this->authorizeSenditShipment($shipment);
+
+        $shipment->forceFill([
+            'provider_error' => null,
+        ])->save();
+
+        SyncSenditDeliveryUpdateJob::dispatch($shipment->id);
+
+        return back()->with('success', 'Sendit delivery update queued successfully.');
+    }
+
+    public function syncSenditStatus(Shipment $shipment)
+    {
+        $this->authorizeSenditShipment($shipment);
+
+        $this->senditService->fetchDelivery($shipment);
+
+        return back()->with('success', 'Sendit shipment status synced.');
+    }
+
+    public function downloadSenditLabel(Request $request, Shipment $shipment)
+    {
+        $this->authorizeSenditShipment($shipment);
+
+        $format = $request->query('format') === 'thermal' ? 1 : 0;
+        $fileUrl = (string) ($shipment->label_url ?? '');
+
+        if ($fileUrl === '') {
+            $fileUrl = $this->refreshSenditLabelUrl($shipment, $format);
+        }
+
+        abort_unless($fileUrl !== '', 404);
+
+        $fileResponse = Http::get($fileUrl);
+
+        if (! $fileResponse->successful()) {
+            $refreshedUrl = $this->refreshSenditLabelUrl($shipment->fresh(), $format);
+            abort_unless($refreshedUrl !== '', 404);
+
+            $fileResponse = Http::get($refreshedUrl);
+            abort_unless($fileResponse->successful(), 502);
+        }
+
+        $filename = ($format === 1 ? 'sendit-thermal-' : 'sendit-a4-').($shipment->external_reference ?: $shipment->id).'.pdf';
+
+        return response($fileResponse->body(), 200, [
+            'Content-Type' => $fileResponse->header('Content-Type', 'application/pdf'),
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
     /**
      * Shipment reports: history, status log, failed/returned queues.
      */
@@ -306,5 +390,23 @@ class ShipmentController extends Controller
         };
 
         return view('admin.shipping.reports', array_merge($data, compact('tab')));
+    }
+
+    private function authorizeSenditShipment(Shipment $shipment): void
+    {
+        abort_unless($shipment->usesSendit(), 404);
+        abort_unless(auth()->user()?->canAny(['shipping.update']), 403);
+    }
+
+    private function refreshSenditLabelUrl(Shipment $shipment, int $format): string
+    {
+        $response = $this->senditService->printLabels([$shipment->external_reference], $format, $shipment->shippingMethod?->shippingCarrier);
+        $fileUrl = (string) data_get($response, 'data.fileUrl');
+
+        if ($fileUrl !== '' && $fileUrl !== $shipment->label_url) {
+            $shipment->forceFill(['label_url' => $fileUrl])->saveQuietly();
+        }
+
+        return $fileUrl;
     }
 }

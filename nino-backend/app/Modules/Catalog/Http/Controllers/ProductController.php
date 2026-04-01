@@ -8,6 +8,7 @@ use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductImage;
 use App\Modules\Catalog\Models\ProductTag;
+use App\Modules\Catalog\Services\ProductBulkActionService;
 use App\Modules\Catalog\Services\ProductMediaService;
 use App\Modules\Catalog\Services\ProductVariantService;
 use App\Modules\Audit\Models\AuditLog;
@@ -24,6 +25,7 @@ class ProductController extends Controller
         private readonly FinanceSettingsService $financeSettings,
         private readonly ProductMediaService $productMedia,
         private readonly ProductVariantService $productVariants,
+        private readonly ProductBulkActionService $productBulkActions,
     ) {}
 
     public function index(Request $request)
@@ -444,70 +446,11 @@ class ProductController extends Controller
             return redirect()->route('admin.catalog.products.index')->with('error', 'No products were selected.');
         }
 
-        $action = $validated['action'];
-        $affectedCount = 0;
-
-        foreach ($products as $product) {
-            if ($action === 'delete') {
-                $this->authorize('delete', $product);
-
-                $snapshot = $this->stateSnapshot($product);
-                $pricing = $this->pricingSnapshot($product);
-                $this->productVariants->purge($product);
-                $this->productMedia->purge($product);
-                $this->syncProductTags($product, null);
-                $product->categories()->detach();
-                $product->delete();
-
-                $this->audit->log(
-                    action: 'catalog.product.bulk_deleted',
-                    target: $product,
-                    oldValues: array_merge($snapshot, $pricing),
-                    newValues: [],
-                    notes: 'Product deleted through bulk action',
-                    context: [
-                        'module' => 'catalog',
-                        'source' => 'product_controller',
-                        'bulk_action' => true,
-                    ],
-                );
-
-                $affectedCount++;
-                continue;
-            }
-
-            $this->authorize('update', $product);
-
-            $newStatus = match ($action) {
-                'publish' => Product::STATUS_PUBLISHED,
-                'draft' => Product::STATUS_DRAFT,
-                default => Product::STATUS_ARCHIVED,
-            };
-
-            if ($product->status === $newStatus) {
-                continue;
-            }
-
-            $oldStatus = $product->status;
-            $product->status = $newStatus;
-            $product->save();
-
-            $this->audit->log(
-                action: 'catalog.product.bulk_status_changed',
-                target: $product,
-                oldValues: ['status' => $oldStatus],
-                newValues: ['status' => $newStatus],
-                notes: 'Product status changed through bulk action',
-                context: [
-                    'module' => 'catalog',
-                    'source' => 'product_controller',
-                    'bulk_action' => true,
-                    'requested_action' => $action,
-                ],
-            );
-
-            $affectedCount++;
-        }
+        $affectedCount = $this->productBulkActions->run(
+            $products,
+            $validated['action'],
+            fn (string $ability, Product $product) => $this->authorize($ability, $product),
+        );
 
         return redirect()->route('admin.catalog.products.index')->with('success', "Bulk action completed for {$affectedCount} product(s).");
     }

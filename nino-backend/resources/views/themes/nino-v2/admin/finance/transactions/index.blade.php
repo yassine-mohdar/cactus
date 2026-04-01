@@ -49,7 +49,7 @@
     <div class="filter-field"><label class="filter-label" for="txn-method">Method</label>
         <select id="txn-method" name="method" class="input-field">
             <option value="">All</option>
-            @foreach(\App\Modules\Finance\Enums\PaymentMethod::cases() as $m)<option value="{{ $m->value }}" {{ request('method') === $m->value ? 'selected' : '' }}>{{ $m->label() }}</option>@endforeach
+            @foreach(\App\Modules\Payments\Models\PaymentMethod::query()->orderBy('sort_order')->orderBy('name')->get() as $m)<option value="{{ $m->code }}" {{ request('method') === $m->code ? 'selected' : '' }}>{{ $m->checkoutLabel() }}</option>@endforeach
         </select>
     </div>
     <div class="filter-field"><label class="filter-label" for="txn-from">From</label><input id="txn-from" type="date" name="date_from" value="{{ request('date_from') }}" class="input-field"></div>
@@ -98,7 +98,7 @@
                     @endif
                 </td>
                 <td class="px-4 py-3 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $txn->type->badgeColor() }}">{{ $txn->type->label() }}</span></td>
-                <td class="px-4 py-3 text-center text-xs">{{ $txn->payment_method->icon() }} {{ $txn->payment_method->label() }}</td>
+                <td class="px-4 py-3 text-center text-xs">{{ $txn->resolvedPaymentMethodIcon() }} {{ $txn->resolvedPaymentMethodLabel() }}</td>
                 <td class="px-4 py-3 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $txn->status->badgeColor() }}">{{ $txn->status->label() }}</span></td>
                 <td class="px-4 py-3 text-right font-semibold text-[#1E2B27]">{{ $txn->formattedAmount() }}</td>
                 <td class="px-4 py-3 text-right text-xs text-[#61706B]">{{ $txn->fee_amount > 0 ? number_format($txn->fee_amount, 2) : '—' }}</td>

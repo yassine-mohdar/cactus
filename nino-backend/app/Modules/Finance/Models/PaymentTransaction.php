@@ -4,9 +4,11 @@ namespace App\Modules\Finance\Models;
 
 use App\Models\User;
 use App\Modules\Finance\Enums\CodStatus;
-use App\Modules\Finance\Enums\PaymentMethod;
+use App\Modules\Finance\Enums\PaymentMethod as LegacyPaymentMethod;
 use App\Modules\Finance\Enums\TransactionStatus;
 use App\Modules\Finance\Enums\TransactionType;
+use App\Modules\Payments\Models\PaymentMethod;
+use App\Modules\Payments\Services\PaymentMethodAvailabilityService;
 use App\Modules\Payments\Enums\PaymentStatus as GatewayPaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +18,8 @@ class PaymentTransaction extends Model
 {
     protected $fillable = [
         'reference', 'order_id', 'customer_id',
-        'type', 'status', 'payment_method', 'gateway', 'gateway_transaction_id',
+        'type', 'status', 'payment_method', 'payment_method_id', 'payment_method_label', 'payment_method_behavior', 'gateway', 'gateway_transaction_id',
+        'gateway_reference', 'payload', 'error_code', 'error_message',
         'amount', 'fee_amount', 'net_amount', 'currency',
         'cod_status', 'cod_collected_at', 'cod_deposited_at', 'cod_collected_by',
         'cod_collected_amount', 'cod_notes',
@@ -27,7 +30,6 @@ class PaymentTransaction extends Model
     protected $casts = [
         'type' => TransactionType::class,
         'status' => TransactionStatus::class,
-        'payment_method' => PaymentMethod::class,
         'cod_status' => CodStatus::class,
         'amount' => 'decimal:2',
         'fee_amount' => 'decimal:2',
@@ -68,6 +70,30 @@ class PaymentTransaction extends Model
         };
     }
 
+    public function setPaymentMethodAttribute(mixed $value): void
+    {
+        $normalized = match (true) {
+            $value instanceof LegacyPaymentMethod => $value->value,
+            default => is_string($value) ? $value : (string) $value,
+        };
+
+        $snapshot = app(PaymentMethodAvailabilityService::class)->snapshot($normalized);
+
+        $this->attributes['payment_method'] = $snapshot['code'] ?? $normalized;
+
+        if (! array_key_exists('payment_method_id', $this->attributes) || blank($this->attributes['payment_method_id'] ?? null)) {
+            $this->attributes['payment_method_id'] = $snapshot['id'];
+        }
+
+        if (! array_key_exists('payment_method_label', $this->attributes) || blank($this->attributes['payment_method_label'] ?? null)) {
+            $this->attributes['payment_method_label'] = $snapshot['label'];
+        }
+
+        if (! array_key_exists('payment_method_behavior', $this->attributes) || blank($this->attributes['payment_method_behavior'] ?? null)) {
+            $this->attributes['payment_method_behavior'] = $snapshot['behavior'];
+        }
+    }
+
     // ── Relationships ──────────────────────────────────────
     public function order(): BelongsTo
     {
@@ -84,9 +110,19 @@ class PaymentTransaction extends Model
         return $this->belongsTo(User::class, 'processed_by');
     }
 
+    public function paymentMethodRecord(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+    }
+
     public function refundRequests()
     {
         return $this->hasMany(RefundRequest::class, 'transaction_id');
+    }
+
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class, 'transaction_id');
     }
 
     // ── Scopes ─────────────────────────────────────────────
@@ -107,7 +143,11 @@ class PaymentTransaction extends Model
 
     public function scopeCod($query)
     {
-        return $query->where('payment_method', PaymentMethod::CASH_ON_DELIVERY);
+        return $query->where(function ($builder) {
+            $builder
+                ->where('payment_method_behavior', PaymentMethod::BEHAVIOR_COD)
+                ->orWhereIn('payment_method', ['cod', 'cash_on_delivery']);
+        });
     }
 
     public function scopeCodPending($query)
@@ -123,7 +163,14 @@ class PaymentTransaction extends Model
     // ── Helpers ─────────────────────────────────────────────
     public function isCod(): bool
     {
-        return $this->payment_method === PaymentMethod::CASH_ON_DELIVERY;
+        return $this->resolvedPaymentMethodBehavior() === PaymentMethod::BEHAVIOR_COD
+            || in_array($this->resolvedPaymentMethodCode(), ['cod', 'cash_on_delivery'], true);
+    }
+
+    public function isOfflineManual(): bool
+    {
+        return $this->resolvedPaymentMethodBehavior() === PaymentMethod::BEHAVIOR_OFFLINE_MANUAL
+            || $this->gateway === 'offline_transfer';
     }
 
     public function markCodCollected(string $collectedBy, ?float $collectedAmount = null): void
@@ -164,6 +211,63 @@ class PaymentTransaction extends Model
     public function formattedAmount(): string
     {
         return number_format($this->amount, 2) . ' ' . $this->currency;
+    }
+
+    public function resolvedPaymentMethodCode(): ?string
+    {
+        $code = strtolower(trim((string) ($this->paymentMethodRecord?->code ?? $this->payment_method ?? '')));
+
+        return match ($code) {
+            '', 'other' => null,
+            'cash_on_delivery' => 'cod',
+            'offline_transfer' => 'bank_transfer',
+            default => $code,
+        };
+    }
+
+    public function resolvedPaymentMethodLabel(): string
+    {
+        if ($this->paymentMethodRecord) {
+            return $this->paymentMethodRecord->checkoutLabel();
+        }
+
+        if (filled($this->payment_method_label)) {
+            return (string) $this->payment_method_label;
+        }
+
+        $legacy = LegacyPaymentMethod::tryFrom((string) $this->payment_method);
+
+        if ($legacy) {
+            return $legacy->label();
+        }
+
+        return app(PaymentMethodAvailabilityService::class)->legacyLabel($this->payment_method) ?? 'Payment Method';
+    }
+
+    public function resolvedPaymentMethodIcon(): string
+    {
+        $legacy = LegacyPaymentMethod::tryFrom((string) $this->payment_method);
+
+        if ($legacy) {
+            return $legacy->icon();
+        }
+
+        return app(PaymentMethodAvailabilityService::class)->legacyIcon($this->resolvedPaymentMethodCode());
+    }
+
+    public function resolvedPaymentMethodBehavior(): ?string
+    {
+        if (filled($this->payment_method_behavior)) {
+            return (string) $this->payment_method_behavior;
+        }
+
+        if ($this->paymentMethodRecord) {
+            return $this->paymentMethodRecord->behavior;
+        }
+
+        return $this->resolvedPaymentMethodCode() === 'cod'
+            ? PaymentMethod::BEHAVIOR_COD
+            : null;
     }
 
     public function gatewayStatusValue(): string

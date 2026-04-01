@@ -323,6 +323,60 @@ class InventoryService
         return $releasedOrders;
     }
 
+    public function finalizeReservationsForOrder(
+        Order $order,
+        string $reason = 'shipment_dispatched',
+        ?int $userId = null,
+    ): int {
+        $order->loadMissing('lineItems');
+
+        $reservationsByStockItem = [];
+
+        foreach ($order->lineItems as $lineItem) {
+            $stockItem = $this->resolveReservableStockItemForOrderLine($lineItem->product_id, $lineItem->variant_id);
+
+            if (! $stockItem) {
+                continue;
+            }
+
+            $stockItemId = $stockItem->id;
+
+            if (! isset($reservationsByStockItem[$stockItemId])) {
+                $reservationsByStockItem[$stockItemId] = [
+                    'stock_item' => $stockItem,
+                    'quantity' => 0,
+                ];
+            }
+
+            $reservationsByStockItem[$stockItemId]['quantity'] += (int) $lineItem->quantity;
+        }
+
+        $finalizedReservations = 0;
+
+        foreach ($reservationsByStockItem as $entry) {
+            /** @var StockItem $stockItem */
+            $stockItem = $entry['stock_item'];
+            $quantity = (int) $entry['quantity'];
+
+            if ($stockItem->reserved_quantity <= 0 || $quantity <= 0) {
+                continue;
+            }
+
+            $this->commitReservedStock(
+                $stockItem,
+                $quantity,
+                userId: $userId,
+                referenceType: Order::class,
+                referenceId: (string) $order->id,
+                reason: $reason,
+            );
+
+            $finalizedReservations++;
+        }
+
+        return $finalizedReservations;
+    }
+
     private function stockTargetLabel(StockItem $stockItem): string
     {
         $name = $stockItem->variant?->sku
@@ -376,5 +430,75 @@ class InventoryService
             ->where('product_id', $productId)
             ->whereNull('product_variant_id')
             ->first();
+    }
+
+    private function commitReservedStock(
+        StockItem $stockItem,
+        int $quantity,
+        ?int $userId = null,
+        ?string $referenceType = null,
+        ?string $referenceId = null,
+        string $reason = 'shipment_dispatched',
+    ): StockMovement {
+        if ($quantity <= 0) {
+            throw new Exception("Committed reservation quantity must be greater than zero.");
+        }
+
+        return DB::transaction(function () use ($stockItem, $quantity, $userId, $referenceType, $referenceId, $reason) {
+            $lockedItem = StockItem::lockForUpdate()->find($stockItem->id);
+            $actualCommit = min($quantity, $lockedItem->reserved_quantity);
+
+            if ($actualCommit <= 0) {
+                throw new Exception("No reserved stock is available to commit for Item ID {$stockItem->id}.");
+            }
+
+            $quantityBefore = $lockedItem->quantity;
+            $reservedBefore = $lockedItem->reserved_quantity;
+            $quantityAfter = max(0, $quantityBefore - $actualCommit);
+            $reservedAfter = max(0, $reservedBefore - $actualCommit);
+
+            $movement = StockMovement::create([
+                'stock_item_id' => $lockedItem->id,
+                'user_id' => $userId,
+                'type' => 'deduction',
+                'reason' => $reason,
+                'quantity' => -$actualCommit,
+                'quantity_before' => $quantityBefore,
+                'quantity_after' => $quantityAfter,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'notes' => "Committed {$actualCommit} reserved units.",
+            ]);
+
+            $lockedItem->quantity = $quantityAfter;
+            $lockedItem->reserved_quantity = $reservedAfter;
+            $lockedItem->status = $this->statusForSnapshot(
+                $quantityAfter,
+                $reservedAfter,
+                $lockedItem->low_stock_threshold,
+            );
+            $lockedItem->save();
+
+            $lockedItem->loadMissing(['product', 'variant', 'branch']);
+            $this->audit->log(
+                action: 'inventory.stock_adjusted',
+                target: $lockedItem,
+                oldValues: $this->stockSnapshot($lockedItem, $quantityBefore, $reservedBefore, $this->statusForSnapshot($quantityBefore, $reservedBefore, $lockedItem->low_stock_threshold)),
+                newValues: $this->stockSnapshot($lockedItem, $quantityAfter, $reservedAfter, $lockedItem->status),
+                context: [
+                    'module' => 'inventory',
+                    'source' => 'inventory_service',
+                    'movement_id' => $movement->id,
+                    'movement_type' => 'deduction',
+                    'reason' => $reason,
+                    'quantity_change' => -$actualCommit,
+                    'reference_type' => $referenceType,
+                    'reference_id' => $referenceId,
+                ],
+                targetLabel: $this->stockTargetLabel($lockedItem),
+            );
+
+            return $movement;
+        });
     }
 }

@@ -18,7 +18,7 @@
         title="Transaction {{ $transaction->reference }}"
         subtitle="Payment-level detail for finance review, reconciliation, and exception handling.">
         <x-slot:actions>
-            @if($transaction->gateway === 'offline_transfer' && $transaction->payment_method->value === 'bank_transfer' && $transaction->type->value === 'payment' && $transaction->status->value === 'pending')
+            @if($transaction->gateway === 'offline_transfer' && $transaction->isOfflineManual() && $transaction->type->value === 'payment' && $transaction->status->value === 'pending')
                 <form method="POST" action="{{ route('admin.finance.transactions.verify-offline', $transaction) }}" class="inline-flex">
                     @csrf
                     <button type="submit" class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100">
@@ -40,7 +40,7 @@
             <div class="detail-meta-grid">
                 <div>
                     <p class="detail-kicker">Method</p>
-                    <p class="detail-value">{{ $transaction->payment_method->icon() }} {{ $transaction->payment_method->label() }}</p>
+                    <p class="detail-value">{{ $transaction->resolvedPaymentMethodIcon() }} {{ $transaction->resolvedPaymentMethodLabel() }}</p>
                 </div>
                 <div>
                     <p class="detail-kicker">Gateway</p>
@@ -68,7 +68,7 @@
                 <p class="detail-note mt-5"><strong>Failure reason:</strong> {{ $transaction->failure_reason }}</p>
             @endif
 
-            @if($transaction->gateway === 'offline_transfer' && $transaction->payment_method->value === 'bank_transfer' && $transaction->type->value === 'payment' && $transaction->status->value === 'pending')
+            @if($transaction->gateway === 'offline_transfer' && $transaction->isOfflineManual() && $transaction->type->value === 'payment' && $transaction->status->value === 'pending')
                 <div class="mt-6 grid gap-4 lg:grid-cols-2">
                     <form method="POST" action="{{ route('admin.finance.transactions.verify-offline', $transaction) }}" class="rounded-3xl border border-emerald-200 bg-emerald-50/70 p-5">
                         @csrf
@@ -160,7 +160,13 @@
                 <div class="space-y-2">
                     <p class="font-mono text-sm font-semibold text-[#1E2B27]">{{ $transaction->order->reference_number }}</p>
                     <p class="text-sm text-[#61706B]">Customer: {{ $transaction->order->customer?->full_name ?: ($transaction->order->customer?->name ?? 'Guest') }}</p>
-                    <x-nino.button href="{{ route('admin.orders.show', $transaction->order) }}" size="sm" variant="secondary">View Order</x-nino.button>
+                    <div class="flex flex-wrap gap-2">
+                        <x-nino.button href="{{ route('admin.orders.show', $transaction->order) }}" size="sm" variant="secondary">View Order</x-nino.button>
+                        @if($invoice)
+                            <x-nino.button href="{{ route('admin.orders.invoice.preview', $transaction->order) }}" size="sm" variant="secondary">Preview Invoice</x-nino.button>
+                            <x-nino.button href="{{ route('admin.orders.invoice', $transaction->order) }}" size="sm" variant="primary" :navigate="false">Download PDF</x-nino.button>
+                        @endif
+                    </div>
                 </div>
             @else
                 <x-nino.empty-state

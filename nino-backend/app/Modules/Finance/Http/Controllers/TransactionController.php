@@ -4,15 +4,25 @@ namespace App\Modules\Finance\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Finance\Enums\CodStatus;
-use App\Modules\Finance\Enums\PaymentMethod;
 use App\Modules\Finance\Enums\TransactionStatus;
 use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\PaymentTransaction;
+use App\Modules\Inventory\Services\InventoryService;
+use App\Modules\Notifications\Services\NotificationTriggerService;
 use App\Modules\Orders\Enums\OrderStatus;
+use App\Modules\Finance\Services\InvoiceService;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
+    public function __construct(
+        private readonly InventoryService $inventoryService,
+        private readonly NotificationTriggerService $notificationTriggerService,
+        private readonly InvoiceService $invoiceService,
+    ) {
+        $this->middleware('permission.any:finance.viewAny,payments.viewAny')->only(['index', 'show', 'verifyOffline', 'failOffline']);
+    }
+
     public function index(Request $request)
     {
         $query = PaymentTransaction::with(['order', 'customer']);
@@ -63,7 +73,11 @@ class TransactionController extends Controller
     public function show(PaymentTransaction $transaction)
     {
         $transaction->load(['order', 'customer', 'processor', 'refundRequests']);
-        return view('admin.finance.transactions.show', compact('transaction'));
+        $invoice = $transaction->order
+            ? $this->invoiceService->ensureInvoiceForOrder($transaction->order, $transaction)
+            : null;
+
+        return view('admin.finance.transactions.show', compact('transaction', 'invoice'));
     }
 
     public function verifyOffline(Request $request, PaymentTransaction $transaction)
@@ -92,6 +106,12 @@ class TransactionController extends Controller
 
         if ($transaction->order && $transaction->order->status === OrderStatus::AWAITING_PAYMENT) {
             $transaction->order->update(['status' => OrderStatus::PAID]);
+            $this->invoiceService->ensureInvoiceForOrder($transaction->order->fresh(['transactions', 'shipments', 'invoice']), $transaction->fresh());
+            $this->notificationTriggerService->paymentSuccess(
+                $transaction->order->fresh(),
+                $transaction->resolvedPaymentMethodCode(),
+                $transaction->gateway_reference ?? $transaction->reference,
+            );
         }
 
         return redirect()
@@ -125,6 +145,16 @@ class TransactionController extends Controller
 
         if ($transaction->order && $transaction->order->status === OrderStatus::AWAITING_PAYMENT) {
             $transaction->order->update(['status' => OrderStatus::FAILED]);
+            $this->inventoryService->releaseReservationsForOrder(
+                $transaction->order,
+                reason: 'payment_failed',
+                userId: $request->user()?->id,
+            );
+            $this->notificationTriggerService->paymentFailed(
+                $transaction->order->fresh(),
+                $transaction->resolvedPaymentMethodCode(),
+                $transaction->gateway_reference ?? $transaction->reference,
+            );
         }
 
         return redirect()
@@ -135,7 +165,7 @@ class TransactionController extends Controller
     private function isVerifiableOfflineTransaction(PaymentTransaction $transaction): bool
     {
         return $transaction->gateway === 'offline_transfer'
-            && $transaction->payment_method === PaymentMethod::BANK_TRANSFER
+            && $transaction->isOfflineManual()
             && $transaction->type === TransactionType::PAYMENT
             && $transaction->status === TransactionStatus::PENDING;
     }

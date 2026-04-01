@@ -11,7 +11,7 @@
 {{-- Search --}}
 <form method="GET" class="filter-toolbar mb-6">
     <div class="flex flex-col gap-3 sm:flex-row">
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="Search by reference, email, phone, or customer name..." class="input-field flex-1" autofocus>
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Search by order reference, tracking number, email, phone, or customer name..." class="input-field flex-1" autofocus>
         <button type="submit" class="btn-primary px-6">Search</button>
     </div>
 </form>
@@ -33,6 +33,7 @@
                     <th>Customer</th>
                     <th>Email</th>
                     <th>Phone</th>
+                    <th>Tracking</th>
                     <th class="text-center">Status</th>
                     <th class="text-right">Total</th>
                     <th>Date</th>
@@ -49,12 +50,23 @@
                         : trim($customer?->full_name ?: ($customer?->name ?? ''));
                     $customerEmail = $customer?->email;
                     $customerPhone = $billingAddress?->phone ?? $customer?->phone;
+                    $latestShipment = $order->shipments->sortByDesc('id')->first();
+                    $trackingValue = $latestShipment?->tracking_number ?: $latestShipment?->external_reference;
+                    $providerReference = $latestShipment?->external_reference && $latestShipment?->external_reference !== $trackingValue
+                        ? $latestShipment->external_reference
+                        : null;
                 @endphp
                 <tr>
                     <td class="px-4 py-3 font-mono text-xs font-medium text-slate-900"><a href="{{ route('admin.orders.show', $order) }}" class="table-link table-mono">{{ $order->reference_number }}</a></td>
                     <td class="px-4 py-3 text-sm text-slate-900">{{ $customerName !== '' ? $customerName : '—' }}</td>
                     <td class="px-4 py-3 text-xs text-slate-500">{{ $customerEmail ?? '—' }}</td>
                     <td class="px-4 py-3 text-xs text-slate-500">{{ $customerPhone ?? '—' }}</td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-500">
+                        <span class="block">{{ $trackingValue ?? '—' }}</span>
+                        @if($providerReference)
+                            <span class="mt-1 block text-[11px] text-slate-400">Provider: {{ $providerReference }}</span>
+                        @endif
+                    </td>
                     <td class="px-4 py-3 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{{ $order->status?->label() ?? 'N/A' }}</span></td>
                     <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ number_format((float) $order->grand_total, 2) }}</td>
                     <td class="px-4 py-3 text-xs text-slate-500">{{ $order->created_at->format('M d, H:i') }}</td>
@@ -66,7 +78,7 @@
         </div>
     </div>
     @else
-    <p class="text-sm text-slate-500">No orders found.</p>
+    <p class="text-sm text-slate-500">No orders found. Try another reference, tracking number, email, phone number, or customer name.</p>
     @endif
 </div>
 
@@ -112,7 +124,7 @@
 @else
 <div class="text-center py-16">
     <svg class="mx-auto h-12 w-12 text-slate-500/40" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path></svg>
-    <p class="mt-3 text-sm text-slate-500">Enter an order reference, email, phone, name, or transaction reference to search.</p>
+    <p class="mt-3 text-sm text-slate-500">Enter an order reference, tracking number, email, phone, name, or transaction reference to search.</p>
 </div>
 @endif
 @endsection

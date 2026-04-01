@@ -12,7 +12,10 @@ class RefundController extends Controller
 {
     public function __construct(
         private readonly AuditLogger $audit,
-    ) {}
+    ) {
+        $this->middleware('permission.any:finance.viewAny,payments.refund')->only('index');
+        $this->middleware('permission.any:payments.refund')->only(['approve', 'reject', 'complete']);
+    }
 
     public function index(Request $request)
     {

@@ -11,6 +11,7 @@ enum OrderStatus: string
     case SHIPPED = 'shipped';
     case DELIVERED = 'delivered';
     case FAILED = 'failed';
+    case REFUND_PENDING = 'refund_pending';
     case CANCELLED = 'cancelled';
     case REFUNDED = 'refunded';
 
@@ -24,6 +25,7 @@ enum OrderStatus: string
             self::SHIPPED => 'Shipped',
             self::DELIVERED => 'Delivered',
             self::FAILED => 'Failed',
+            self::REFUND_PENDING => 'Refund Pending',
             self::CANCELLED => 'Cancelled',
             self::REFUNDED => 'Refunded',
         };

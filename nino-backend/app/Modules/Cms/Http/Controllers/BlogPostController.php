@@ -7,11 +7,16 @@ use App\Modules\Cms\Enums\PostStatus;
 use App\Modules\Cms\Models\BlogCategory;
 use App\Modules\Cms\Models\BlogPost;
 use App\Modules\Cms\Models\BlogTag;
+use App\Modules\Settings\Services\AdminMediaLibraryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class BlogPostController extends Controller
 {
+    public function __construct(
+        private readonly AdminMediaLibraryService $mediaLibrary,
+    ) {}
+
     public function index(Request $request)
     {
         $query = BlogPost::with(['author', 'category', 'tags']);
@@ -54,7 +59,8 @@ class BlogPostController extends Controller
     {
         $categories = BlogCategory::active()->orderBy('name')->get();
         $tags = BlogTag::orderBy('name')->get();
-        return view('admin.cms.posts.form', compact('categories', 'tags'));
+        $mediaOptions = $this->mediaLibrary->imageOptions(['blog', 'categories', 'products']);
+        return view('admin.cms.posts.form', compact('categories', 'tags', 'mediaOptions'));
     }
 
     public function store(Request $request)
@@ -82,7 +88,8 @@ class BlogPostController extends Controller
         $post->load('tags');
         $categories = BlogCategory::active()->orderBy('name')->get();
         $tags = BlogTag::orderBy('name')->get();
-        return view('admin.cms.posts.form', compact('post', 'categories', 'tags'));
+        $mediaOptions = $this->mediaLibrary->imageOptions(['blog', 'categories', 'products']);
+        return view('admin.cms.posts.form', compact('post', 'categories', 'tags', 'mediaOptions'));
     }
 
     public function update(Request $request, BlogPost $post)

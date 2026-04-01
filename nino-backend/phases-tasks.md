@@ -1239,8 +1239,8 @@ Build a robust content and SEO layer to support organic traffic, educational con
 - [x] `P12-SEO-05` Add noindex foundation if included
 
 ### 12.4 SEO across entities
-- [ ] `P12-ENTITYSEO-01` Add Product SEO
-- [ ] `P12-ENTITYSEO-02` Add Category SEO
+- [x] `P12-ENTITYSEO-01` Add Product SEO
+- [x] `P12-ENTITYSEO-02` Add Category SEO
 - [x] `P12-ENTITYSEO-03` Add Blog category SEO
 - [x] `P12-ENTITYSEO-04` Add Post SEO
 
@@ -1253,7 +1253,7 @@ Build a robust content and SEO layer to support organic traffic, educational con
 - [x] `P12-UX-01` Add draft/publish workflow
 - [x] `P12-UX-02` Add preview if practical
 - [x] `P12-UX-03` Add author attribution
-- [ ] `P12-UX-04` Add media picker integration
+- [x] `P12-UX-04` Add media picker integration
 
 ## Acceptance Criteria
 - Blog content can be created and managed.
@@ -1396,7 +1396,7 @@ Provide operational leverage through reporting, search tools, and admin producti
 - [x] `P15-SEARCH-03` Add saved views foundation if practical
 
 ### 15.3 Bulk actions
-- [ ] `P15-BULK-01` Add products bulk actions
+- [x] `P15-BULK-01` Add products bulk actions
 - [x] `P15-BULK-02` Add orders bulk actions where safe
 - [x] `P15-BULK-03` Add content bulk actions
 

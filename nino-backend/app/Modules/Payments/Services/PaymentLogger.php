@@ -2,8 +2,8 @@
 
 namespace App\Modules\Payments\Services;
 
+use App\Modules\Finance\Models\PaymentTransaction;
 use App\Modules\Payments\Models\PaymentLog;
-use App\Modules\Payments\Models\PaymentTransaction;
 use App\Modules\Orders\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

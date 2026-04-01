@@ -111,7 +111,7 @@ class ReleaseReadinessTest extends TestCase
 
         $gatewaysResponse = $this->actingAs($staffUser)->get(route('admin.gateways.index'));
         $gatewaysResponse->assertOk();
-        $gatewaysResponse->assertSee('Payment Gateways');
+        $gatewaysResponse->assertSee('Payments &amp; Gateways', false);
         $this->assertSame(4, (int) \App\Modules\Payments\Models\GatewaySetting::query()->count());
 
         $integrationsResponse = $this->actingAs($staffUser)->get(route('admin.notifications.integrations.index'));

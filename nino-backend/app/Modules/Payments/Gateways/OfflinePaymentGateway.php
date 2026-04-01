@@ -2,12 +2,13 @@
 
 namespace App\Modules\Payments\Gateways;
 
+use App\Modules\Finance\Models\PaymentTransaction;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Payments\Contracts\PaymentGatewayInterface;
 use App\Modules\Payments\DTOs\PaymentResponse;
 use App\Modules\Payments\Models\GatewaySetting;
-use App\Modules\Payments\Models\PaymentTransaction;
-use App\Modules\Finance\Enums\PaymentMethod;
+use App\Modules\Payments\Models\PaymentMethod as PaymentMethodRecord;
+use App\Modules\Payments\Services\PaymentMethodAvailabilityService;
 use App\Modules\Finance\Enums\TransactionType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -26,6 +27,14 @@ class OfflinePaymentGateway implements PaymentGatewayInterface
         'require_receipt' => true,
     ];
 
+    private readonly PaymentMethodAvailabilityService $paymentMethodAvailability;
+
+    public function __construct(
+        ?PaymentMethodAvailabilityService $paymentMethodAvailability = null,
+    ) {
+        $this->paymentMethodAvailability = $paymentMethodAvailability ?? app(PaymentMethodAvailabilityService::class);
+    }
+
     public function gatewayId(): string
     {
         return self::GATEWAY_ID;
@@ -43,24 +52,34 @@ class OfflinePaymentGateway implements PaymentGatewayInterface
                 'metadata' => self::DEFAULT_METADATA,
             ],
         );
-        $config = $this->resolveMetadata($setting);
+        $paymentMethod = $this->resolveOfflineMethod($order);
+        $config = $this->resolveMetadata($setting, $paymentMethod);
         $instructions = $this->buildInstructions($config);
 
-        $reference = 'OFFLINE-' . now()->format('Ymd') . '-' . Str::random(6);
+        $referencePrefix = trim((string) ($config['reference_prefix'] ?? 'OFFLINE'));
+        $reference = ($referencePrefix !== '' ? strtoupper($referencePrefix) : 'OFFLINE')
+            . '-' . now()->format('Ymd') . '-' . Str::random(6);
+
+        $snapshot = $paymentMethod
+            ? $this->paymentMethodAvailability->snapshot($paymentMethod->code)
+            : $this->paymentMethodAvailability->snapshot('bank_transfer');
 
         $transaction = PaymentTransaction::create([
             'order_id' => $order->id,
             'customer_id' => $order->customer_id,
+            'payment_method_id' => $snapshot['id'],
+            'payment_method_label' => $snapshot['label'],
+            'payment_method_behavior' => $snapshot['behavior'],
             'type' => TransactionType::PAYMENT,
             'gateway' => self::GATEWAY_ID,
-            'payment_method' => PaymentMethod::BANK_TRANSFER,
+            'payment_method' => $snapshot['code'] ?? 'bank_transfer',
             'status' => 'pending', // Awaiting manual admin verification
             'amount' => $order->grand_total,
             'currency' => $order->currency,
             'gateway_reference' => $reference,
-            'payload' => [
+            'metadata' => [
                 'instructions_shown' => $instructions,
-                'offline_method' => $this->checkoutDetails($setting, $reference),
+                'offline_method' => $this->checkoutDetails($setting, $reference, $paymentMethod),
             ],
         ]);
 
@@ -70,7 +89,7 @@ class OfflinePaymentGateway implements PaymentGatewayInterface
             gatewayReference: $reference,
             message: $instructions,
             rawPayload: array_merge($transaction->toArray(), [
-                'offline_method' => $this->checkoutDetails($setting, $reference),
+                'offline_method' => $this->checkoutDetails($setting, $reference, $paymentMethod),
             ]),
         );
     }
@@ -78,14 +97,14 @@ class OfflinePaymentGateway implements PaymentGatewayInterface
     /**
      * @return array<string, mixed>
      */
-    public function checkoutDetails(?GatewaySetting $setting = null, ?string $reference = null): array
+    public function checkoutDetails(?GatewaySetting $setting = null, ?string $reference = null, ?PaymentMethodRecord $paymentMethod = null): array
     {
         $setting ??= GatewaySetting::query()->where('gateway_id', self::GATEWAY_ID)->first();
-        $metadata = $this->resolveMetadata($setting);
+        $metadata = $this->resolveMetadata($setting, $paymentMethod);
 
         return [
             'gateway' => self::GATEWAY_ID,
-            'method_code' => 'bank_transfer',
+            'method_code' => $paymentMethod?->code ?? 'bank_transfer',
             'method_label' => $metadata['method_label'],
             'checkout_title' => $metadata['checkout_title'],
             'checkout_description' => $metadata['checkout_description'],
@@ -161,12 +180,12 @@ class OfflinePaymentGateway implements PaymentGatewayInterface
     /**
      * @return array<string, mixed>
      */
-    private function resolveMetadata(?GatewaySetting $setting): array
+    private function resolveMetadata(?GatewaySetting $setting, ?PaymentMethodRecord $paymentMethod = null): array
     {
-        $metadata = array_merge(self::DEFAULT_METADATA, $setting?->metadata ?? []);
+        $metadata = array_merge(self::DEFAULT_METADATA, $setting?->metadata ?? [], $paymentMethod?->metadata ?? []);
 
         return [
-            'method_label' => trim((string) ($metadata['method_label'] ?? self::DEFAULT_METADATA['method_label'])),
+            'method_label' => trim((string) ($metadata['method_label'] ?? $paymentMethod?->checkoutLabel() ?? self::DEFAULT_METADATA['method_label'])),
             'checkout_title' => trim((string) ($metadata['checkout_title'] ?? self::DEFAULT_METADATA['checkout_title'])),
             'checkout_description' => trim((string) ($metadata['checkout_description'] ?? self::DEFAULT_METADATA['checkout_description'])),
             'instructions' => trim((string) ($metadata['instructions'] ?? self::DEFAULT_METADATA['instructions'])),
@@ -180,6 +199,17 @@ class OfflinePaymentGateway implements PaymentGatewayInterface
             'payment_window_hours' => max(1, (int) ($metadata['payment_window_hours'] ?? self::DEFAULT_METADATA['payment_window_hours'])),
             'require_receipt' => filter_var($metadata['require_receipt'] ?? self::DEFAULT_METADATA['require_receipt'], FILTER_VALIDATE_BOOLEAN),
         ];
+    }
+
+    private function resolveOfflineMethod(Order $order): ?PaymentMethodRecord
+    {
+        $order->loadMissing('paymentMethodRecord');
+
+        if ($order->paymentMethodRecord?->isOfflineManual()) {
+            return $order->paymentMethodRecord;
+        }
+
+        return $this->paymentMethodAvailability->resolveByCode($order->payment_method);
     }
 
     public function verifyPayment(Request $request): PaymentResponse

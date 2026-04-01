@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Modules\Payments\Models\GatewaySetting;
+use App\Modules\Payments\Models\PaymentMethod;
+use App\Modules\Shipping\Models\ShippingCarrier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -12,7 +14,7 @@ class GatewaySettingsFoundationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_gateway_settings_page_renders_cmi_and_payzone_configuration_fields(): void
+    public function test_gateway_workspace_defaults_to_checkout_methods_and_provider_tab_renders_gateway_fields(): void
     {
         $manager = $this->makeGatewayManager();
 
@@ -55,20 +57,108 @@ class GatewaySettingsFoundationTest extends TestCase
         $response = $this->actingAs($manager)->get(route('admin.gateways.index'));
 
         $response->assertOk();
-        $response->assertSee('Store ID');
-        $response->assertSee('Client ID');
-        $response->assertSee('Hash Key');
-        $response->assertSee('Terminal ID');
-        $response->assertSee('Publishable Key');
-        $response->assertSee('Webhook Secret');
-        $response->assertSee('Merchant ID');
-        $response->assertSee('API Key');
-        $response->assertSee('Secret Key');
-        $response->assertSee('Bank Name');
-        $response->assertSee('IBAN');
-        $response->assertSee('Payment Window');
-        $response->assertSee('Checkout Title');
-        $response->assertSee('Admin verification notes');
+        $response->assertSee('Payments &amp; Gateways', false);
+        $response->assertSee('Checkout Methods');
+        $response->assertSee('Provider Connections');
+        $response->assertSee('Add Offline Method');
+
+        preg_match_all(
+            '/<a[^>]+href="[^"]*\/admin\/gateways\?tab=(?:methods&amp;method=[^"]+|providers&amp;gateway=[^"]+)"[^>]*>/i',
+            $response->getContent(),
+            $matches,
+        );
+
+        $this->assertNotEmpty($matches[0]);
+
+        foreach ($matches[0] as $anchorTag) {
+            $this->assertStringNotContainsString('wire:navigate', $anchorTag);
+        }
+
+        $providerResponse = $this->actingAs($manager)->get(route('admin.gateways.index', [
+            'tab' => 'providers',
+            'gateway' => 'cmi',
+        ]));
+
+        $providerResponse->assertOk();
+        $providerResponse->assertSee('Store ID');
+        $providerResponse->assertSee('Client ID');
+        $providerResponse->assertSee('Hash Key');
+        $providerResponse->assertSee('Terminal ID');
+
+        $stripeResponse = $this->actingAs($manager)->get(route('admin.gateways.index', [
+            'tab' => 'providers',
+            'gateway' => 'stripe',
+        ]));
+
+        $stripeResponse->assertOk();
+        $stripeResponse->assertSee('Publishable Key');
+        $stripeResponse->assertSee('Webhook Secret');
+        $stripeResponse->assertSee('Secret Key');
+
+        $payzoneResponse = $this->actingAs($manager)->get(route('admin.gateways.index', [
+            'tab' => 'providers',
+            'gateway' => 'payzone',
+        ]));
+
+        $payzoneResponse->assertOk();
+        $payzoneResponse->assertSee('Merchant ID');
+        $payzoneResponse->assertSee('API Key');
+        $payzoneResponse->assertSee('Secret Key');
+    }
+
+    public function test_gateway_workspace_can_create_toggle_and_delete_custom_offline_method_with_cod_carriers(): void
+    {
+        $manager = $this->makeGatewayManager();
+
+        $carrier = ShippingCarrier::query()->firstOrCreate([
+            'code' => 'amana',
+        ], [
+            'name' => 'Amana',
+            'provider' => ShippingCarrier::PROVIDER_MANUAL,
+            'is_enabled' => true,
+        ]);
+
+        $this->actingAs($manager)
+            ->post(route('admin.gateways.methods.store'), [
+                'name' => 'Cash on Pickup',
+                'code' => 'cash_on_pickup',
+                'is_enabled' => '1',
+                'sort_order' => 90,
+                'behavior' => 'cod',
+                'metadata' => [
+                    'method_label' => 'Cash on Pickup',
+                    'checkout_title' => 'Pay the carrier on pickup',
+                    'checkout_description' => 'Use this when the carrier collects cash during pickup.',
+                    'instructions' => 'The carrier will collect the amount during pickup.',
+                    'admin_instructions' => 'Track this in the COD reconciliation workflow.',
+                    'payment_window_hours' => '24',
+                    'reference_prefix' => 'COP',
+                    'require_receipt' => '0',
+                ],
+                'carrier_ids' => [$carrier->id],
+            ])
+            ->assertRedirect();
+
+        $method = PaymentMethod::query()->where('code', 'cash_on_pickup')->firstOrFail();
+
+        $this->assertSame('cod', $method->behavior);
+        $this->assertTrue($method->is_enabled);
+        $this->assertSame([$carrier->id], $method->shippingCarriers()->pluck('shipping_carriers.id')->all());
+
+        $this->actingAs($manager)
+            ->post(route('admin.gateways.methods.toggle', $method))
+            ->assertRedirect();
+
+        $method->refresh();
+        $this->assertFalse($method->is_enabled);
+
+        $this->actingAs($manager)
+            ->delete(route('admin.gateways.methods.destroy', $method))
+            ->assertRedirect(route('admin.gateways.index', ['tab' => 'methods']));
+
+        $this->assertDatabaseMissing('payment_methods', [
+            'code' => 'cash_on_pickup',
+        ]);
     }
 
     public function test_cmi_gateway_settings_require_provider_specific_fields_and_preserve_masked_hash_key(): void
@@ -127,7 +217,7 @@ class GatewaySettingsFoundationTest extends TestCase
                     'language' => 'EN',
                 ],
             ])
-            ->assertRedirect(route('admin.gateways.index'));
+            ->assertRedirect(route('admin.gateways.index', ['tab' => 'providers', 'gateway' => 'cmi']));
 
         $gateway->refresh();
 
@@ -192,7 +282,7 @@ class GatewaySettingsFoundationTest extends TestCase
                     'currency' => 'eur',
                 ],
             ])
-            ->assertRedirect(route('admin.gateways.index'));
+            ->assertRedirect(route('admin.gateways.index', ['tab' => 'providers', 'gateway' => 'payzone']));
 
         $gateway->refresh();
 
@@ -257,7 +347,7 @@ class GatewaySettingsFoundationTest extends TestCase
                     'currency' => 'usd',
                 ],
             ])
-            ->assertRedirect(route('admin.gateways.index'));
+            ->assertRedirect(route('admin.gateways.index', ['tab' => 'providers', 'gateway' => 'stripe']));
 
         $gateway->refresh();
 
@@ -297,7 +387,7 @@ class GatewaySettingsFoundationTest extends TestCase
                     'instructions' => 'Pay within 48 hours.',
                 ],
             ])
-            ->assertRedirect(route('admin.gateways.index'));
+            ->assertRedirect(route('admin.gateways.index', ['tab' => 'providers', 'gateway' => 'offline_transfer']));
 
         $gateway->refresh();
         $this->assertTrue($gateway->is_enabled);
@@ -312,7 +402,7 @@ class GatewaySettingsFoundationTest extends TestCase
                     'instructions' => 'Pay within 48 hours.',
                 ],
             ])
-            ->assertRedirect(route('admin.gateways.index'));
+            ->assertRedirect(route('admin.gateways.index', ['tab' => 'providers', 'gateway' => 'offline_transfer']));
 
         $gateway->refresh();
         $this->assertFalse($gateway->is_enabled);
@@ -371,7 +461,7 @@ class GatewaySettingsFoundationTest extends TestCase
                     'require_receipt' => '1',
                 ],
             ])
-            ->assertRedirect(route('admin.gateways.index'));
+            ->assertRedirect(route('admin.gateways.index', ['tab' => 'providers', 'gateway' => 'offline_transfer']));
 
         $gateway->refresh();
 

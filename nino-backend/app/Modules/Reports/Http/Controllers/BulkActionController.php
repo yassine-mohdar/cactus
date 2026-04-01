@@ -5,6 +5,7 @@ namespace App\Modules\Reports\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Audit\Services\AuditLogger;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Services\ProductBulkActionService;
 use App\Modules\Cms\Models\BlogPost;
 use App\Modules\Orders\Models\Order;
 use Illuminate\Http\Request;
@@ -13,34 +14,37 @@ class BulkActionController extends Controller
 {
     public function __construct(
         private readonly AuditLogger $audit,
+        private readonly ProductBulkActionService $productBulkActions,
     ) {}
 
     // ── Products ───────────────────────────────────────────
     public function productsBulk(Request $request)
     {
         $request->validate([
-            'action' => 'required|in:activate,deactivate,delete',
+            'action' => 'required|string',
             'ids' => 'required|array|min:1',
             'ids.*' => 'exists:products,id',
         ]);
 
-        $count = count($request->ids);
+        $normalizedAction = $this->productBulkActions->normalizeAction((string) $request->action);
 
-        switch ($request->action) {
-            case 'activate':
-                Product::whereIn('id', $request->ids)->update(['is_active' => true]);
-                return back()->with('success', "{$count} product(s) activated.");
+        abort_unless($this->productBulkActions->supports($normalizedAction), 422, 'Unsupported product bulk action.');
 
-            case 'deactivate':
-                Product::whereIn('id', $request->ids)->update(['is_active' => false]);
-                return back()->with('success', "{$count} product(s) deactivated.");
+        $products = Product::query()->whereIn('id', $request->ids)->get();
+        $count = $this->productBulkActions->run(
+            $products,
+            $normalizedAction,
+            fn (string $ability, Product $product) => $this->authorize($ability, $product),
+        );
 
-            case 'delete':
-                Product::whereIn('id', $request->ids)->delete();
-                return back()->with('success', "{$count} product(s) deleted.");
-        }
+        $label = match ($normalizedAction) {
+            'publish' => 'published',
+            'draft' => 'moved to draft',
+            'archive' => 'archived',
+            default => 'deleted',
+        };
 
-        return back();
+        return back()->with('success', "{$count} product(s) {$label}.");
     }
 
     // ── Orders ─────────────────────────────────────────────

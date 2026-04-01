@@ -17,7 +17,7 @@
         <div class="bg-white border border-slate-200 rounded-md shadow-sm p-6">
             <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Payment Info</h2>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                <div><p class="text-xs text-slate-500">Method</p><p class="font-medium text-slate-900 mt-0.5">{{ $transaction->payment_method->icon() }} {{ $transaction->payment_method->label() }}</p></div>
+                <div><p class="text-xs text-slate-500">Method</p><p class="font-medium text-slate-900 mt-0.5">{{ $transaction->resolvedPaymentMethodIcon() }} {{ $transaction->resolvedPaymentMethodLabel() }}</p></div>
                 <div><p class="text-xs text-slate-500">Gateway</p><p class="font-medium text-slate-900 mt-0.5">{{ $transaction->gateway ?? '—' }}</p></div>
                 <div><p class="text-xs text-slate-500">Gateway Ref</p><p class="font-mono text-xs text-slate-900 mt-0.5">{{ $transaction->gateway_transaction_id ?? '—' }}</p></div>
                 <div><p class="text-xs text-slate-500">Amount</p><p class="font-bold text-slate-900 text-lg mt-0.5">{{ $transaction->formattedAmount() }}</p></div>

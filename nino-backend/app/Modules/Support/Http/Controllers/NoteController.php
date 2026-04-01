@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 
 class NoteController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission.any:support.manage_tickets');
+    }
+
     /**
      * Add a note to any notable entity (order, customer, etc.).
      */

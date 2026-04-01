@@ -14,6 +14,11 @@ use Illuminate\Support\Facades\DB;
 
 class FinanceReportController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission.any:finance.viewAny');
+    }
+
     public function index()
     {
         // ── Revenue Overview ──────────────────────────────────
